@@ -67,8 +67,10 @@ export function applyTurnStart(
   rng: Rng,
   impetoToSlancio: number = 0,
 ): Unit {
-  // 1. Recupero dadi
-  const recovery = computeDiceRecovery(unit);
+  // 1. Recupero dadi.
+  //    Regola: al PRIMO turno della battaglia (turnsPlayed===0) il PG parte col pool
+  //    iniziale (baseline 6) — niente recovery. Dal 2° turno in poi: recovery normale.
+  const recovery = unit.turnsPlayed === 0 ? 0 : computeDiceRecovery(unit);
   let newDadi = Math.min(unit.dadiAzioneMax, unit.dadiAzione + recovery);
 
   // 2. Slancio → impeto
@@ -122,6 +124,8 @@ export function applyTurnStart(
     // Fase 1: snapshot posizione per calcolo carica + reset toggle stance
     positionAtTurnStart: unit.position,
     defensiveToggledThisTurn: false,
+    // Increment turn counter (per regola "no recovery al 1° turno")
+    turnsPlayed: unit.turnsPlayed + 1,
   };
 }
 

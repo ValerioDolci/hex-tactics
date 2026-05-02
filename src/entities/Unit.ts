@@ -83,6 +83,11 @@ export interface Unit {
 
   /** Fase 1 — Cap a 1 toggle/turno per la posizione difensiva. Reset in START_TURN. */
   defensiveToggledThisTurn: boolean;
+
+  /** Numero di turni giocati dall'unità (incrementato in applyTurnStart).
+   *  Al primo turno (turnsPlayed===0) NON si applica recovery dadi azione: il PG parte
+   *  con 6 dadi (pool iniziale baseline) e il recovery scatta dal 2° turno in poi. */
+  turnsPlayed: number;
 }
 
 /** Crea un'unità baseline ai valori di default. */
@@ -114,5 +119,6 @@ export function createBaselineUnit(params: {
     defensiveToggledThisTurn: false,
     weaponLoaded: true,
     actionTakenThisTurn: false,
+    turnsPlayed: 0,
   };
 }

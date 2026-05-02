@@ -137,6 +137,7 @@ function doStartTurn(state: GameState, slancioDice: number, impetoToSlancio: num
     actionTakenThisTurn: updated.actionTakenThisTurn,
     positionAtTurnStart: updated.positionAtTurnStart,
     defensiveToggledThisTurn: updated.defensiveToggledThisTurn,
+    turnsPlayed: updated.turnsPlayed,
   });
   newState = appendLog(
     newState,

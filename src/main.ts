@@ -25,7 +25,9 @@ const config: Phaser.Types.Core.GameConfig = {
   backgroundColor: GAME_CONFIG.backgroundColor,
   scale: {
     mode: Phaser.Scale.RESIZE,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
+    // NIENTE autoCenter: con un container CSS che occupa tutto il viewport (top:0/left:0),
+    // CENTER_BOTH causa offset visibile come "click non allineato al cursore" in alcune
+    // configurazioni (es. file:// + flex parent legacy). Lasciamo a 0,0.
     width: initialWidth,
     height: initialHeight,
   },

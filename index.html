@@ -26,14 +26,17 @@
         -webkit-tap-highlight-color: transparent;
         overscroll-behavior: none;
       }
+      /* Niente flex centering: il canvas Phaser deve essere posizionato a (0,0)
+         relativamente al container per evitare mismatch tra coord viewport e coord pointer
+         interne (bug visibile come "click non allineato al cursore"). */
       #game-container {
+        position: absolute;
+        top: 0;
+        left: 0;
         width: 100vw;
         height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
       }
-      canvas { display: block; touch-action: none; }
+      canvas { display: block; touch-action: none; position: absolute; top: 0; left: 0; }
     </style>
   </head>
   <body>
