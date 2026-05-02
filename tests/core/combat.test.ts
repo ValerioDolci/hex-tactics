@@ -17,16 +17,15 @@ function unit(id: string) {
 }
 
 describe('composeAttackRoll', () => {
-  it('spada modo Forza, 2 dadi PG → variabile 2+1 dadi, fissa 2+2(F)+2(A, D-047)−imp(3)=3', () => {
+  it('spada modo Forza, 2 dadi PG → variabile 2+1 dadi, fissa 2+2(F)+2(A, D-047), variableMod=-3 (V2 imp)', () => {
     const u = unit('att');
     u.weapon = 'spada';
     const rng = createRng(1);
     const roll = composeAttackRoll(u, 'spada', 0, 'forza', 2, rng);
-    // Variabile = 2 (PG) + 1 (spada) = 3 dadi
     expect(roll.variable).toHaveLength(3);
-    // D-047: con 2 dadi PG si attivano entrambi i bonus stat dell'arma "X/Y"
-    // Fissa = 2 (PG) + 2 (spada Forza) + 2 (spada Agilità, D-047) − 3 (imp spada) = 3
-    expect(roll.fixed).toBe(BASE_PG_FIXED + 2 + 2 - 3);
+    // V2: imp NON è più nella fissa, ma in variableMod
+    expect(roll.fixed).toBe(BASE_PG_FIXED + 2 + 2);
+    expect(roll.variableMod).toBe(-3);
   });
 
   it('spada modo Forza, 1 dado PG → solo Forza (D-047 non si attiva con 1 dado)', () => {
@@ -35,35 +34,39 @@ describe('composeAttackRoll', () => {
     const rng = createRng(1);
     const roll = composeAttackRoll(u, 'spada', 0, 'forza', 1, rng);
     expect(roll.variable).toHaveLength(2); // 1 PG + 1 spada
-    expect(roll.fixed).toBe(BASE_PG_FIXED + 2 - 3); // solo Forza, no D-047
+    expect(roll.fixed).toBe(BASE_PG_FIXED + 2);
+    expect(roll.variableMod).toBe(-3);
   });
 
-  it('mazza, 1 dado PG → variabile 1 dado (mazza non aggiunge dadi), fissa 2+9-3=8', () => {
+  it('mazza, 1 dado PG → variabile 1 dado, fissa 2+9, variableMod=-3', () => {
     const u = unit('att');
     u.weapon = 'mazza';
     const rng = createRng(2);
     const roll = composeAttackRoll(u, 'mazza', 0, undefined, 1, rng);
     expect(roll.variable).toHaveLength(1);
-    expect(roll.fixed).toBe(BASE_PG_FIXED + 9 - 3);
+    expect(roll.fixed).toBe(BASE_PG_FIXED + 9);
+    expect(roll.variableMod).toBe(-3);
   });
 
-  it('arco lungo modo default, 2 dadi PG → 2+2 dadi, fissa 2+6-6=2', () => {
+  it('arco lungo modo default, 2 dadi PG → 2+2 dadi, fissa 2+6, variableMod=-6', () => {
     const u = unit('att');
     u.weapon = 'arco_lungo';
     const rng = createRng(3);
     const roll = composeAttackRoll(u, 'arco_lungo', 0, undefined, 2, rng);
     expect(roll.variable).toHaveLength(4);
-    expect(roll.fixed).toBe(BASE_PG_FIXED + 6 - 6);
+    expect(roll.fixed).toBe(BASE_PG_FIXED + 6);
+    expect(roll.variableMod).toBe(-6);
   });
 
   it('+1 al tiro skill aumenta la fissa', () => {
     const u = unit('att');
     u.weapon = 'spada';
-    u.skills = [{ id: 's1', modifier: '+1tiro', azione: 'attaccare', cost: 600 }];
+    u.skills = [{ id: 's1', modifier: '+1tiro', azione: 'attaccare', level: 1, cost: 600 }];
     const rng = createRng(4);
     const roll = composeAttackRoll(u, 'spada', 0, 'forza', 1, rng);
-    // fissa = 2 + 2 - 3 + 1 (skill) = 2
-    expect(roll.fixed).toBe(2 + 2 - 3 + 1);
+    // V2: fissa = 2 (PG) + 2 (spada Forza) + 1 (skill); imp -3 in variableMod
+    expect(roll.fixed).toBe(2 + 2 + 1);
+    expect(roll.variableMod).toBe(-3);
   });
 
   it('+1 dado forza un dado in più', () => {
@@ -95,24 +98,27 @@ describe('composeDodgeRoll', () => {
 });
 
 describe('composeParryRoll', () => {
-  it('parata con spada 1 dado → 1+1 dadi, fissa 2+2-3=1', () => {
+  it('parata con spada 1 dado → 1+1 dadi, fissa 2+2, variableMod=-3', () => {
     const u = unit('def');
     u.weapon = 'spada';
     const rng = createRng(20);
     const roll = composeParryRoll(u, 'weapon', 1, rng);
     expect(roll).not.toBeNull();
     expect(roll!.variable).toHaveLength(2); // 1 PG + 1 spada
-    expect(roll!.fixed).toBe(2 + 2 - 3);
+    // V2: imp non più nella fissa
+    expect(roll!.fixed).toBe(2 + 2);
+    expect(roll!.variableMod).toBe(-3);
   });
 
-  it('parata con scudo medio (offhand) 1 dado → 1+1 dadi, fissa 2+8-6=4', () => {
+  it('parata con scudo medio (offhand) 1 dado → 1+1 dadi, fissa 2+8, variableMod=-6', () => {
     const u = unit('def');
     u.offhand = 'scudo_medio';
     const rng = createRng(21);
     const roll = composeParryRoll(u, 'offhand', 1, rng);
     expect(roll).not.toBeNull();
     expect(roll!.variable).toHaveLength(2);
-    expect(roll!.fixed).toBe(2 + 8 - 6);
+    expect(roll!.fixed).toBe(2 + 8);
+    expect(roll!.variableMod).toBe(-6);
   });
 
   it('parata con arco è null', () => {
@@ -237,12 +243,12 @@ describe('integration: spada vs schivata vs mazza vs schivata', () => {
     const attRoll = composeAttackRoll(att, 'mazza', 0, undefined, 1, rng);
     const defRoll = composeDodgeRoll(def, 2, rng);
     const result = resolveDodge(attRoll, defRoll);
-    // Variabile attaccante = 1d6, fissa = 2+9-3 = 8
-    // Variabile difensore = 2d6, fissa = 2-0 = 2 → total ~9
-    // È molto probabile che schivi (var 1d6 max 6 vs total ~9)
-    // Test: con seed deterministico, controllo che il risultato sia coerente
+    // V2: variabile attaccante = 1d6 + variableMod (-3 imp), fissa = 2+9 = 11
+    // Variabile difensore = 2d6 + variableMod (-0 imp), fissa = 2 → total ~9
+    // È ancora più probabile che schivi: imp ora morde la VARIABILE attaccante
     expect(typeof result.hit).toBe('boolean');
     expect(attRoll.variable).toHaveLength(1);
-    expect(attRoll.fixed).toBe(2 + 9 - 3);
+    expect(attRoll.fixed).toBe(2 + 9);
+    expect(attRoll.variableMod).toBe(-3);
   });
 });

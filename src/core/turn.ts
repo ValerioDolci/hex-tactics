@@ -98,17 +98,17 @@ export function applyTurnStart(
     const slancioRoll = makeRoll(rng, actualDiceN, BASE_PG_FIXED);
     // Bonus skill (+1 al tiro)
     slancioRoll.fixed += countFlatBonuses(unit.skills, ctx);
-    // Impedimento applicato
-    slancioRoll.fixed -= getImpedimentTotal(unit);
+    // V2: imp alla VARIABILE (non alla fissa). Slancio loss da residuo neg.
+    slancioRoll.variableMod = (slancioRoll.variableMod ?? 0) - getImpedimentTotal(unit);
     newSlancio = rollTotal(slancioRoll);
   } else {
-    // 0 dadi: niente tiro, slancio resta 0 (clamp impedimento se serve)
+    // 0 dadi: niente tiro, slancio resta 0
     newSlancio = 0;
   }
 
-  // Slancio non scende mai sotto 0 (eccesso si sottrae a impeto, ma qui inizio turno è positivo da tiro)
+  // Slancio non scende mai sotto 0 (eccesso si sottrae a impeto)
   if (newSlancio < 0) {
-    newImpeto += newSlancio; // sottrae il negativo a impeto
+    newImpeto += newSlancio;
     newSlancio = 0;
   }
 
@@ -149,7 +149,9 @@ export function applyInitialSlancio(unit: Unit, rng: Rng): Unit {
   const actualDiceN = getActualDiceCount(unit, ctx, diceN);
   const slancioRoll = makeRoll(rng, actualDiceN, BASE_PG_FIXED);
   slancioRoll.fixed += countFlatBonuses(unit.skills, ctx);
-  slancioRoll.fixed -= getImpedimentTotal(unit);
+  // V2: imp alla VARIABILE (coerenza con applyTurnStart). Eventuale negativo viene
+  // ASSORBITO: nel round 0 di setup non c'è slancio da cui sottrarre, quindi clamp 0.
+  slancioRoll.variableMod = (slancioRoll.variableMod ?? 0) - getImpedimentTotal(unit);
   const newSlancio = Math.max(0, rollTotal(slancioRoll));
   return { ...unit, slancio: newSlancio };
 }

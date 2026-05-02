@@ -27,7 +27,8 @@ WEAPONS: dict[str, Weapon] = {
         ),
         parry=RollSpec(dice=1, fixed=0),
         impediment=0,
-        range=WeaponRange(throw=1, ranged_divisor=1),  # Lancio 0.5m → 1 hex
+        # V2: reach 1 (= 0.5m, default armi melee). Triggera asta zona controllo.
+        range=WeaponRange(reach=1, throw=1, ranged_divisor=1),  # Lancio 0.5m → 1 hex; reach mischia 1
     ),
     "spada": Weapon(
         id="spada",
@@ -39,6 +40,7 @@ WEAPONS: dict[str, Weapon] = {
         ),
         parry=RollSpec(dice=1, fixed=2),
         impediment=3,
+        range=WeaponRange(reach=1),  # V2: reach 1 (default 0.5m), attiva asta zona controllo
     ),
     "spada_lunga": Weapon(
         id="spada_lunga",
@@ -61,6 +63,7 @@ WEAPONS: dict[str, Weapon] = {
         ),
         parry=RollSpec(dice=0, fixed=3),
         impediment=3,
+        range=WeaponRange(reach=1),  # V2
     ),
     "ascia_1h": Weapon(
         id="ascia_1h",
@@ -71,7 +74,7 @@ WEAPONS: dict[str, Weapon] = {
         ),
         parry=RollSpec(dice=0, fixed=3),
         impediment=3,
-        range=WeaponRange(throw=1, ranged_divisor=1),
+        range=WeaponRange(reach=1, throw=1, ranged_divisor=1),  # V2: reach 1; Lancio 0.5m → 1 hex
     ),
     "ascia_2h": Weapon(
         id="ascia_2h",
@@ -82,6 +85,7 @@ WEAPONS: dict[str, Weapon] = {
         ),
         parry=RollSpec(dice=0, fixed=3),
         impediment=6,
+        range=WeaponRange(reach=1),  # V2
     ),
     "lancia_2m": Weapon(
         id="lancia_2m",

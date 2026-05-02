@@ -85,8 +85,10 @@ describe('composeRangedAttackRoll', () => {
     const roll = composeRangedAttackRoll(att, 'arco_lungo', 0, undefined, 2, tgt, los, rng);
     // Variabile: 2 PG + 2 arma = 4 dadi
     expect(roll.variable).toHaveLength(4);
-    // Fissa: 2 PG + 6 arma + 7 visibility - floor(5/5)=1 - slancio_target=0 - imp_arco_lungo=6 = 8
-    expect(roll.fixed).toBe(2 + 6 + 7 - 1 - 0 - 6);
+    // V2: imp NON è più nella fissa, ma in variableMod
+    // Fissa: 2 PG + 6 arma + 7 visibility - floor(5/5)=1 - slancio_target=0 = 14
+    expect(roll.fixed).toBe(2 + 6 + 7 - 1 - 0);
+    expect(roll.variableMod).toBe(-6); // imp_arco_lungo = 6
   });
 
   it('malus distanza N=5 (arco lungo): a dist 4 → -0; a dist 5 → -1; a dist 10 → -2', () => {

@@ -90,7 +90,8 @@ def apply_turn_start(
     if actual_dice_n > 0:
         slancio_roll = make_roll(rng, actual_dice_n, BASE_PG_FIXED)
         slancio_roll.fixed += count_flat_bonuses(unit.skills, ctx)
-        slancio_roll.fixed -= get_impediment_total(unit)
+        # V2: imp alla VARIABILE (non alla fissa). Slancio loss da residuo neg.
+        slancio_roll.variable_mod -= get_impediment_total(unit)
         new_slancio = roll_total(slancio_roll)
     else:
         new_slancio = 0
@@ -131,7 +132,8 @@ def apply_initial_slancio(unit: Unit, rng: Rng) -> Unit:
     actual_dice_n = get_actual_dice_count(unit, ctx, dice_n)
     slancio_roll = make_roll(rng, actual_dice_n, BASE_PG_FIXED)
     slancio_roll.fixed += count_flat_bonuses(unit.skills, ctx)
-    slancio_roll.fixed -= get_impediment_total(unit)
+    # V2: imp alla VARIABILE (coerenza con apply_turn_start). Negativo assorbito: clamp 0.
+    slancio_roll.variable_mod -= get_impediment_total(unit)
     new_slancio = max(0, roll_total(slancio_roll))
 
     new_unit = _clone_unit(unit)

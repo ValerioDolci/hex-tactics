@@ -262,14 +262,15 @@ def _check_threat_zone(state: GameState, mover_id: str, target_hex: Axial) -> Op
         weapon = get_weapon(other.weapon)
         if weapon is None:
             continue
-        # Meccanica A CALIBRATA (v11): solo armi con REACH >= 4 contestano la zona.
-        # v11: solo lance vere (lancia_2m reach=4, lancia_3m reach=6) — escluso
-        # spada_lunga (reach=2) e giavellotto (reach=2) per evitare meccanica troppo
-        # invasiva che rendeva il policy DQN incapace di convergere.
+        # V2 (regola universale): TUTTE le armi melee con reach >= 1 triggerano l'asta.
+        # Default: pugnale, spada, mazza, ascia 1h, ascia 2h hanno reach 1 (= 0.5m).
+        # Spada lunga reach 2, lancia 2m reach 4, lancia 3m reach 6, giavellotto reach 2.
+        # Disarmato (no weapon) → reach considerato 0.
+        # Armi solo-ranged senza secondaria melee (arco, balestra) → reach undefined.
         if weapon.range is None or weapon.range.reach is None:
             continue
         reach = weapon.range.reach
-        if reach < 4:
+        if reach < 1:
             continue
         # Distanza dal centro difensore al target_hex
         d = hex_distance(other.position, target_hex)
@@ -906,6 +907,35 @@ def _do_resolve_combat(state: GameState) -> GameState:
                     f"{'parato' if pa.defense_type == 'parry' else 'schivato'} senza penalty",
                 )
 
+    # V2: applicazione slancio loss da imp variabile (atk/def). Cumulativo a
+    # slancio_penalty_to_attacker se entrambi presenti. Floor a 0 sul totale.
+    if result.slancio_loss_attacker_imp > 0:
+        atk_now = new_state.units.get(attacker.id)
+        if atk_now is not None and atk_now.alive:
+            updated = apply_slancio_penalty(atk_now, result.slancio_loss_attacker_imp)
+            new_state = update_unit(
+                new_state, attacker.id, slancio=updated.slancio, impeto=updated.impeto
+            )
+            new_state = append_log(
+                new_state,
+                f"{attacker.name} impedimento eccessivo: "
+                f"-{result.slancio_loss_attacker_imp} slancio "
+                f"(sl {updated.slancio}, imp {updated.impeto})",
+            )
+    if result.slancio_loss_defender_imp > 0:
+        def_now = new_state.units.get(target.id)
+        if def_now is not None and def_now.alive:
+            updated = apply_slancio_penalty(def_now, result.slancio_loss_defender_imp)
+            new_state = update_unit(
+                new_state, target.id, slancio=updated.slancio, impeto=updated.impeto
+            )
+            new_state = append_log(
+                new_state,
+                f"{target.name} impedimento eccessivo: "
+                f"-{result.slancio_loss_defender_imp} slancio "
+                f"(sl {updated.slancio}, imp {updated.impeto})",
+            )
+
     return _state_with(
         new_state, phase="choosing-action", pending_action=None, rng_seed=rng.get_state()
     )
@@ -951,7 +981,8 @@ def _do_reload(state: GameState, unit_id: str, dice_n: int) -> GameState:
     actual_dice = get_actual_dice_count(unit, ctx, dice_n)
     roll = make_roll(rng, actual_dice, BASE_PG_FIXED)
     roll.fixed += count_flat_bonuses(unit.skills, ctx)
-    roll.fixed -= get_impediment_total(unit)
+    # V2: imp alla VARIABILE (non più fissa).
+    roll.variable_mod -= get_impediment_total(unit)
     # forced extra già contabilizzato in get_actual_dice_count; calcolato qui solo per parità con TS (no-op)
     _ = count_forced_extra_dice(unit.skills, ctx)
 

@@ -25,9 +25,11 @@ from hex_tactics.entities.unit import Unit
 from .dice import (
     Roll,
     combine_rolls,
+    empty_roll,
     make_roll,
     subtract_from_total,
     subtract_from_variable,
+    variable_neg_residue,
 )
 from .rng import Rng
 from .stats import (
@@ -52,6 +54,10 @@ class CombatResult:
     slancio_penalty_to_attacker: int  # se miss: |residual|; se hit: 0
     attacker_roll: Roll
     defender_roll: Roll
+    # V2: slancio loss da imp variabile (residuo neg della parte variabile post-mod).
+    # Sempre cumulativo a slancio_penalty_to_attacker.
+    slancio_loss_attacker_imp: int = 0
+    slancio_loss_defender_imp: int = 0
 
 
 def get_shield_passive_rd(target: Unit) -> int:
@@ -127,8 +133,10 @@ def compose_attack_roll(
     # +1 al tiro (skill flat bonus)
     combined.fixed += count_flat_bonuses(attacker.skills, ctx)
 
-    # Impedimento totale (sottratto)
-    combined.fixed -= get_impediment_total(attacker)
+    # V2: Impedimento sottratto alla VARIABILE (non più alla fissa).
+    # Se la variabile va sotto 0, viene floored a 0 e |negativo| → slancio loss
+    # (gestito nel resolve, via variable_neg_residue del Roll).
+    combined.variable_mod -= get_impediment_total(attacker)
 
     # Fase 1: carica bonus (alla fissa)
     combined.fixed += carica_amount
@@ -146,7 +154,8 @@ def compose_dodge_roll(defender: Unit, dice_n: int, rng: Rng) -> Roll:
     actual_dice = get_actual_dice_count(defender, ctx, dice_n)
     roll = make_roll(rng, actual_dice, BASE_PG_FIXED)
     roll.fixed += count_flat_bonuses(defender.skills, ctx)
-    roll.fixed -= get_impediment_total(defender)
+    # V2: imp alla VARIABILE (non più fissa). Slancio loss in caso di residuo neg.
+    roll.variable_mod -= get_impediment_total(defender)
     return roll
 
 
@@ -184,7 +193,8 @@ def compose_parry_roll(
     combined = combine_rolls(pg_roll, item_roll)
 
     combined.fixed += count_flat_bonuses(defender.skills, ctx)
-    combined.fixed -= get_impediment_total(defender)
+    # V2: imp alla VARIABILE (non più fissa).
+    combined.variable_mod -= get_impediment_total(defender)
     return combined
 
 
@@ -195,6 +205,9 @@ def resolve_dodge(attacker_roll: Roll, dodge_roll: Roll) -> CombatResult:
     residual > 0 → si somma anche la fissa atk al residual e si applicano danni.
     """
     residual = subtract_from_variable(attacker_roll, dodge_roll)
+    # V2: slancio loss da imp variabile sopra il floor
+    slancio_loss_attacker_imp = variable_neg_residue(attacker_roll)
+    slancio_loss_defender_imp = variable_neg_residue(dodge_roll)
     if residual <= 0:
         return CombatResult(
             hit=False,
@@ -202,6 +215,8 @@ def resolve_dodge(attacker_roll: Roll, dodge_roll: Roll) -> CombatResult:
             slancio_penalty_to_attacker=abs(residual),
             attacker_roll=attacker_roll,
             defender_roll=dodge_roll,
+            slancio_loss_attacker_imp=slancio_loss_attacker_imp,
+            slancio_loss_defender_imp=slancio_loss_defender_imp,
         )
     damage = residual + attacker_roll.fixed
     return CombatResult(
@@ -210,6 +225,8 @@ def resolve_dodge(attacker_roll: Roll, dodge_roll: Roll) -> CombatResult:
         slancio_penalty_to_attacker=0,
         attacker_roll=attacker_roll,
         defender_roll=dodge_roll,
+        slancio_loss_attacker_imp=slancio_loss_attacker_imp,
+        slancio_loss_defender_imp=slancio_loss_defender_imp,
     )
 
 
@@ -220,6 +237,8 @@ def resolve_parry(attacker_roll: Roll, parry_roll: Roll) -> CombatResult:
     residual > 0 → si applicano danni col rimanente.
     """
     residual = subtract_from_total(attacker_roll, parry_roll)
+    slancio_loss_attacker_imp = variable_neg_residue(attacker_roll)
+    slancio_loss_defender_imp = variable_neg_residue(parry_roll)
     if residual <= 0:
         return CombatResult(
             hit=False,
@@ -227,6 +246,8 @@ def resolve_parry(attacker_roll: Roll, parry_roll: Roll) -> CombatResult:
             slancio_penalty_to_attacker=abs(residual),
             attacker_roll=attacker_roll,
             defender_roll=parry_roll,
+            slancio_loss_attacker_imp=slancio_loss_attacker_imp,
+            slancio_loss_defender_imp=slancio_loss_defender_imp,
         )
     return CombatResult(
         hit=True,
@@ -234,18 +255,26 @@ def resolve_parry(attacker_roll: Roll, parry_roll: Roll) -> CombatResult:
         slancio_penalty_to_attacker=0,
         attacker_roll=attacker_roll,
         defender_roll=parry_roll,
+        slancio_loss_attacker_imp=slancio_loss_attacker_imp,
+        slancio_loss_defender_imp=slancio_loss_defender_imp,
     )
 
 
 def resolve_no_defense(attacker_roll: Roll) -> CombatResult:
     """Difensore non spende dadi. Tutti i danni passano (dopo armor RD)."""
-    total = attacker_roll.fixed + sum(attacker_roll.variable)
+    # V2: applica floor 0 sulla variabile post-modificatore.
+    total = attacker_roll.fixed + max(
+        0, sum(attacker_roll.variable) + attacker_roll.variable_mod
+    )
+    slancio_loss_attacker_imp = variable_neg_residue(attacker_roll)
     return CombatResult(
         hit=total > 0,
         raw_damage=max(0, total),
         slancio_penalty_to_attacker=0,
         attacker_roll=attacker_roll,
-        defender_roll=Roll(variable=[], fixed=0),
+        defender_roll=empty_roll(),
+        slancio_loss_attacker_imp=slancio_loss_attacker_imp,
+        slancio_loss_defender_imp=0,
     )
 
 

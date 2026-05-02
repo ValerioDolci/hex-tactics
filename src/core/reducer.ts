@@ -150,7 +150,20 @@ function doStartTurn(state: GameState, slancioDice: number, impetoToSlancio: num
   };
 }
 
-/** Verifica se un esagono è entro reach >= 4 di un difensore avversario eligibile. */
+/**
+ * Verifica se un esagono è entro l'area minacciata da un difensore avversario.
+ *
+ * V2 (regola universale): TUTTE le armi melee con `reach >= 1` triggerano l'asta.
+ * Default: pugnale, spada, mazza, ascia 1h, ascia 2h hanno reach 1 (= 0.5m).
+ * Spada lunga reach 2, lancia 2m reach 4, lancia 3m reach 6, giavellotto reach 2.
+ *
+ * NON triggerano:
+ * - Disarmato (no weapon) → reach considerato 0
+ * - Armi solo-ranged senza secondaria melee (arco, balestra) → reach undefined
+ * - Difensore con slancio = 0 (non può biddare)
+ *
+ * In caso di più candidati, sceglie quello con reach maggiore (chi outranges di più).
+ */
 function checkThreatZone(state: GameState, moverId: string, targetHex: { q: number; r: number }): string | null {
   const mover = state.units[moverId];
   if (!mover) return null;
@@ -163,7 +176,8 @@ function checkThreatZone(state: GameState, moverId: string, targetHex: { q: numb
     if (!other.weapon) continue;
     const w = getWeapon(other.weapon);
     if (!w || !w.range || w.range.reach == null) continue;
-    if (w.range.reach < 4) continue;
+    // V2: rimosso check reach >= 4. Ora ogni reach >= 1 (qualunque arma melee) triggera asta.
+    if (w.range.reach < 1) continue;
     const d = hexDistance(other.position, targetHex);
     if (d <= w.range.reach) {
       candidates.push({ id: other.id, reach: w.range.reach });
@@ -544,6 +558,37 @@ function doResolveCombat(state: GameState): GameState {
     }
   }
 
+  // V2: applicazione slancio loss da imp variabile (atk/def). Cumulativo a slancioPenalty
+  // se entrambi presenti. Floor a 0 sul totale.
+  if (result.slancioLossAttackerImp > 0) {
+    const aktNow = newState.units[attacker.id];
+    if (aktNow && aktNow.alive) {
+      const updated = applySlancioPenalty(aktNow, result.slancioLossAttackerImp);
+      newState = updateUnit(newState, attacker.id, {
+        slancio: updated.slancio,
+        impeto: updated.impeto,
+      });
+      newState = appendLog(
+        newState,
+        `${attacker.name} impedimento eccessivo: -${result.slancioLossAttackerImp} slancio (sl ${updated.slancio}, imp ${updated.impeto})`,
+      );
+    }
+  }
+  if (result.slancioLossDefenderImp > 0) {
+    const defNow = newState.units[target.id];
+    if (defNow && defNow.alive) {
+      const updated = applySlancioPenalty(defNow, result.slancioLossDefenderImp);
+      newState = updateUnit(newState, target.id, {
+        slancio: updated.slancio,
+        impeto: updated.impeto,
+      });
+      newState = appendLog(
+        newState,
+        `${target.name} impedimento eccessivo: -${result.slancioLossDefenderImp} slancio (sl ${updated.slancio}, imp ${updated.impeto})`,
+      );
+    }
+  }
+
   return {
     ...newState,
     phase: 'choosing-action',
@@ -589,7 +634,8 @@ function doReload(state: GameState, unitId: string, diceN: number): GameState {
   const actualDice = getActualDiceCount(unit, ctx, diceN);
   const roll = makeRoll(rng, actualDice, BASE_PG_FIXED);
   roll.fixed += countFlatBonuses(unit.skills, ctx);
-  roll.fixed -= getImpedimentTotal(unit);
+  // V2: imp alla variabile, non alla fissa.
+  roll.variableMod = (roll.variableMod ?? 0) - getImpedimentTotal(unit);
   // Anche +1 dado forzato già applicato in getActualDiceCount; countForcedExtraDice solo per log
   const forcedExtra = countForcedExtraDice(unit.skills, ctx);
   void forcedExtra;

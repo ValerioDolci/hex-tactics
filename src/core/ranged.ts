@@ -189,8 +189,8 @@ export function composeRangedAttackRoll(
   // +1 al tiro skill
   combined.fixed += countFlatBonuses(attacker.skills, ctx);
 
-  // Impedimento attaccante
-  combined.fixed -= getImpedimentTotal(attacker);
+  // V2: impedimento alla VARIABILE (non più fissa). Slancio loss in caso negativo.
+  combined.variableMod = (combined.variableMod ?? 0) - getImpedimentTotal(attacker);
 
   // Fase 1: bonus carica (per giavellotti / armi da lancio)
   if (options.caricaAmount && options.caricaAmount > 0) {

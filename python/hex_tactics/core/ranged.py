@@ -189,8 +189,8 @@ def compose_ranged_attack_roll(
     # +1 al tiro skill
     combined.fixed += count_flat_bonuses(attacker.skills, ctx)
 
-    # Impedimento atk
-    combined.fixed -= get_impediment_total(attacker)
+    # V2: impedimento alla VARIABILE (non più fissa). Slancio loss in caso negativo.
+    combined.variable_mod -= get_impediment_total(attacker)
 
     # Fase 1: carica bonus alla fissa (per giavellotti/lance da lancio)
     combined.fixed += carica_amount

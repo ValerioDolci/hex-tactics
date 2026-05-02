@@ -15,7 +15,7 @@
  */
 
 import { Rng } from '@utils/rng';
-import { Roll, makeRoll, combineRolls, subtractFromVariable, subtractFromTotal } from './dice';
+import { Roll, makeRoll, combineRolls, subtractFromVariable, subtractFromTotal, variableNegResidue } from './dice';
 import { Unit } from '@entities/Unit';
 import { Weapon, Shield, AttackMode, Stat, RollSpec } from '@entities/Equipment';
 import { getWeapon } from '@data/weapons';
@@ -42,6 +42,14 @@ export interface CombatResult {
   rawDamage: number;
   /** Slancio penalty da applicare all'attaccante in caso di miss (dodge: |residual|, parry: |residual|) */
   slancioPenaltyToAttacker: number;
+  /**
+   * Slancio loss aggiuntiva da applicare all'attaccante perché la sua variabile
+   * (post-impedimento) è andata sotto 0. Sempre cumulativa con `slancioPenaltyToAttacker`.
+   * Regola V2: se imp_atk > rawSum dadi → variabile floored a 0, slancio_atk -= |negativo|.
+   */
+  slancioLossAttackerImp: number;
+  /** Slancio loss equivalente per il difensore (imp del difensore vs suoi dadi). */
+  slancioLossDefenderImp: number;
   /** Roll dell'attaccante (per log) */
   attackerRoll: Roll;
   /** Roll del difensore (per log) */
@@ -119,8 +127,10 @@ export function composeAttackRoll(
   // +1 al tiro skill matchanti
   combined.fixed += countFlatBonuses(attacker.skills, ctx);
 
-  // Impedimento totale (sottratto)
-  combined.fixed -= getImpedimentTotal(attacker);
+  // V2: Impedimento sottratto alla VARIABILE (non più alla fissa).
+  // Se la variabile va sotto 0, viene floored a 0 e |negativo| → slancio loss
+  // (gestito nel resolve, via variableNegResidue del Roll).
+  combined.variableMod = (combined.variableMod ?? 0) - getImpedimentTotal(attacker);
 
   // Fase 1: bonus carica (alla fissa)
   if (options.caricaAmount && options.caricaAmount > 0) {
@@ -141,7 +151,8 @@ export function composeDodgeRoll(defender: Unit, diceN: number, rng: Rng): Roll 
   const actualDice = getActualDiceCount(defender, ctx, diceN);
   let roll = makeRoll(rng, actualDice, BASE_PG_FIXED);
   roll.fixed += countFlatBonuses(defender.skills, ctx);
-  roll.fixed -= getImpedimentTotal(defender);
+  // V2: imp alla VARIABILE (non più fissa). Slancio loss in caso di residuo neg.
+  roll.variableMod = (roll.variableMod ?? 0) - getImpedimentTotal(defender);
   return roll;
 }
 
@@ -185,7 +196,8 @@ export function composeParryRoll(
   let combined = combineRolls(pgRoll, itemRoll);
 
   combined.fixed += countFlatBonuses(defender.skills, ctx);
-  combined.fixed -= getImpedimentTotal(defender);
+  // V2: imp alla VARIABILE (non più fissa).
+  combined.variableMod = (combined.variableMod ?? 0) - getImpedimentTotal(defender);
   return combined;
 }
 
@@ -199,11 +211,16 @@ export function composeParryRoll(
  */
 export function resolveDodge(attackerRoll: Roll, dodgeRoll: Roll): CombatResult {
   const residual = subtractFromVariable(attackerRoll, dodgeRoll);
+  // V2: slancio loss da imp variabile sopra il floor
+  const slancioLossAttackerImp = variableNegResidue(attackerRoll);
+  const slancioLossDefenderImp = variableNegResidue(dodgeRoll);
   if (residual <= 0) {
     return {
       hit: false,
       rawDamage: 0,
       slancioPenaltyToAttacker: Math.abs(residual),
+      slancioLossAttackerImp,
+      slancioLossDefenderImp,
       attackerRoll,
       defenderRoll: dodgeRoll,
     };
@@ -214,6 +231,8 @@ export function resolveDodge(attackerRoll: Roll, dodgeRoll: Roll): CombatResult 
     hit: damage > 0,
     rawDamage: Math.max(0, damage),
     slancioPenaltyToAttacker: 0,
+    slancioLossAttackerImp,
+    slancioLossDefenderImp,
     attackerRoll,
     defenderRoll: dodgeRoll,
   };
@@ -229,11 +248,15 @@ export function resolveDodge(attackerRoll: Roll, dodgeRoll: Roll): CombatResult 
  */
 export function resolveParry(attackerRoll: Roll, parryRoll: Roll): CombatResult {
   const residual = subtractFromTotal(attackerRoll, parryRoll);
+  const slancioLossAttackerImp = variableNegResidue(attackerRoll);
+  const slancioLossDefenderImp = variableNegResidue(parryRoll);
   if (residual <= 0) {
     return {
       hit: false,
       rawDamage: 0,
       slancioPenaltyToAttacker: Math.abs(residual),
+      slancioLossAttackerImp,
+      slancioLossDefenderImp,
       attackerRoll,
       defenderRoll: parryRoll,
     };
@@ -242,6 +265,8 @@ export function resolveParry(attackerRoll: Roll, parryRoll: Roll): CombatResult 
     hit: true,
     rawDamage: residual,
     slancioPenaltyToAttacker: 0,
+    slancioLossAttackerImp,
+    slancioLossDefenderImp,
     attackerRoll,
     defenderRoll: parryRoll,
   };
@@ -252,13 +277,18 @@ export function resolveParry(attackerRoll: Roll, parryRoll: Roll): CombatResult 
  * Tutti i danni passano (dopo armor RD).
  */
 export function resolveNoDefense(attackerRoll: Roll): CombatResult {
-  const total = attackerRoll.fixed + attackerRoll.variable.reduce((a, b) => a + b, 0);
+  // V2: usa rollTotal che applica floor 0 sulla variabile post-modificatore
+  const total = attackerRoll.fixed + Math.max(0,
+    attackerRoll.variable.reduce((a, b) => a + b, 0) + (attackerRoll.variableMod ?? 0));
+  const slancioLossAttackerImp = variableNegResidue(attackerRoll);
   return {
     hit: total > 0,
     rawDamage: Math.max(0, total),
     slancioPenaltyToAttacker: 0,
+    slancioLossAttackerImp,
+    slancioLossDefenderImp: 0,
     attackerRoll,
-    defenderRoll: { variable: [], fixed: 0 },
+    defenderRoll: { variable: [], fixed: 0, variableMod: 0 },
   };
 }
 

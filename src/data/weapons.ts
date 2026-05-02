@@ -20,7 +20,8 @@ export const WEAPONS: Record<string, Weapon> = {
     attackModes: [{ label: 'default', stat: 'either', diceVariable: 1, fixedBonus: 2 }],
     parry: { dice: 1, fixed: 0 }, // 1D6+0
     impediment: 0,
-    range: { throw: 1, rangedDivisor: 1 }, // Lancio 0.5m → 1 hex
+    // V2: reach 1 (= 0.5m, default armi melee). Triggera asta zona controllo.
+    range: { reach: 1, throw: 1, rangedDivisor: 1 }, // Lancio 0.5m → 1 hex; reach mischia 1
   },
   spada: {
     id: 'spada',
@@ -32,6 +33,7 @@ export const WEAPONS: Record<string, Weapon> = {
     ],
     parry: { dice: 1, fixed: 2 }, // 1D6+2
     impediment: 3,
+    range: { reach: 1 }, // V2: reach 1 (default 0.5m), attiva asta zona controllo
   },
   spada_lunga: {
     id: 'spada_lunga',
@@ -52,6 +54,7 @@ export const WEAPONS: Record<string, Weapon> = {
     attackModes: [{ label: 'default', stat: 'either', diceVariable: 0, fixedBonus: 9 }], // +9 fisso, niente dadi arma
     parry: { dice: 0, fixed: 3 }, // +3 fisso
     impediment: 3,
+    range: { reach: 1 }, // V2
   },
   ascia_1h: {
     id: 'ascia_1h',
@@ -60,7 +63,7 @@ export const WEAPONS: Record<string, Weapon> = {
     attackModes: [{ label: 'default', stat: 'either', diceVariable: 1, fixedBonus: 6 }],
     parry: { dice: 0, fixed: 3 },
     impediment: 3,
-    range: { throw: 1, rangedDivisor: 1 }, // Lancio 0.5m → 1 hex
+    range: { reach: 1, throw: 1, rangedDivisor: 1 }, // V2: reach 1; Lancio 0.5m → 1 hex
   },
   ascia_2h: {
     id: 'ascia_2h',
@@ -69,6 +72,7 @@ export const WEAPONS: Record<string, Weapon> = {
     attackModes: [{ label: 'default', stat: 'either', diceVariable: 1, fixedBonus: 15 }],
     parry: { dice: 0, fixed: 3 },
     impediment: 6,
+    range: { reach: 1 }, // V2
   },
   lancia_2m: {
     id: 'lancia_2m',
