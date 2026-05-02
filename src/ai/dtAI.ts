@@ -42,13 +42,30 @@ export function aiDecideHard(state: GameState, unitId: UnitId): GameEvent {
     actionId = 0; // fallback: prima legale
   }
 
-  // Action masking: se actionId è fuori range, scegli la prima legale (preferenza END_TURN se presente)
+  // Action masking: se actionId è fuori range, fallback alla prima azione UTILE
+  // Preferenza: ATTACK > MOVE > END_TURN (era: END_TURN). Cambiato perché il DT è
+  // calibrato su stato spazio leggermente diverso (slancio costa dadi, etc.) e a
+  // volte predice fuori range portando a END_TURN spuri che bloccano l'AI in mischia.
   if (actionId < 0 || actionId >= moves.length) {
-    const endTurn = moves.find((m) => m.type === 'END_TURN');
-    return endTurn ?? moves[moves.length - 1];
+    const attack = moves.find((m) => m.type === 'DECLARE_ATTACK');
+    if (attack) return attack;
+    const move = moves.find((m) => m.type === 'MOVE');
+    if (move) return move;
+    return moves[moves.length - 1];
   }
 
-  return moves[actionId];
+  const chosen = moves[actionId];
+  // Override anti-degenerazione: se DT propone END_TURN ma esiste un attacco
+  // legale (cioè AI è in range mischia o ranged), forziamo l'attacco. Il DT su
+  // stati non visti durante distillazione (D-044 transfer, slancio cost change)
+  // può essere sub-ottimale; questo override garantisce che l'AI non rinunci a
+  // un attacco già "guadagnato" col movimento.
+  if (chosen.type === 'END_TURN') {
+    const attack = moves.find((m) => m.type === 'DECLARE_ATTACK');
+    if (attack) return attack;
+  }
+
+  return chosen;
 }
 
 /**

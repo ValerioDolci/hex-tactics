@@ -686,12 +686,30 @@ export class BattleScene extends Phaser.Scene {
       event.type === 'RELOAD' ? 'ricarica' :
       event.type === 'END_TURN' ? 'passa turno' :
       event.type;
+    // Diagnostica estesa: per MOVE/END_TURN aggiungi distanza/reach/canAct così
+    // si capisce PERCHÉ l'AI non attacca quando è "vicina" al nemico.
+    let diag = '';
+    if ((event.type === 'MOVE' || event.type === 'END_TURN') && unit.weapon) {
+      const enemies = Object.values(this.state.units).filter(
+        (u) => u.faction !== unit.faction && u.alive,
+      );
+      if (enemies.length > 0) {
+        const w = getWeapon(unit.weapon);
+        const reach = w?.range?.reach ?? 1;
+        const closest = enemies.reduce((a, b) =>
+          baseDistance(unit.position, a.position) < baseDistance(unit.position, b.position) ? a : b,
+        );
+        const dist = baseDistance(unit.position, closest.position);
+        const canAct = !unit.actionTakenThisTurn && unit.dadiAzione >= 1;
+        diag = ` [dist=${dist} reach=${reach} canAct=${canAct} dadi=${unit.dadiAzione} act=${unit.actionTakenThisTurn} sl=${unit.slancio}]`;
+      }
+    }
     this.state = {
       ...this.state,
       log: [...this.state.log, {
         round: this.state.round,
         turnUnitId: unit.id,
-        message: `${unit.name}: scelta AI = ${choice}`,
+        message: `${unit.name}: scelta AI = ${choice}${diag}`,
       }],
     };
     // Defensive: traccia state pre-dispatch. Per MOVE rilevo loop quando il
@@ -712,6 +730,24 @@ export class BattleScene extends Phaser.Scene {
     }
 
     if (event.type === 'DECLARE_ATTACK') {
+      // Defensive: se il reducer ha rifiutato l'attacco (es. AI ha proposto un attacco
+      // mischia con arco — DT degenerato), phase resta 'choosing-action' e
+      // pendingAction è undefined. Niente pendingAction → END_TURN per evitare loop
+      // (executeAiAction continuerebbe a dispatchare CHOOSE_ATTACKER_DICE su uno
+      // state inesistente, che il reducer rejecterebbe in serie).
+      if (this.state.phase === 'choosing-action' && !this.state.pendingAction) {
+        this.state = {
+          ...this.state,
+          log: [...this.state.log, {
+            round: this.state.round,
+            turnUnitId: unit.id,
+            message: `${unit.name}: attacco rifiutato dal reducer → END_TURN (defensive)`,
+          }],
+        };
+        this.dispatch({ type: 'END_TURN' });
+        this.startCurrentTurnFlow();
+        return;
+      }
       // Fase 1: gestisci awaiting-carica per AI.
       if ((this.state.phase as string) === 'awaiting-carica') {
         let amount: number;
@@ -884,10 +920,10 @@ export class BattleScene extends Phaser.Scene {
 
     this.sliderUI.show({
       title: `${unit.name} — Impeto → Slancio (2/2)`,
-      subtitle: `Trascina lo slider o usa −/+ (0 = skip)`,
+      subtitle: `Trascina lo slider o usa −/+ (default = max disponibile)`,
       infoLines: info,
       max: cap,
-      initial: 0,
+      initial: cap, // default massimo: l'utente può sempre ridurre con −
       onConfirm: (m) => {
         this.dispatch({ type: 'START_TURN', slancioDice: slancioDiceN, impetoToSlancio: m });
         this.showActionMenu();
