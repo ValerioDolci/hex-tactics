@@ -11,16 +11,14 @@ export const GAME_CONFIG = {
   /** Sfondo */
   backgroundColor: 0x1a1a1a,
 
-  /** Geometria mappa (M2: ingrandita) */
+  /** Geometria mappa: dimensionata per stare in viewport 1280×720 ÷ 1528×800
+   *  senza pan/zoom camera (camera fissa per stabilità input click).
+   */
   map: {
-    /** Numero colonne della griglia */
     cols: 24,
-    /** Numero righe della griglia */
-    rows: 18,
-    /** Raggio dal centro al vertice di un esagono in pixel */
-    hexSize: 32,
-    /** Padding visivo dal bordo canvas */
-    padding: 80,
+    rows: 14, // ridotto da 18 (eccedeva verticalmente i ~720-800px)
+    hexSize: 24, // ridotto da 32 per stare orizzontalmente
+    padding: 60, // ridotto da 80 per dare un po' più spazio
   },
 
   /** Camera (M2: pan/zoom) */

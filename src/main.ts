@@ -8,28 +8,29 @@ import { TutorialMenuScene } from '@scenes/TutorialMenuScene';
 import { CharacterBuilderScene } from '@scenes/CharacterBuilderScene';
 
 /**
- * Setup Phaser con scale RESIZE: il canvas si adatta al viewport reale del browser
- * (iPad incluso). Le scene ascoltano l'evento resize per riposizionare l'UI.
+ * Setup Phaser con scale FIT: canvas logica fissa a GAME_CONFIG.width/height,
+ * scalata uniformemente per stare nella finestra del browser mantenendo aspect ratio.
  *
- * Le dimensioni iniziali in GAME_CONFIG.width/height sono usate come "design size"
- * iniziale e come fallback se il viewport è troppo piccolo.
+ * Razionale: la mappa è dimensionata per il "design size" 1280×800. Con Scale.RESIZE
+ * il canvas seguiva la window: se la window < mappa, la mappa veniva troncata e il
+ * giocatore poteva perdere unità mosse fuori vista. Scale.FIT garantisce che l'intera
+ * mappa sia sempre visibile (con eventuale letterboxing).
+ *
+ * Il bug pointer in BattleScene era CAMERA-side (cam.centerOn con viewport > bounds) →
+ * fixato rimuovendo pan/zoom. Phaser gestisce trasparentemente la conversione coord
+ * canvas→logical anche con Scale.FIT, quindi il pointer continua a funzionare.
  */
-const initialWidth = Math.max(window.innerWidth || 0, 800);
-const initialHeight = Math.max(window.innerHeight || 0, 600);
-
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   parent: 'game-container',
-  width: initialWidth,
-  height: initialHeight,
+  width: GAME_CONFIG.width,
+  height: GAME_CONFIG.height,
   backgroundColor: GAME_CONFIG.backgroundColor,
   scale: {
-    // Scale.RESIZE: default Phaser, canvas si adatta al parent. Su Windows DPR > 1
-    // è ben testato. Il bug pointer in BattleScene era CAMERA-SIDE (cam.centerOn con
-    // viewport > bounds) — fixato lì, non qui.
-    mode: Phaser.Scale.RESIZE,
-    width: initialWidth,
-    height: initialHeight,
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: GAME_CONFIG.width,
+    height: GAME_CONFIG.height,
   },
   render: {
     antialias: true,
