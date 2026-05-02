@@ -5,6 +5,7 @@ import { HUD } from '@ui/HUD';
 import { CombatLog } from '@ui/CombatLog';
 import { ActionMenu, ActionMenuItem } from '@ui/ActionMenu';
 import { DiceChoiceUI } from '@ui/DiceChoiceUI';
+import { SliderChoiceUI } from '@ui/SliderChoiceUI';
 import { HandoffOverlay } from '@ui/HandoffOverlay';
 import { GameOverOverlay } from '@ui/GameOverOverlay';
 import { GAME_CONFIG } from '@/config';
@@ -66,6 +67,7 @@ export class BattleScene extends Phaser.Scene {
   private log!: CombatLog;
   private menu!: ActionMenu;
   private diceUI!: DiceChoiceUI;
+  private sliderUI!: SliderChoiceUI;
   private handoff!: HandoffOverlay;
   private gameOverOverlay!: GameOverOverlay;
 
@@ -329,6 +331,7 @@ export class BattleScene extends Phaser.Scene {
     // Menu: ancorato in alto a destra
     this.menu = new ActionMenu(this, this.scale.width - 300, 140);
     this.diceUI = new DiceChoiceUI(this);
+    this.sliderUI = new SliderChoiceUI(this);
     this.handoff = new HandoffOverlay(this);
     this.gameOverOverlay = new GameOverOverlay(this);
     this.refreshUI();
@@ -345,9 +348,11 @@ export class BattleScene extends Phaser.Scene {
     // Distrugge gli overlay (le loro dimensioni dipendono dalle camera dimensions)
     this.handoff.destroy?.();
     this.diceUI.destroy?.();
+    this.sliderUI.destroy?.();
     this.gameOverOverlay.destroy?.();
     this.handoff = new HandoffOverlay(this);
     this.diceUI = new DiceChoiceUI(this);
+    this.sliderUI = new SliderChoiceUI(this);
     this.gameOverOverlay = new GameOverOverlay(this);
 
     // Riposiziona log (rimane in basso-sinistra) e menu (in alto-destra)
@@ -833,40 +838,32 @@ export class BattleScene extends Phaser.Scene {
 
   /**
    * Step 2 turn-start (D-044): trasferisce N punti da impeto a slancio (1:1, gratis).
-   * Cap upper = `getMaxSlancioRoll(unit)` (tiro massimo possibile dello slancio).
-   * Reducer fa clamp finale, qui esponiamo solo le scelte ragionevoli.
+   * Cap upper = `min(impeto_attuale, getMaxSlancioRoll(unit))`.
+   * Il reducer fa il clamp finale su `headroom = maxRoll - newSlancio` (post-tiro),
+   * quindi anche se il giocatore mette il valore al massimo teorico, viene tagliato
+   * automaticamente a quanto resta di "spazio" nello slancio dopo il tiro.
    *
-   * Per non avere 14 bottoni in fila quando l'impeto è alto, mostriamo step proporzionati.
+   * UI: slider continuo (più immediato di N bottoni quando il cap è alto).
    */
   private askImpetoTransfer(unitId: UnitId, slancioDiceN: number): void {
     const unit = this.state.units[unitId];
     if (!unit) return;
     const cap = Math.min(unit.impeto, getMaxSlancioRoll(unit));
-    let choices: number[];
-    if (cap <= 6) {
-      choices = Array.from({ length: cap + 1 }, (_, i) => i);
-    } else {
-      // 7 bottoni equispaziati [0, step, 2*step, ..., cap]
-      const step = Math.ceil(cap / 6);
-      const set = new Set<number>([0]);
-      for (let k = 1; k <= 5; k++) set.add(Math.min(k * step, cap));
-      set.add(cap);
-      choices = Array.from(set).sort((a, b) => a - b);
-    }
 
     const info: string[] = [
       `Impeto attuale: ${unit.impeto}`,
-      `Cap massimo trasferibile: ${cap}`,
+      `Cap massimo trasferibile: ${cap} (limitato da impeto e dal tetto slancio)`,
       `Trasferimento 1:1 → slancio (gratis, una volta a inizio turno)`,
-      `Più impeto = giochi prima nel round; più slancio = più mobilità + scudo passivo ranged`,
+      `Più impeto = giochi prima nel round; più slancio = mobilità + scudo passivo ranged`,
     ];
 
-    this.diceUI.show({
+    this.sliderUI.show({
       title: `${unit.name} — Impeto → Slancio (2/2)`,
-      subtitle: `Quanti punti trasferire? (0 = skip)`,
+      subtitle: `Trascina lo slider o usa −/+ (0 = skip, conferma per chiudere)`,
       infoLines: info,
-      choices,
-      onChoose: (m) => {
+      max: cap,
+      initial: 0,
+      onConfirm: (m) => {
         this.dispatch({ type: 'START_TURN', slancioDice: slancioDiceN, impetoToSlancio: m });
         this.showActionMenu();
       },
