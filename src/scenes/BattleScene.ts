@@ -16,6 +16,7 @@ import { BattleSetup } from '@persistence/storage';
 import { createInitialState, GameState } from '@core/state';
 import { reduce } from '@core/reducer';
 import { GameEvent } from '@core/events';
+import { getMaxSlancioRoll } from '@core/turn';
 import {
   countFlatBonuses,
   countForcedExtraDice,
@@ -386,6 +387,8 @@ export class BattleScene extends Phaser.Scene {
     if (prev.phase === 'resolving' && this.state.phase === 'choosing-action' && this.state.pendingAction === undefined) {
       this.maybeShowDamageAnimations(prev, this.state);
     }
+    // Popup variazione slancio per ogni unità (skip START_TURN dove lo slancio si azzera per design)
+    this.maybeShowSlancioChange(prev, this.state, event.type);
     // Animazione movimento: confronta posizioni prima/dopo
     this.maybeTweenMovement(prev, this.state);
     this.refreshUI();
@@ -455,16 +458,24 @@ export class BattleScene extends Phaser.Scene {
     let anyHit = false;
     let anyMiss = false;
     for (const id of Object.keys(curr.units)) {
-      const before = prev.units[id]?.hp ?? 0;
-      const after = curr.units[id]?.hp ?? 0;
-      const lost = before - after;
+      const beforeU = prev.units[id];
+      const afterU = curr.units[id];
+      if (!beforeU || !afterU) continue;
+      const lost = beforeU.hp - afterU.hp;
+      const sprite = this.unitSprites.get(id);
       if (lost > 0) {
         anyHit = true;
-        const sprite = this.unitSprites.get(id);
         if (sprite) {
           sprite.flashHit(this);
           sprite.showDamage(this, lost);
+          // Screen-shake leggero proporzionale al danno (cap 12px)
+          const intensity = Math.min(0.012, 0.003 + lost * 0.0015);
+          this.cameras.main.shake(180, intensity);
         }
+      }
+      // Death animation: era vivo, ora morto
+      if (beforeU.alive && !afterU.alive && sprite) {
+        sprite.playDeathAnimation(this);
       }
     }
     // Se c'era un pendingAction risolto e nessuno ha perso HP: schivata/parata riuscita
@@ -475,13 +486,128 @@ export class BattleScene extends Phaser.Scene {
       if (sprite) {
         const txt =
           def === 'parry' ? 'PARATO' : def === 'dodge' ? 'SCHIVATO' : 'MISS';
-        sprite.showText(this, txt);
+        const color = def === 'parry' ? '#88ccff' : def === 'dodge' ? '#88ff88' : '#ffd966';
+        sprite.showText(this, txt, color);
       }
       anyMiss = true;
     }
     // Audio
     if (anyHit) audio.hit();
     else if (anyMiss) audio.miss();
+  }
+
+  /**
+   * Mostra delta slancio sopra ogni unità che ha cambiato slancio tra prev/curr.
+   * Skippa l'evento START_TURN dove lo slancio si azzera (transfer in impeto) per
+   * design — non è meaningful da mostrare come "perdita".
+   */
+  private maybeShowSlancioChange(prev: GameState, curr: GameState, eventType: string): void {
+    if (eventType === 'START_TURN') return;
+    for (const id of Object.keys(curr.units)) {
+      const before = prev.units[id]?.slancio ?? 0;
+      const after = curr.units[id]?.slancio ?? 0;
+      if (before === after) continue;
+      const sprite = this.unitSprites.get(id);
+      if (!sprite) continue;
+      sprite.showSlancioChange(this, after - before);
+    }
+  }
+
+  /**
+   * Linea/proiettile attacker → target. Per CaC: linea diretta che lampeggia.
+   * Per ranged: proiettile (cerchietto luminoso) che viaggia.
+   * Va chiamato PRIMA del dispatch RESOLVE_COMBAT (altrimenti se l'unità muore
+   * il sprite non c'è più). Dura ~280ms in parallelo al flash danno: i due
+   * insieme leggono come "attacca → colpisce".
+   */
+  private vfxAttackLine(attackerId: UnitId, targetId: UnitId, isRanged: boolean): void {
+    const a = this.unitSprites.get(attackerId);
+    const b = this.unitSprites.get(targetId);
+    if (!a || !b) return;
+    const p1 = a.getCenter();
+    const p2 = b.getCenter();
+    if (isRanged) {
+      // Proiettile: pallino giallo + alone
+      const proj = this.add.graphics();
+      proj.fillStyle(0xffee66, 1);
+      proj.fillCircle(0, 0, 5);
+      proj.lineStyle(2, 0xffee66, 0.5);
+      proj.strokeCircle(0, 0, 9);
+      proj.x = p1.x;
+      proj.y = p1.y;
+      this.tweens.add({
+        targets: proj,
+        x: p2.x,
+        y: p2.y,
+        duration: 280,
+        ease: 'Linear',
+        onComplete: () => proj.destroy(),
+      });
+    } else {
+      // Linea CaC: striscia gialla che lampeggia 400ms
+      const line = this.add.graphics();
+      line.lineStyle(5, 0xffee66, 0.95);
+      line.lineBetween(p1.x, p1.y, p2.x, p2.y);
+      this.tweens.add({
+        targets: line,
+        alpha: 0,
+        duration: 400,
+        onComplete: () => line.destroy(),
+      });
+    }
+  }
+
+  /**
+   * Helper: chiama vfxAttackLine leggendo attaccante/target/ranged dal pendingAction
+   * corrente, poi dispatcha RESOLVE_COMBAT. Usato come sostituto dei 4 dispatch
+   * RESOLVE_COMBAT per garantire che l'effetto visivo sia agganciato sempre.
+   */
+  private dispatchResolveCombat(): void {
+    const pa = this.state.pendingAction;
+    if (pa) {
+      this.vfxAttackLine(pa.attackerId, pa.targetId, pa.isRanged ?? false);
+    }
+    const ev: GameEvent = { type: 'RESOLVE_COMBAT' };
+    this.dispatch(ev);
+  }
+
+  /**
+   * Banner "Turno: <nome>" che pop-in al centro alto dello schermo a inizio turno.
+   * Colore basato sulla fazione (blu A, rosso B). Auto-distrugge dopo ~1.5s.
+   */
+  private vfxTurnBanner(unit: Unit): void {
+    const w = this.scale.width;
+    const h = this.scale.height;
+    const factionLabel = unit.faction === 'A' ? '🟦' : '🟥';
+    const color = unit.faction === 'A' ? '#9ad6ff' : '#ffaaaa';
+    const t = this.add.text(w / 2, h * 0.18, `${factionLabel}  ${unit.name}`, {
+      fontFamily: 'monospace',
+      fontSize: '32px',
+      color,
+      stroke: '#000',
+      strokeThickness: 5,
+      fontStyle: 'bold',
+    });
+    t.setOrigin(0.5, 0.5);
+    t.setScrollFactor(0);
+    t.setAlpha(0);
+    t.setScale(0.5);
+    this.tweens.add({
+      targets: t,
+      alpha: 1,
+      scale: 1.0,
+      duration: 220,
+      ease: 'Back.easeOut',
+      onComplete: () => {
+        this.tweens.add({
+          targets: t,
+          alpha: 0,
+          duration: 600,
+          delay: 700,
+          onComplete: () => t.destroy(),
+        });
+      },
+    });
   }
 
   /** Entry-point del turno: applica START_TURN (con scelta slancio) e mostra menu azioni */
@@ -495,6 +621,9 @@ export class BattleScene extends Phaser.Scene {
     const unitId = this.state.turnOrder[this.state.currentTurnIdx];
     const unit = this.state.units[unitId];
     if (!unit) return;
+
+    // VFX: banner che annuncia chi sta giocando (rapido, per non rompere il pacing)
+    this.vfxTurnBanner(unit);
 
     // Se l'unità è AI: salta handoff e gioca automaticamente
     if (this.controlMode[unit.faction] === 'ai') {
@@ -600,7 +729,7 @@ export class BattleScene extends Phaser.Scene {
       this.dispatch({ type: 'CHOOSE_ATTACKER_DICE', diceN });
 
       if (event.isRanged) {
-        this.dispatch({ type: 'RESOLVE_COMBAT' });
+        this.dispatchResolveCombat();
         this.afterCombat();
         this.scheduleAiTurn();
         return;
@@ -637,7 +766,7 @@ export class BattleScene extends Phaser.Scene {
           parryWith,
           diceN: defDice,
         });
-        this.dispatch({ type: 'RESOLVE_COMBAT' });
+        this.dispatchResolveCombat();
         this.afterCombat();
         this.scheduleAiTurn();
       } else {
@@ -686,12 +815,59 @@ export class BattleScene extends Phaser.Scene {
     info.push(`Round successivo: questo slancio si somma a impeto`);
 
     this.diceUI.show({
-      title: `${unit.name} — Tiro slancio`,
+      title: `${unit.name} — Tiro slancio (1/2)`,
       subtitle: `Scegli quanti dadi tirare (0..${maxN})`,
       infoLines: info,
       choices,
       onChoose: (n) => {
-        this.dispatch({ type: 'START_TURN', slancioDice: n });
+        // Step 2: opzionale transfer impeto→slancio (D-044). Skip se impeto a 0.
+        if (unit.impeto > 0) {
+          this.askImpetoTransfer(unit.id, n);
+        } else {
+          this.dispatch({ type: 'START_TURN', slancioDice: n });
+          this.showActionMenu();
+        }
+      },
+    });
+  }
+
+  /**
+   * Step 2 turn-start (D-044): trasferisce N punti da impeto a slancio (1:1, gratis).
+   * Cap upper = `getMaxSlancioRoll(unit)` (tiro massimo possibile dello slancio).
+   * Reducer fa clamp finale, qui esponiamo solo le scelte ragionevoli.
+   *
+   * Per non avere 14 bottoni in fila quando l'impeto è alto, mostriamo step proporzionati.
+   */
+  private askImpetoTransfer(unitId: UnitId, slancioDiceN: number): void {
+    const unit = this.state.units[unitId];
+    if (!unit) return;
+    const cap = Math.min(unit.impeto, getMaxSlancioRoll(unit));
+    let choices: number[];
+    if (cap <= 6) {
+      choices = Array.from({ length: cap + 1 }, (_, i) => i);
+    } else {
+      // 7 bottoni equispaziati [0, step, 2*step, ..., cap]
+      const step = Math.ceil(cap / 6);
+      const set = new Set<number>([0]);
+      for (let k = 1; k <= 5; k++) set.add(Math.min(k * step, cap));
+      set.add(cap);
+      choices = Array.from(set).sort((a, b) => a - b);
+    }
+
+    const info: string[] = [
+      `Impeto attuale: ${unit.impeto}`,
+      `Cap massimo trasferibile: ${cap}`,
+      `Trasferimento 1:1 → slancio (gratis, una volta a inizio turno)`,
+      `Più impeto = giochi prima nel round; più slancio = più mobilità + scudo passivo ranged`,
+    ];
+
+    this.diceUI.show({
+      title: `${unit.name} — Impeto → Slancio (2/2)`,
+      subtitle: `Quanti punti trasferire? (0 = skip)`,
+      infoLines: info,
+      choices,
+      onChoose: (m) => {
+        this.dispatch({ type: 'START_TURN', slancioDice: slancioDiceN, impetoToSlancio: m });
         this.showActionMenu();
       },
     });
@@ -1040,7 +1216,7 @@ export class BattleScene extends Phaser.Scene {
       onChoose: (n) => {
         this.dispatch({ type: 'CHOOSE_ATTACKER_DICE', diceN: n });
         if (isRanged) {
-          this.dispatch({ type: 'RESOLVE_COMBAT' });
+          this.dispatchResolveCombat();
           this.afterCombat();
           return;
         }
@@ -1075,7 +1251,7 @@ export class BattleScene extends Phaser.Scene {
             parryWith,
             diceN: defDice,
           });
-          this.dispatch({ type: 'RESOLVE_COMBAT' });
+          this.dispatchResolveCombat();
           this.afterCombat();
           return;
         }
@@ -1306,7 +1482,7 @@ export class BattleScene extends Phaser.Scene {
       onClick: () => {
         if (d.type === 'none') {
           this.dispatch({ type: 'CHOOSE_DEFENSE', defenseType: 'none', diceN: 0 });
-          this.dispatch({ type: 'RESOLVE_COMBAT' });
+          this.dispatchResolveCombat();
           this.afterCombat();
           if (resumeAiAfter) this.scheduleAiTurn();
           return;
@@ -1361,7 +1537,7 @@ export class BattleScene extends Phaser.Scene {
           choices,
           onChoose: (n) => {
             this.dispatch({ type: 'CHOOSE_DEFENSE', defenseType: d.type, parryWith: d.parryWith, diceN: n });
-            this.dispatch({ type: 'RESOLVE_COMBAT' });
+            this.dispatchResolveCombat();
             this.afterCombat();
             if (resumeAiAfter) this.scheduleAiTurn();
           },

@@ -319,23 +319,34 @@ export class UnitSprite {
     });
   }
 
-  /** Numero danni fluttuante */
+  /** Numero danni fluttuante (grosso, scala in poi sale e svanisce) */
   showDamage(scene: Phaser.Scene, dmg: number): void {
     const center = axialToPixel(this.displayedPosition, this.hexSize, this.origin);
     const t = scene.add.text(center.x, center.y - this.hexSize * 0.5, `-${dmg}`, {
       fontFamily: 'monospace',
-      fontSize: '24px',
-      color: '#ff5050',
+      fontSize: '34px',
+      color: '#ff3030',
       stroke: '#000',
-      strokeThickness: 4,
+      strokeThickness: 5,
+      fontStyle: 'bold',
     });
     t.setOrigin(0.5, 0.5);
+    t.setScale(0.3);
+    // Fase 1: pop-in con scale dramatic. Fase 2: drift up + fade.
     scene.tweens.add({
       targets: t,
-      y: center.y - this.hexSize * 2.5,
-      alpha: 0,
-      duration: 1200,
-      onComplete: () => t.destroy(),
+      scale: 1.0,
+      duration: 180,
+      ease: 'Back.easeOut',
+      onComplete: () => {
+        scene.tweens.add({
+          targets: t,
+          y: center.y - this.hexSize * 2.8,
+          alpha: 0,
+          duration: 1100,
+          onComplete: () => t.destroy(),
+        });
+      },
     });
   }
 
@@ -344,19 +355,101 @@ export class UnitSprite {
     const center = axialToPixel(this.displayedPosition, this.hexSize, this.origin);
     const t = scene.add.text(center.x, center.y - this.hexSize * 0.5, text, {
       fontFamily: 'monospace',
-      fontSize: '18px',
+      fontSize: '24px',
       color,
       stroke: '#000',
-      strokeThickness: 3,
+      strokeThickness: 4,
+      fontStyle: 'bold',
     });
     t.setOrigin(0.5, 0.5);
+    t.setScale(0.4);
     scene.tweens.add({
       targets: t,
-      y: center.y - this.hexSize * 2.5,
-      alpha: 0,
-      duration: 1200,
-      onComplete: () => t.destroy(),
+      scale: 1.0,
+      duration: 180,
+      ease: 'Back.easeOut',
+      onComplete: () => {
+        scene.tweens.add({
+          targets: t,
+          y: center.y - this.hexSize * 2.5,
+          alpha: 0,
+          duration: 1100,
+          onComplete: () => t.destroy(),
+        });
+      },
     });
+  }
+
+  /** Popup variazione slancio: "+3 SLANCIO" verde / "−2 SLANCIO" rosso. */
+  showSlancioChange(scene: Phaser.Scene, delta: number): void {
+    if (delta === 0) return;
+    const center = axialToPixel(this.displayedPosition, this.hexSize, this.origin);
+    const sign = delta > 0 ? '+' : '−';
+    const color = delta > 0 ? '#66ff99' : '#ff8866';
+    const t = scene.add.text(
+      center.x + this.hexSize * 1.4,
+      center.y,
+      `${sign}${Math.abs(delta)} sl`,
+      {
+        fontFamily: 'monospace',
+        fontSize: '16px',
+        color,
+        stroke: '#000',
+        strokeThickness: 3,
+        fontStyle: 'bold',
+      },
+    );
+    t.setOrigin(0, 0.5);
+    t.setAlpha(0);
+    scene.tweens.add({
+      targets: t,
+      alpha: 1,
+      x: center.x + this.hexSize * 2.0,
+      duration: 250,
+      onComplete: () => {
+        scene.tweens.add({
+          targets: t,
+          alpha: 0,
+          x: center.x + this.hexSize * 2.6,
+          duration: 800,
+          onComplete: () => t.destroy(),
+        });
+      },
+    });
+  }
+
+  /**
+   * Animazione morte: il sprite ruota e svanisce (fade alpha + scale up).
+   * Restituisce una Promise che si risolve a fine animazione.
+   * Lascia poi il sprite in stato "alive=false" → next redraw lo nasconde.
+   */
+  playDeathAnimation(scene: Phaser.Scene): Promise<void> {
+    return new Promise((resolve) => {
+      // Anima graphics + label + hpText insieme
+      const targets = [this.graphics, this.label, this.hpText];
+      scene.tweens.add({
+        targets,
+        alpha: 0,
+        scale: 1.4,
+        angle: 90,
+        duration: 700,
+        ease: 'Cubic.easeIn',
+        onComplete: () => {
+          // Reset trasformi (li nascondiamo via redraw quando alive=false)
+          for (const t of targets) {
+            t.setAlpha(1);
+            (t as Phaser.GameObjects.Text).setScale?.(1);
+            (t as Phaser.GameObjects.Text).setAngle?.(0);
+          }
+          resolve();
+        },
+      });
+    });
+  }
+
+  /** Centro pixel (per disegnare effetti esterni come linea attacco). */
+  getCenter(): Pixel {
+    return axialToPixel(this.displayedPosition, this.hexSize, this.origin);
   }
 
   destroy(): void {
