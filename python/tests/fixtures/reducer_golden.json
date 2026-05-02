@@ -1,0 +1,2183 @@
+{
+  "meta": {
+    "generated_by": "tests/sim/dump_reducer_golden.test.ts"
+  },
+  "scenarios": [
+    {
+      "label": "round-base-2-passes",
+      "unitsSpec": [
+        {
+          "presetId": "spadaccino",
+          "faction": "A",
+          "pos": {
+            "col": 4,
+            "row": 4
+          }
+        },
+        {
+          "presetId": "tank",
+          "faction": "B",
+          "pos": {
+            "col": 12,
+            "row": 4
+          }
+        }
+      ],
+      "rngSeed": 100001,
+      "events": [
+        {
+          "step": 0,
+          "description": "inizio round 1",
+          "event": {
+            "type": "START_ROUND"
+          }
+        },
+        {
+          "step": 1,
+          "description": "turn-1 start (2 dadi)",
+          "event": {
+            "type": "START_TURN",
+            "slancioDice": 2,
+            "impetoToSlancio": 0
+          }
+        },
+        {
+          "step": 2,
+          "description": "turn-1 end",
+          "event": {
+            "type": "END_TURN"
+          }
+        },
+        {
+          "step": 3,
+          "description": "turn-2 start (1 dado, transfer 2)",
+          "event": {
+            "type": "START_TURN",
+            "slancioDice": 1,
+            "impetoToSlancio": 2
+          }
+        },
+        {
+          "step": 4,
+          "description": "turn-2 end (porta a end-round → start-round 2)",
+          "event": {
+            "type": "END_TURN"
+          }
+        }
+      ],
+      "snapshots": [
+        {
+          "step": -1,
+          "description": "initial",
+          "state": {
+            "round": 0,
+            "phase": "turn-start",
+            "currentTurnIdx": 0,
+            "turnOrder": [],
+            "rngSeed": 567994474,
+            "logSize": 0,
+            "pendingAction": null,
+            "winner": null,
+            "units": {
+              "A-spadaccino": {
+                "id": "A-spadaccino",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 11,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-tank": {
+                "id": "B-tank",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 13,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 10,
+                  "r": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "step": 0,
+          "description": "inizio round 1",
+          "eventType": "START_ROUND",
+          "state": {
+            "round": 1,
+            "phase": "turn-start",
+            "currentTurnIdx": 0,
+            "turnOrder": [
+              "B-tank",
+              "A-spadaccino"
+            ],
+            "rngSeed": -63841196,
+            "logSize": 1,
+            "pendingAction": null,
+            "winner": null,
+            "units": {
+              "A-spadaccino": {
+                "id": "A-spadaccino",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 11,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-tank": {
+                "id": "B-tank",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 13,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 10,
+                  "r": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "step": 1,
+          "description": "turn-1 start (2 dadi)",
+          "eventType": "START_TURN",
+          "state": {
+            "round": 1,
+            "phase": "choosing-action",
+            "currentTurnIdx": 0,
+            "turnOrder": [
+              "B-tank",
+              "A-spadaccino"
+            ],
+            "rngSeed": -695676866,
+            "logSize": 2,
+            "pendingAction": null,
+            "winner": null,
+            "units": {
+              "A-spadaccino": {
+                "id": "A-spadaccino",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 11,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-tank": {
+                "id": "B-tank",
+                "hp": 20,
+                "impeto": 27,
+                "slancio": 9,
+                "dadiAzione": 9,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 10,
+                  "r": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "step": 2,
+          "description": "turn-1 end",
+          "eventType": "END_TURN",
+          "state": {
+            "round": 1,
+            "phase": "turn-start",
+            "currentTurnIdx": 1,
+            "turnOrder": [
+              "B-tank",
+              "A-spadaccino"
+            ],
+            "rngSeed": -695676866,
+            "logSize": 2,
+            "pendingAction": null,
+            "winner": null,
+            "units": {
+              "A-spadaccino": {
+                "id": "A-spadaccino",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 11,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-tank": {
+                "id": "B-tank",
+                "hp": 20,
+                "impeto": 27,
+                "slancio": 9,
+                "dadiAzione": 9,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 10,
+                  "r": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "step": 3,
+          "description": "turn-2 start (1 dado, transfer 2)",
+          "eventType": "START_TURN",
+          "state": {
+            "round": 1,
+            "phase": "choosing-action",
+            "currentTurnIdx": 1,
+            "turnOrder": [
+              "B-tank",
+              "A-spadaccino"
+            ],
+            "rngSeed": 1135888947,
+            "logSize": 3,
+            "pendingAction": null,
+            "winner": null,
+            "units": {
+              "A-spadaccino": {
+                "id": "A-spadaccino",
+                "hp": 20,
+                "impeto": 23,
+                "slancio": 7,
+                "dadiAzione": 9,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-tank": {
+                "id": "B-tank",
+                "hp": 20,
+                "impeto": 27,
+                "slancio": 9,
+                "dadiAzione": 9,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 10,
+                  "r": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "step": 4,
+          "description": "turn-2 end (porta a end-round → start-round 2)",
+          "eventType": "END_TURN",
+          "state": {
+            "round": 2,
+            "phase": "turn-start",
+            "currentTurnIdx": 0,
+            "turnOrder": [
+              "B-tank",
+              "A-spadaccino"
+            ],
+            "rngSeed": 504054277,
+            "logSize": 4,
+            "pendingAction": null,
+            "winner": null,
+            "units": {
+              "A-spadaccino": {
+                "id": "A-spadaccino",
+                "hp": 20,
+                "impeto": 23,
+                "slancio": 7,
+                "dadiAzione": 9,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-tank": {
+                "id": "B-tank",
+                "hp": 20,
+                "impeto": 27,
+                "slancio": 9,
+                "dadiAzione": 9,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 10,
+                  "r": 4
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "label": "cac-attack-dodge-hit",
+      "unitsSpec": [
+        {
+          "presetId": "spadaccino",
+          "faction": "A",
+          "pos": {
+            "col": 4,
+            "row": 4
+          }
+        },
+        {
+          "presetId": "arciere",
+          "faction": "B",
+          "pos": {
+            "col": 5,
+            "row": 4
+          }
+        }
+      ],
+      "rngSeed": 100002,
+      "events": [
+        {
+          "step": 0,
+          "description": "round 1",
+          "event": {
+            "type": "START_ROUND"
+          }
+        },
+        {
+          "step": 1,
+          "description": "turn-1 start",
+          "event": {
+            "type": "START_TURN",
+            "slancioDice": 2
+          }
+        },
+        {
+          "step": 2,
+          "description": "declare attack",
+          "event": {
+            "type": "DECLARE_ATTACK",
+            "attackerId": "A-spadaccino",
+            "targetId": "B-arciere",
+            "weaponId": "spada_lunga",
+            "attackModeIdx": 1,
+            "isRanged": false
+          }
+        },
+        {
+          "step": 3,
+          "description": "choose atk dice 2",
+          "event": {
+            "type": "CHOOSE_ATTACKER_DICE",
+            "diceN": 2
+          }
+        },
+        {
+          "step": 4,
+          "description": "choose dodge 2",
+          "event": {
+            "type": "CHOOSE_DEFENSE",
+            "defenseType": "dodge",
+            "diceN": 2
+          }
+        },
+        {
+          "step": 5,
+          "description": "resolve",
+          "event": {
+            "type": "RESOLVE_COMBAT"
+          }
+        }
+      ],
+      "snapshots": [
+        {
+          "step": -1,
+          "description": "initial",
+          "state": {
+            "round": 0,
+            "phase": "turn-start",
+            "currentTurnIdx": 0,
+            "turnOrder": [],
+            "rngSeed": 567994475,
+            "logSize": 0,
+            "pendingAction": null,
+            "winner": null,
+            "units": {
+              "A-spadaccino": {
+                "id": "A-spadaccino",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 10,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-arciere": {
+                "id": "B-arciere",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 16,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 3,
+                  "r": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "step": 0,
+          "description": "round 1",
+          "eventType": "START_ROUND",
+          "state": {
+            "round": 1,
+            "phase": "turn-start",
+            "currentTurnIdx": 0,
+            "turnOrder": [
+              "B-arciere",
+              "A-spadaccino"
+            ],
+            "rngSeed": -63841195,
+            "logSize": 1,
+            "pendingAction": null,
+            "winner": null,
+            "units": {
+              "A-spadaccino": {
+                "id": "A-spadaccino",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 10,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-arciere": {
+                "id": "B-arciere",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 16,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 3,
+                  "r": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "step": 1,
+          "description": "turn-1 start",
+          "eventType": "START_TURN",
+          "state": {
+            "round": 1,
+            "phase": "choosing-action",
+            "currentTurnIdx": 0,
+            "turnOrder": [
+              "B-arciere",
+              "A-spadaccino"
+            ],
+            "rngSeed": -695676865,
+            "logSize": 2,
+            "pendingAction": null,
+            "winner": null,
+            "units": {
+              "A-spadaccino": {
+                "id": "A-spadaccino",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 10,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-arciere": {
+                "id": "B-arciere",
+                "hp": 20,
+                "impeto": 30,
+                "slancio": 10,
+                "dadiAzione": 9,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 3,
+                  "r": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "step": 2,
+          "description": "declare attack",
+          "eventType": "DECLARE_ATTACK",
+          "state": {
+            "round": 1,
+            "phase": "choosing-action",
+            "currentTurnIdx": 0,
+            "turnOrder": [
+              "B-arciere",
+              "A-spadaccino"
+            ],
+            "rngSeed": -695676865,
+            "logSize": 3,
+            "pendingAction": null,
+            "winner": null,
+            "units": {
+              "A-spadaccino": {
+                "id": "A-spadaccino",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 10,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-arciere": {
+                "id": "B-arciere",
+                "hp": 20,
+                "impeto": 30,
+                "slancio": 10,
+                "dadiAzione": 9,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 3,
+                  "r": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "step": 3,
+          "description": "choose atk dice 2",
+          "eventType": "CHOOSE_ATTACKER_DICE",
+          "state": {
+            "round": 1,
+            "phase": "choosing-action",
+            "currentTurnIdx": 0,
+            "turnOrder": [
+              "B-arciere",
+              "A-spadaccino"
+            ],
+            "rngSeed": -695676865,
+            "logSize": 4,
+            "pendingAction": null,
+            "winner": null,
+            "units": {
+              "A-spadaccino": {
+                "id": "A-spadaccino",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 10,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-arciere": {
+                "id": "B-arciere",
+                "hp": 20,
+                "impeto": 30,
+                "slancio": 10,
+                "dadiAzione": 9,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 3,
+                  "r": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "step": 4,
+          "description": "choose dodge 2",
+          "eventType": "CHOOSE_DEFENSE",
+          "state": {
+            "round": 1,
+            "phase": "choosing-action",
+            "currentTurnIdx": 0,
+            "turnOrder": [
+              "B-arciere",
+              "A-spadaccino"
+            ],
+            "rngSeed": -695676865,
+            "logSize": 5,
+            "pendingAction": null,
+            "winner": null,
+            "units": {
+              "A-spadaccino": {
+                "id": "A-spadaccino",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 10,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-arciere": {
+                "id": "B-arciere",
+                "hp": 20,
+                "impeto": 30,
+                "slancio": 10,
+                "dadiAzione": 9,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 3,
+                  "r": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "step": 5,
+          "description": "resolve",
+          "eventType": "RESOLVE_COMBAT",
+          "state": {
+            "round": 1,
+            "phase": "choosing-action",
+            "currentTurnIdx": 0,
+            "turnOrder": [
+              "B-arciere",
+              "A-spadaccino"
+            ],
+            "rngSeed": -695676865,
+            "logSize": 6,
+            "pendingAction": null,
+            "winner": null,
+            "units": {
+              "A-spadaccino": {
+                "id": "A-spadaccino",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 10,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-arciere": {
+                "id": "B-arciere",
+                "hp": 20,
+                "impeto": 30,
+                "slancio": 10,
+                "dadiAzione": 9,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 3,
+                  "r": 4
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "label": "ranged-attack-arciere-vs-tank",
+      "unitsSpec": [
+        {
+          "presetId": "arciere",
+          "faction": "A",
+          "pos": {
+            "col": 4,
+            "row": 4
+          }
+        },
+        {
+          "presetId": "tank",
+          "faction": "B",
+          "pos": {
+            "col": 8,
+            "row": 4
+          }
+        }
+      ],
+      "rngSeed": 100003,
+      "events": [
+        {
+          "step": 0,
+          "description": "round 1",
+          "event": {
+            "type": "START_ROUND"
+          }
+        },
+        {
+          "step": 1,
+          "description": "start turn",
+          "event": {
+            "type": "START_TURN",
+            "slancioDice": 2
+          }
+        },
+        {
+          "step": 2,
+          "description": "declare ranged",
+          "event": {
+            "type": "DECLARE_ATTACK",
+            "attackerId": "A-arciere",
+            "targetId": "B-tank",
+            "weaponId": "arco_lungo",
+            "attackModeIdx": 0,
+            "isRanged": true
+          }
+        },
+        {
+          "step": 3,
+          "description": "choose atk dice 2",
+          "event": {
+            "type": "CHOOSE_ATTACKER_DICE",
+            "diceN": 2
+          }
+        },
+        {
+          "step": 4,
+          "description": "resolve ranged (no defense step)",
+          "event": {
+            "type": "RESOLVE_COMBAT"
+          }
+        }
+      ],
+      "snapshots": [
+        {
+          "step": -1,
+          "description": "initial",
+          "state": {
+            "round": 0,
+            "phase": "turn-start",
+            "currentTurnIdx": 0,
+            "turnOrder": [],
+            "rngSeed": -1895407007,
+            "logSize": 0,
+            "pendingAction": null,
+            "winner": null,
+            "units": {
+              "A-arciere": {
+                "id": "A-arciere",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 12,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-tank": {
+                "id": "B-tank",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 10,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 6,
+                  "r": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "step": 0,
+          "description": "round 1",
+          "eventType": "START_ROUND",
+          "state": {
+            "round": 1,
+            "phase": "turn-start",
+            "currentTurnIdx": 0,
+            "turnOrder": [
+              "A-arciere",
+              "B-tank"
+            ],
+            "rngSeed": 1767724619,
+            "logSize": 1,
+            "pendingAction": null,
+            "winner": null,
+            "units": {
+              "A-arciere": {
+                "id": "A-arciere",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 12,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-tank": {
+                "id": "B-tank",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 10,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 6,
+                  "r": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "step": 1,
+          "description": "start turn",
+          "eventType": "START_TURN",
+          "state": {
+            "round": 1,
+            "phase": "choosing-action",
+            "currentTurnIdx": 0,
+            "turnOrder": [
+              "A-arciere",
+              "B-tank"
+            ],
+            "rngSeed": 1135888949,
+            "logSize": 2,
+            "pendingAction": null,
+            "winner": null,
+            "units": {
+              "A-arciere": {
+                "id": "A-arciere",
+                "hp": 20,
+                "impeto": 26,
+                "slancio": 6,
+                "dadiAzione": 9,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-tank": {
+                "id": "B-tank",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 10,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 6,
+                  "r": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "step": 2,
+          "description": "declare ranged",
+          "eventType": "DECLARE_ATTACK",
+          "state": {
+            "round": 1,
+            "phase": "declaring-attack",
+            "currentTurnIdx": 0,
+            "turnOrder": [
+              "A-arciere",
+              "B-tank"
+            ],
+            "rngSeed": 1135888949,
+            "logSize": 3,
+            "pendingAction": {
+              "attackerId": "A-arciere",
+              "targetId": "B-tank",
+              "weaponId": "arco_lungo",
+              "attackModeIdx": 0,
+              "isRanged": true,
+              "chosenStat": null,
+              "attackerDice": null,
+              "defense": null
+            },
+            "winner": null,
+            "units": {
+              "A-arciere": {
+                "id": "A-arciere",
+                "hp": 20,
+                "impeto": 26,
+                "slancio": 6,
+                "dadiAzione": 9,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-tank": {
+                "id": "B-tank",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 10,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 6,
+                  "r": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "step": 3,
+          "description": "choose atk dice 2",
+          "eventType": "CHOOSE_ATTACKER_DICE",
+          "state": {
+            "round": 1,
+            "phase": "resolving",
+            "currentTurnIdx": 0,
+            "turnOrder": [
+              "A-arciere",
+              "B-tank"
+            ],
+            "rngSeed": 1135888949,
+            "logSize": 3,
+            "pendingAction": {
+              "attackerId": "A-arciere",
+              "targetId": "B-tank",
+              "weaponId": "arco_lungo",
+              "attackModeIdx": 0,
+              "isRanged": true,
+              "chosenStat": null,
+              "attackerDice": 2,
+              "defense": null
+            },
+            "winner": null,
+            "units": {
+              "A-arciere": {
+                "id": "A-arciere",
+                "hp": 20,
+                "impeto": 26,
+                "slancio": 6,
+                "dadiAzione": 9,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-tank": {
+                "id": "B-tank",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 10,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 6,
+                  "r": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "step": 4,
+          "description": "resolve ranged (no defense step)",
+          "eventType": "RESOLVE_COMBAT",
+          "state": {
+            "round": 1,
+            "phase": "choosing-action",
+            "currentTurnIdx": 0,
+            "turnOrder": [
+              "A-arciere",
+              "B-tank"
+            ],
+            "rngSeed": -127782391,
+            "logSize": 6,
+            "pendingAction": null,
+            "winner": null,
+            "units": {
+              "A-arciere": {
+                "id": "A-arciere",
+                "hp": 20,
+                "impeto": 26,
+                "slancio": 6,
+                "dadiAzione": 7,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": true,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-tank": {
+                "id": "B-tank",
+                "hp": 15,
+                "impeto": 14,
+                "slancio": 5,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 6,
+                  "r": 4
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "label": "cac-parry-miss",
+      "unitsSpec": [
+        {
+          "presetId": "arciere",
+          "faction": "A",
+          "pos": {
+            "col": 4,
+            "row": 4
+          }
+        },
+        {
+          "presetId": "tank",
+          "faction": "B",
+          "pos": {
+            "col": 5,
+            "row": 4
+          }
+        }
+      ],
+      "rngSeed": 100004,
+      "events": [
+        {
+          "step": 0,
+          "description": "round 1",
+          "event": {
+            "type": "START_ROUND"
+          }
+        },
+        {
+          "step": 1,
+          "description": "start",
+          "event": {
+            "type": "START_TURN",
+            "slancioDice": 2
+          }
+        },
+        {
+          "step": 2,
+          "description": "declare melee attack with pugnale (default arco_lungo non parabile, useremo pugnale come arma)",
+          "event": {
+            "type": "DECLARE_ATTACK",
+            "attackerId": "A-arciere",
+            "targetId": "B-tank",
+            "weaponId": "pugnale",
+            "attackModeIdx": 0,
+            "isRanged": false
+          }
+        },
+        {
+          "step": 3,
+          "description": "choose 1",
+          "event": {
+            "type": "CHOOSE_ATTACKER_DICE",
+            "diceN": 1
+          }
+        },
+        {
+          "step": 4,
+          "description": "parry with shield (tank offhand)",
+          "event": {
+            "type": "CHOOSE_DEFENSE",
+            "defenseType": "parry",
+            "parryWith": "offhand",
+            "diceN": 2
+          }
+        },
+        {
+          "step": 5,
+          "description": "resolve",
+          "event": {
+            "type": "RESOLVE_COMBAT"
+          }
+        }
+      ],
+      "snapshots": [
+        {
+          "step": -1,
+          "description": "initial",
+          "state": {
+            "round": 0,
+            "phase": "turn-start",
+            "currentTurnIdx": 0,
+            "turnOrder": [],
+            "rngSeed": -1895407006,
+            "logSize": 0,
+            "pendingAction": null,
+            "winner": null,
+            "units": {
+              "A-arciere": {
+                "id": "A-arciere",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 11,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-tank": {
+                "id": "B-tank",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 8,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 3,
+                  "r": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "step": 0,
+          "description": "round 1",
+          "eventType": "START_ROUND",
+          "state": {
+            "round": 1,
+            "phase": "turn-start",
+            "currentTurnIdx": 0,
+            "turnOrder": [
+              "A-arciere",
+              "B-tank"
+            ],
+            "rngSeed": 1767724620,
+            "logSize": 1,
+            "pendingAction": null,
+            "winner": null,
+            "units": {
+              "A-arciere": {
+                "id": "A-arciere",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 11,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-tank": {
+                "id": "B-tank",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 8,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 3,
+                  "r": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "step": 1,
+          "description": "start",
+          "eventType": "START_TURN",
+          "state": {
+            "round": 1,
+            "phase": "choosing-action",
+            "currentTurnIdx": 0,
+            "turnOrder": [
+              "A-arciere",
+              "B-tank"
+            ],
+            "rngSeed": 1135888950,
+            "logSize": 2,
+            "pendingAction": null,
+            "winner": null,
+            "units": {
+              "A-arciere": {
+                "id": "A-arciere",
+                "hp": 20,
+                "impeto": 25,
+                "slancio": 12,
+                "dadiAzione": 9,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-tank": {
+                "id": "B-tank",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 8,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 3,
+                  "r": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "step": 2,
+          "description": "declare melee attack with pugnale (default arco_lungo non parabile, useremo pugnale come arma)",
+          "eventType": "DECLARE_ATTACK",
+          "state": {
+            "round": 1,
+            "phase": "declaring-attack",
+            "currentTurnIdx": 0,
+            "turnOrder": [
+              "A-arciere",
+              "B-tank"
+            ],
+            "rngSeed": 1135888950,
+            "logSize": 3,
+            "pendingAction": {
+              "attackerId": "A-arciere",
+              "targetId": "B-tank",
+              "weaponId": "pugnale",
+              "attackModeIdx": 0,
+              "isRanged": false,
+              "chosenStat": null,
+              "attackerDice": null,
+              "defense": null
+            },
+            "winner": null,
+            "units": {
+              "A-arciere": {
+                "id": "A-arciere",
+                "hp": 20,
+                "impeto": 25,
+                "slancio": 12,
+                "dadiAzione": 9,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-tank": {
+                "id": "B-tank",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 8,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 3,
+                  "r": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "step": 3,
+          "description": "choose 1",
+          "eventType": "CHOOSE_ATTACKER_DICE",
+          "state": {
+            "round": 1,
+            "phase": "awaiting-defense",
+            "currentTurnIdx": 0,
+            "turnOrder": [
+              "A-arciere",
+              "B-tank"
+            ],
+            "rngSeed": 1135888950,
+            "logSize": 3,
+            "pendingAction": {
+              "attackerId": "A-arciere",
+              "targetId": "B-tank",
+              "weaponId": "pugnale",
+              "attackModeIdx": 0,
+              "isRanged": false,
+              "chosenStat": null,
+              "attackerDice": 1,
+              "defense": null
+            },
+            "winner": null,
+            "units": {
+              "A-arciere": {
+                "id": "A-arciere",
+                "hp": 20,
+                "impeto": 25,
+                "slancio": 12,
+                "dadiAzione": 9,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-tank": {
+                "id": "B-tank",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 8,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 3,
+                  "r": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "step": 4,
+          "description": "parry with shield (tank offhand)",
+          "eventType": "CHOOSE_DEFENSE",
+          "state": {
+            "round": 1,
+            "phase": "resolving",
+            "currentTurnIdx": 0,
+            "turnOrder": [
+              "A-arciere",
+              "B-tank"
+            ],
+            "rngSeed": 1135888950,
+            "logSize": 3,
+            "pendingAction": {
+              "attackerId": "A-arciere",
+              "targetId": "B-tank",
+              "weaponId": "pugnale",
+              "attackModeIdx": 0,
+              "isRanged": false,
+              "chosenStat": null,
+              "attackerDice": 1,
+              "defense": {
+                "type": "parry",
+                "diceN": 2,
+                "parryWith": "offhand"
+              }
+            },
+            "winner": null,
+            "units": {
+              "A-arciere": {
+                "id": "A-arciere",
+                "hp": 20,
+                "impeto": 25,
+                "slancio": 12,
+                "dadiAzione": 9,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-tank": {
+                "id": "B-tank",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 8,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 3,
+                  "r": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "step": 5,
+          "description": "resolve",
+          "eventType": "RESOLVE_COMBAT",
+          "state": {
+            "round": 1,
+            "phase": "choosing-action",
+            "currentTurnIdx": 0,
+            "turnOrder": [
+              "A-arciere",
+              "B-tank"
+            ],
+            "rngSeed": 1703783423,
+            "logSize": 6,
+            "pendingAction": null,
+            "winner": null,
+            "units": {
+              "A-arciere": {
+                "id": "A-arciere",
+                "hp": 20,
+                "impeto": 21,
+                "slancio": 0,
+                "dadiAzione": 8,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": true,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-tank": {
+                "id": "B-tank",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 8,
+                "dadiAzione": 4,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 3,
+                  "r": 4
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "label": "movement-cost",
+      "unitsSpec": [
+        {
+          "presetId": "spadaccino",
+          "faction": "A",
+          "pos": {
+            "col": 4,
+            "row": 4
+          }
+        },
+        {
+          "presetId": "tank",
+          "faction": "B",
+          "pos": {
+            "col": 12,
+            "row": 4
+          }
+        }
+      ],
+      "rngSeed": 100005,
+      "events": [
+        {
+          "step": 0,
+          "description": "round 1",
+          "event": {
+            "type": "START_ROUND"
+          }
+        },
+        {
+          "step": 1,
+          "description": "start",
+          "event": {
+            "type": "START_TURN",
+            "slancioDice": 2
+          }
+        },
+        {
+          "step": 2,
+          "description": "move 1 hex (free)",
+          "event": {
+            "type": "MOVE",
+            "unitId": "A-spadaccino",
+            "targetHex": {
+              "q": 3,
+              "r": 4
+            }
+          }
+        },
+        {
+          "step": 3,
+          "description": "move 2 hex (cost 2)",
+          "event": {
+            "type": "MOVE",
+            "unitId": "A-spadaccino",
+            "targetHex": {
+              "q": 5,
+              "r": 4
+            }
+          }
+        }
+      ],
+      "snapshots": [
+        {
+          "step": -1,
+          "description": "initial",
+          "state": {
+            "round": 0,
+            "phase": "turn-start",
+            "currentTurnIdx": 0,
+            "turnOrder": [],
+            "rngSeed": 567994478,
+            "logSize": 0,
+            "pendingAction": null,
+            "winner": null,
+            "units": {
+              "A-spadaccino": {
+                "id": "A-spadaccino",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 11,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-tank": {
+                "id": "B-tank",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 13,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 10,
+                  "r": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "step": 0,
+          "description": "round 1",
+          "eventType": "START_ROUND",
+          "state": {
+            "round": 1,
+            "phase": "turn-start",
+            "currentTurnIdx": 0,
+            "turnOrder": [
+              "B-tank",
+              "A-spadaccino"
+            ],
+            "rngSeed": -63841192,
+            "logSize": 1,
+            "pendingAction": null,
+            "winner": null,
+            "units": {
+              "A-spadaccino": {
+                "id": "A-spadaccino",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 11,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-tank": {
+                "id": "B-tank",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 13,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 10,
+                  "r": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "step": 1,
+          "description": "start",
+          "eventType": "START_TURN",
+          "state": {
+            "round": 1,
+            "phase": "choosing-action",
+            "currentTurnIdx": 0,
+            "turnOrder": [
+              "B-tank",
+              "A-spadaccino"
+            ],
+            "rngSeed": -695676862,
+            "logSize": 2,
+            "pendingAction": null,
+            "winner": null,
+            "units": {
+              "A-spadaccino": {
+                "id": "A-spadaccino",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 11,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-tank": {
+                "id": "B-tank",
+                "hp": 20,
+                "impeto": 27,
+                "slancio": 10,
+                "dadiAzione": 9,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 10,
+                  "r": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "step": 2,
+          "description": "move 1 hex (free)",
+          "eventType": "MOVE",
+          "state": {
+            "round": 1,
+            "phase": "choosing-action",
+            "currentTurnIdx": 0,
+            "turnOrder": [
+              "B-tank",
+              "A-spadaccino"
+            ],
+            "rngSeed": -695676862,
+            "logSize": 3,
+            "pendingAction": null,
+            "winner": null,
+            "units": {
+              "A-spadaccino": {
+                "id": "A-spadaccino",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 11,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-tank": {
+                "id": "B-tank",
+                "hp": 20,
+                "impeto": 27,
+                "slancio": 10,
+                "dadiAzione": 9,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 10,
+                  "r": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "step": 3,
+          "description": "move 2 hex (cost 2)",
+          "eventType": "MOVE",
+          "state": {
+            "round": 1,
+            "phase": "choosing-action",
+            "currentTurnIdx": 0,
+            "turnOrder": [
+              "B-tank",
+              "A-spadaccino"
+            ],
+            "rngSeed": -695676862,
+            "logSize": 4,
+            "pendingAction": null,
+            "winner": null,
+            "units": {
+              "A-spadaccino": {
+                "id": "A-spadaccino",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 11,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-tank": {
+                "id": "B-tank",
+                "hp": 20,
+                "impeto": 27,
+                "slancio": 10,
+                "dadiAzione": 9,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 10,
+                  "r": 4
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "label": "reload-balestra",
+      "unitsSpec": [
+        {
+          "presetId": "tank",
+          "faction": "A",
+          "pos": {
+            "col": 4,
+            "row": 4
+          }
+        },
+        {
+          "presetId": "spadaccino",
+          "faction": "B",
+          "pos": {
+            "col": 12,
+            "row": 4
+          }
+        }
+      ],
+      "rngSeed": 100006,
+      "events": [
+        {
+          "step": 0,
+          "description": "round 1",
+          "event": {
+            "type": "START_ROUND"
+          }
+        },
+        {
+          "step": 1,
+          "description": "start",
+          "event": {
+            "type": "START_TURN",
+            "slancioDice": 1
+          }
+        },
+        {
+          "step": 2,
+          "description": "pass",
+          "event": {
+            "type": "END_TURN"
+          }
+        }
+      ],
+      "snapshots": [
+        {
+          "step": -1,
+          "description": "initial",
+          "state": {
+            "round": 0,
+            "phase": "turn-start",
+            "currentTurnIdx": 0,
+            "turnOrder": [],
+            "rngSeed": 567994479,
+            "logSize": 0,
+            "pendingAction": null,
+            "winner": null,
+            "units": {
+              "A-tank": {
+                "id": "A-tank",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 16,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-spadaccino": {
+                "id": "B-spadaccino",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 7,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 10,
+                  "r": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "step": 0,
+          "description": "round 1",
+          "eventType": "START_ROUND",
+          "state": {
+            "round": 1,
+            "phase": "turn-start",
+            "currentTurnIdx": 0,
+            "turnOrder": [
+              "A-tank",
+              "B-spadaccino"
+            ],
+            "rngSeed": -63841191,
+            "logSize": 1,
+            "pendingAction": null,
+            "winner": null,
+            "units": {
+              "A-tank": {
+                "id": "A-tank",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 16,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-spadaccino": {
+                "id": "B-spadaccino",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 7,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 10,
+                  "r": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "step": 1,
+          "description": "start",
+          "eventType": "START_TURN",
+          "state": {
+            "round": 1,
+            "phase": "choosing-action",
+            "currentTurnIdx": 0,
+            "turnOrder": [
+              "A-tank",
+              "B-spadaccino"
+            ],
+            "rngSeed": 1767724622,
+            "logSize": 2,
+            "pendingAction": null,
+            "winner": null,
+            "units": {
+              "A-tank": {
+                "id": "A-tank",
+                "hp": 20,
+                "impeto": 30,
+                "slancio": 7,
+                "dadiAzione": 9,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-spadaccino": {
+                "id": "B-spadaccino",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 7,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 10,
+                  "r": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "step": 2,
+          "description": "pass",
+          "eventType": "END_TURN",
+          "state": {
+            "round": 1,
+            "phase": "turn-start",
+            "currentTurnIdx": 1,
+            "turnOrder": [
+              "A-tank",
+              "B-spadaccino"
+            ],
+            "rngSeed": 1767724622,
+            "logSize": 2,
+            "pendingAction": null,
+            "winner": null,
+            "units": {
+              "A-tank": {
+                "id": "A-tank",
+                "hp": 20,
+                "impeto": 30,
+                "slancio": 7,
+                "dadiAzione": 9,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 2,
+                  "r": 4
+                }
+              },
+              "B-spadaccino": {
+                "id": "B-spadaccino",
+                "hp": 20,
+                "impeto": 14,
+                "slancio": 7,
+                "dadiAzione": 6,
+                "alive": true,
+                "hexMovedThisTurn": 0,
+                "actionTakenThisTurn": false,
+                "weaponLoaded": true,
+                "position": {
+                  "q": 10,
+                  "r": 4
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+node_modules
+dist
+.DS_Store
+*.log
+.vite
+coverage
+.idea
+.vscode
+# Playwright artefatti dei test (browser screenshots in fail, traces, reports)
+test-results
+playwright-report
+# Python venv / __pycache__ (per la parte python/)
+__pycache__
+*.pyc
+.pytest_cache
+.venv
+venv
+# Modelli RL training output (potenzialmente grandi)
+hex_tactics_*.zip
+*.bak

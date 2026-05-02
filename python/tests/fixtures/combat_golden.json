@@ -1,0 +1,1371 @@
+{
+  "meta": {
+    "generated_by": "tests/sim/dump_combat_golden.test.ts",
+    "seed": 12345
+  },
+  "attack": [
+    {
+      "idx": 0,
+      "presetId": "spadaccino",
+      "weaponId": "spada_lunga",
+      "attackModeIdx": 0,
+      "modeStat": "either",
+      "modeLabel": "1 mano",
+      "chosenStat": null,
+      "diceN": 1,
+      "seed": 12345,
+      "roll": {
+        "variable": [
+          6,
+          2
+        ],
+        "fixed": 6
+      }
+    },
+    {
+      "idx": 1,
+      "presetId": "spadaccino",
+      "weaponId": "spada_lunga",
+      "attackModeIdx": 0,
+      "modeStat": "either",
+      "modeLabel": "1 mano",
+      "chosenStat": null,
+      "diceN": 2,
+      "seed": 12346,
+      "roll": {
+        "variable": [
+          3,
+          5,
+          2
+        ],
+        "fixed": 6
+      }
+    },
+    {
+      "idx": 2,
+      "presetId": "spadaccino",
+      "weaponId": "spada_lunga",
+      "attackModeIdx": 0,
+      "modeStat": "either",
+      "modeLabel": "1 mano",
+      "chosenStat": null,
+      "diceN": 3,
+      "seed": 12347,
+      "roll": {
+        "variable": [
+          4,
+          2,
+          6,
+          2
+        ],
+        "fixed": 6
+      }
+    },
+    {
+      "idx": 3,
+      "presetId": "spadaccino",
+      "weaponId": "spada_lunga",
+      "attackModeIdx": 0,
+      "modeStat": "either",
+      "modeLabel": "1 mano",
+      "chosenStat": "forza",
+      "diceN": 1,
+      "seed": 12348,
+      "roll": {
+        "variable": [
+          1,
+          3
+        ],
+        "fixed": 6
+      }
+    },
+    {
+      "idx": 4,
+      "presetId": "spadaccino",
+      "weaponId": "spada_lunga",
+      "attackModeIdx": 0,
+      "modeStat": "either",
+      "modeLabel": "1 mano",
+      "chosenStat": "forza",
+      "diceN": 2,
+      "seed": 12349,
+      "roll": {
+        "variable": [
+          6,
+          4,
+          6
+        ],
+        "fixed": 6
+      }
+    },
+    {
+      "idx": 5,
+      "presetId": "spadaccino",
+      "weaponId": "spada_lunga",
+      "attackModeIdx": 0,
+      "modeStat": "either",
+      "modeLabel": "1 mano",
+      "chosenStat": "forza",
+      "diceN": 3,
+      "seed": 12350,
+      "roll": {
+        "variable": [
+          2,
+          5,
+          6,
+          6
+        ],
+        "fixed": 6
+      }
+    },
+    {
+      "idx": 6,
+      "presetId": "spadaccino",
+      "weaponId": "spada_lunga",
+      "attackModeIdx": 0,
+      "modeStat": "either",
+      "modeLabel": "1 mano",
+      "chosenStat": "agilità",
+      "diceN": 1,
+      "seed": 12351,
+      "roll": {
+        "variable": [
+          3,
+          1
+        ],
+        "fixed": 6
+      }
+    },
+    {
+      "idx": 7,
+      "presetId": "spadaccino",
+      "weaponId": "spada_lunga",
+      "attackModeIdx": 0,
+      "modeStat": "either",
+      "modeLabel": "1 mano",
+      "chosenStat": "agilità",
+      "diceN": 2,
+      "seed": 12352,
+      "roll": {
+        "variable": [
+          6,
+          1,
+          6
+        ],
+        "fixed": 6
+      }
+    },
+    {
+      "idx": 8,
+      "presetId": "spadaccino",
+      "weaponId": "spada_lunga",
+      "attackModeIdx": 0,
+      "modeStat": "either",
+      "modeLabel": "1 mano",
+      "chosenStat": "agilità",
+      "diceN": 3,
+      "seed": 12353,
+      "roll": {
+        "variable": [
+          5,
+          3,
+          2,
+          1
+        ],
+        "fixed": 6
+      }
+    },
+    {
+      "idx": 9,
+      "presetId": "spadaccino",
+      "weaponId": "spada_lunga",
+      "attackModeIdx": 1,
+      "modeStat": "either",
+      "modeLabel": "2 mani",
+      "chosenStat": null,
+      "diceN": 1,
+      "seed": 12354,
+      "roll": {
+        "variable": [
+          2,
+          2
+        ],
+        "fixed": 10
+      }
+    },
+    {
+      "idx": 10,
+      "presetId": "spadaccino",
+      "weaponId": "spada_lunga",
+      "attackModeIdx": 1,
+      "modeStat": "either",
+      "modeLabel": "2 mani",
+      "chosenStat": null,
+      "diceN": 2,
+      "seed": 12355,
+      "roll": {
+        "variable": [
+          5,
+          1,
+          5
+        ],
+        "fixed": 10
+      }
+    },
+    {
+      "idx": 11,
+      "presetId": "spadaccino",
+      "weaponId": "spada_lunga",
+      "attackModeIdx": 1,
+      "modeStat": "either",
+      "modeLabel": "2 mani",
+      "chosenStat": null,
+      "diceN": 3,
+      "seed": 12356,
+      "roll": {
+        "variable": [
+          1,
+          2,
+          6,
+          6
+        ],
+        "fixed": 10
+      }
+    },
+    {
+      "idx": 12,
+      "presetId": "spadaccino",
+      "weaponId": "spada_lunga",
+      "attackModeIdx": 1,
+      "modeStat": "either",
+      "modeLabel": "2 mani",
+      "chosenStat": "forza",
+      "diceN": 1,
+      "seed": 12357,
+      "roll": {
+        "variable": [
+          2,
+          5
+        ],
+        "fixed": 10
+      }
+    },
+    {
+      "idx": 13,
+      "presetId": "spadaccino",
+      "weaponId": "spada_lunga",
+      "attackModeIdx": 1,
+      "modeStat": "either",
+      "modeLabel": "2 mani",
+      "chosenStat": "forza",
+      "diceN": 2,
+      "seed": 12358,
+      "roll": {
+        "variable": [
+          1,
+          1,
+          4
+        ],
+        "fixed": 10
+      }
+    },
+    {
+      "idx": 14,
+      "presetId": "spadaccino",
+      "weaponId": "spada_lunga",
+      "attackModeIdx": 1,
+      "modeStat": "either",
+      "modeLabel": "2 mani",
+      "chosenStat": "forza",
+      "diceN": 3,
+      "seed": 12359,
+      "roll": {
+        "variable": [
+          4,
+          3,
+          3,
+          5
+        ],
+        "fixed": 10
+      }
+    },
+    {
+      "idx": 15,
+      "presetId": "spadaccino",
+      "weaponId": "spada_lunga",
+      "attackModeIdx": 1,
+      "modeStat": "either",
+      "modeLabel": "2 mani",
+      "chosenStat": "agilità",
+      "diceN": 1,
+      "seed": 12360,
+      "roll": {
+        "variable": [
+          2,
+          2
+        ],
+        "fixed": 10
+      }
+    },
+    {
+      "idx": 16,
+      "presetId": "spadaccino",
+      "weaponId": "spada_lunga",
+      "attackModeIdx": 1,
+      "modeStat": "either",
+      "modeLabel": "2 mani",
+      "chosenStat": "agilità",
+      "diceN": 2,
+      "seed": 12361,
+      "roll": {
+        "variable": [
+          6,
+          1,
+          6
+        ],
+        "fixed": 10
+      }
+    },
+    {
+      "idx": 17,
+      "presetId": "spadaccino",
+      "weaponId": "spada_lunga",
+      "attackModeIdx": 1,
+      "modeStat": "either",
+      "modeLabel": "2 mani",
+      "chosenStat": "agilità",
+      "diceN": 3,
+      "seed": 12362,
+      "roll": {
+        "variable": [
+          4,
+          2,
+          1,
+          1
+        ],
+        "fixed": 10
+      }
+    },
+    {
+      "idx": 18,
+      "presetId": "arciere",
+      "weaponId": "arco_lungo",
+      "attackModeIdx": 0,
+      "modeStat": "either",
+      "modeLabel": "default",
+      "chosenStat": null,
+      "diceN": 1,
+      "seed": 12363,
+      "roll": {
+        "variable": [
+          3,
+          2,
+          1
+        ],
+        "fixed": 10
+      }
+    },
+    {
+      "idx": 19,
+      "presetId": "arciere",
+      "weaponId": "arco_lungo",
+      "attackModeIdx": 0,
+      "modeStat": "either",
+      "modeLabel": "default",
+      "chosenStat": null,
+      "diceN": 2,
+      "seed": 12364,
+      "roll": {
+        "variable": [
+          3,
+          4,
+          4,
+          4
+        ],
+        "fixed": 10
+      }
+    },
+    {
+      "idx": 20,
+      "presetId": "arciere",
+      "weaponId": "arco_lungo",
+      "attackModeIdx": 0,
+      "modeStat": "either",
+      "modeLabel": "default",
+      "chosenStat": null,
+      "diceN": 3,
+      "seed": 12365,
+      "roll": {
+        "variable": [
+          5,
+          4,
+          4,
+          4,
+          5
+        ],
+        "fixed": 10
+      }
+    },
+    {
+      "idx": 21,
+      "presetId": "arciere",
+      "weaponId": "arco_lungo",
+      "attackModeIdx": 0,
+      "modeStat": "either",
+      "modeLabel": "default",
+      "chosenStat": "forza",
+      "diceN": 1,
+      "seed": 12366,
+      "roll": {
+        "variable": [
+          4,
+          4,
+          3
+        ],
+        "fixed": 10
+      }
+    },
+    {
+      "idx": 22,
+      "presetId": "arciere",
+      "weaponId": "arco_lungo",
+      "attackModeIdx": 0,
+      "modeStat": "either",
+      "modeLabel": "default",
+      "chosenStat": "forza",
+      "diceN": 2,
+      "seed": 12367,
+      "roll": {
+        "variable": [
+          1,
+          4,
+          1,
+          4
+        ],
+        "fixed": 10
+      }
+    },
+    {
+      "idx": 23,
+      "presetId": "arciere",
+      "weaponId": "arco_lungo",
+      "attackModeIdx": 0,
+      "modeStat": "either",
+      "modeLabel": "default",
+      "chosenStat": "forza",
+      "diceN": 3,
+      "seed": 12368,
+      "roll": {
+        "variable": [
+          6,
+          4,
+          3,
+          1,
+          4
+        ],
+        "fixed": 10
+      }
+    },
+    {
+      "idx": 24,
+      "presetId": "arciere",
+      "weaponId": "arco_lungo",
+      "attackModeIdx": 0,
+      "modeStat": "either",
+      "modeLabel": "default",
+      "chosenStat": "agilità",
+      "diceN": 1,
+      "seed": 12369,
+      "roll": {
+        "variable": [
+          5,
+          6,
+          3
+        ],
+        "fixed": 10
+      }
+    },
+    {
+      "idx": 25,
+      "presetId": "arciere",
+      "weaponId": "arco_lungo",
+      "attackModeIdx": 0,
+      "modeStat": "either",
+      "modeLabel": "default",
+      "chosenStat": "agilità",
+      "diceN": 2,
+      "seed": 12370,
+      "roll": {
+        "variable": [
+          5,
+          1,
+          6,
+          6
+        ],
+        "fixed": 10
+      }
+    },
+    {
+      "idx": 26,
+      "presetId": "arciere",
+      "weaponId": "arco_lungo",
+      "attackModeIdx": 0,
+      "modeStat": "either",
+      "modeLabel": "default",
+      "chosenStat": "agilità",
+      "diceN": 3,
+      "seed": 12371,
+      "roll": {
+        "variable": [
+          3,
+          2,
+          6,
+          6,
+          4
+        ],
+        "fixed": 10
+      }
+    },
+    {
+      "idx": 27,
+      "presetId": "tank",
+      "weaponId": "mazza",
+      "attackModeIdx": 0,
+      "modeStat": "either",
+      "modeLabel": "default",
+      "chosenStat": null,
+      "diceN": 1,
+      "seed": 12372,
+      "roll": {
+        "variable": [
+          5
+        ],
+        "fixed": 11
+      }
+    },
+    {
+      "idx": 28,
+      "presetId": "tank",
+      "weaponId": "mazza",
+      "attackModeIdx": 0,
+      "modeStat": "either",
+      "modeLabel": "default",
+      "chosenStat": null,
+      "diceN": 2,
+      "seed": 12373,
+      "roll": {
+        "variable": [
+          4,
+          3
+        ],
+        "fixed": 11
+      }
+    },
+    {
+      "idx": 29,
+      "presetId": "tank",
+      "weaponId": "mazza",
+      "attackModeIdx": 0,
+      "modeStat": "either",
+      "modeLabel": "default",
+      "chosenStat": null,
+      "diceN": 3,
+      "seed": 12374,
+      "roll": {
+        "variable": [
+          3,
+          2,
+          1
+        ],
+        "fixed": 11
+      }
+    },
+    {
+      "idx": 30,
+      "presetId": "tank",
+      "weaponId": "mazza",
+      "attackModeIdx": 0,
+      "modeStat": "either",
+      "modeLabel": "default",
+      "chosenStat": "forza",
+      "diceN": 1,
+      "seed": 12375,
+      "roll": {
+        "variable": [
+          6
+        ],
+        "fixed": 11
+      }
+    },
+    {
+      "idx": 31,
+      "presetId": "tank",
+      "weaponId": "mazza",
+      "attackModeIdx": 0,
+      "modeStat": "either",
+      "modeLabel": "default",
+      "chosenStat": "forza",
+      "diceN": 2,
+      "seed": 12376,
+      "roll": {
+        "variable": [
+          5,
+          2
+        ],
+        "fixed": 11
+      }
+    },
+    {
+      "idx": 32,
+      "presetId": "tank",
+      "weaponId": "mazza",
+      "attackModeIdx": 0,
+      "modeStat": "either",
+      "modeLabel": "default",
+      "chosenStat": "forza",
+      "diceN": 3,
+      "seed": 12377,
+      "roll": {
+        "variable": [
+          5,
+          6,
+          3
+        ],
+        "fixed": 11
+      }
+    },
+    {
+      "idx": 33,
+      "presetId": "tank",
+      "weaponId": "mazza",
+      "attackModeIdx": 0,
+      "modeStat": "either",
+      "modeLabel": "default",
+      "chosenStat": "agilità",
+      "diceN": 1,
+      "seed": 12378,
+      "roll": {
+        "variable": [
+          1
+        ],
+        "fixed": 11
+      }
+    },
+    {
+      "idx": 34,
+      "presetId": "tank",
+      "weaponId": "mazza",
+      "attackModeIdx": 0,
+      "modeStat": "either",
+      "modeLabel": "default",
+      "chosenStat": "agilità",
+      "diceN": 2,
+      "seed": 12379,
+      "roll": {
+        "variable": [
+          6,
+          2
+        ],
+        "fixed": 11
+      }
+    },
+    {
+      "idx": 35,
+      "presetId": "tank",
+      "weaponId": "mazza",
+      "attackModeIdx": 0,
+      "modeStat": "either",
+      "modeLabel": "default",
+      "chosenStat": "agilità",
+      "diceN": 3,
+      "seed": 12380,
+      "roll": {
+        "variable": [
+          4,
+          6,
+          3
+        ],
+        "fixed": 11
+      }
+    }
+  ],
+  "dodge": [
+    {
+      "idx": 36,
+      "presetId": "spadaccino",
+      "diceN": 1,
+      "seed": 12381,
+      "roll": {
+        "variable": [
+          4
+        ],
+        "fixed": 2
+      }
+    },
+    {
+      "idx": 37,
+      "presetId": "spadaccino",
+      "diceN": 2,
+      "seed": 12382,
+      "roll": {
+        "variable": [
+          2,
+          5
+        ],
+        "fixed": 2
+      }
+    },
+    {
+      "idx": 38,
+      "presetId": "spadaccino",
+      "diceN": 3,
+      "seed": 12383,
+      "roll": {
+        "variable": [
+          2,
+          4,
+          6
+        ],
+        "fixed": 2
+      }
+    },
+    {
+      "idx": 39,
+      "presetId": "arciere",
+      "diceN": 1,
+      "seed": 12384,
+      "roll": {
+        "variable": [
+          2
+        ],
+        "fixed": 2
+      }
+    },
+    {
+      "idx": 40,
+      "presetId": "arciere",
+      "diceN": 2,
+      "seed": 12385,
+      "roll": {
+        "variable": [
+          5,
+          5
+        ],
+        "fixed": 2
+      }
+    },
+    {
+      "idx": 41,
+      "presetId": "arciere",
+      "diceN": 3,
+      "seed": 12386,
+      "roll": {
+        "variable": [
+          1,
+          4,
+          2
+        ],
+        "fixed": 2
+      }
+    },
+    {
+      "idx": 42,
+      "presetId": "tank",
+      "diceN": 1,
+      "seed": 12387,
+      "roll": {
+        "variable": [
+          1
+        ],
+        "fixed": 2
+      }
+    },
+    {
+      "idx": 43,
+      "presetId": "tank",
+      "diceN": 2,
+      "seed": 12388,
+      "roll": {
+        "variable": [
+          6,
+          3
+        ],
+        "fixed": 2
+      }
+    },
+    {
+      "idx": 44,
+      "presetId": "tank",
+      "diceN": 3,
+      "seed": 12389,
+      "roll": {
+        "variable": [
+          3,
+          2,
+          1
+        ],
+        "fixed": 2
+      }
+    }
+  ],
+  "parry": [
+    {
+      "idx": 45,
+      "presetId": "spadaccino",
+      "parryWith": "weapon",
+      "diceN": 1,
+      "seed": 12390,
+      "roll": {
+        "variable": [
+          3,
+          6
+        ],
+        "fixed": 8
+      }
+    },
+    {
+      "idx": 46,
+      "presetId": "spadaccino",
+      "parryWith": "weapon",
+      "diceN": 2,
+      "seed": 12391,
+      "roll": {
+        "variable": [
+          4,
+          6,
+          4
+        ],
+        "fixed": 8
+      }
+    },
+    {
+      "idx": 47,
+      "presetId": "spadaccino",
+      "parryWith": "offhand",
+      "diceN": 1,
+      "seed": 12392,
+      "roll": null
+    },
+    {
+      "idx": 48,
+      "presetId": "spadaccino",
+      "parryWith": "offhand",
+      "diceN": 2,
+      "seed": 12393,
+      "roll": null
+    },
+    {
+      "idx": 49,
+      "presetId": "arciere",
+      "parryWith": "weapon",
+      "diceN": 1,
+      "seed": 12394,
+      "roll": null
+    },
+    {
+      "idx": 50,
+      "presetId": "arciere",
+      "parryWith": "weapon",
+      "diceN": 2,
+      "seed": 12395,
+      "roll": null
+    },
+    {
+      "idx": 51,
+      "presetId": "arciere",
+      "parryWith": "offhand",
+      "diceN": 1,
+      "seed": 12396,
+      "roll": {
+        "variable": [
+          3,
+          2
+        ],
+        "fixed": 2
+      }
+    },
+    {
+      "idx": 52,
+      "presetId": "arciere",
+      "parryWith": "offhand",
+      "diceN": 2,
+      "seed": 12397,
+      "roll": {
+        "variable": [
+          2,
+          4,
+          2
+        ],
+        "fixed": 2
+      }
+    },
+    {
+      "idx": 53,
+      "presetId": "tank",
+      "parryWith": "weapon",
+      "diceN": 1,
+      "seed": 12398,
+      "roll": {
+        "variable": [
+          4
+        ],
+        "fixed": 5
+      }
+    },
+    {
+      "idx": 54,
+      "presetId": "tank",
+      "parryWith": "weapon",
+      "diceN": 2,
+      "seed": 12399,
+      "roll": {
+        "variable": [
+          1,
+          3
+        ],
+        "fixed": 5
+      }
+    },
+    {
+      "idx": 55,
+      "presetId": "tank",
+      "parryWith": "offhand",
+      "diceN": 1,
+      "seed": 12400,
+      "roll": {
+        "variable": [
+          4,
+          3
+        ],
+        "fixed": 11
+      }
+    },
+    {
+      "idx": 56,
+      "presetId": "tank",
+      "parryWith": "offhand",
+      "diceN": 2,
+      "seed": 12401,
+      "roll": {
+        "variable": [
+          5,
+          6,
+          3
+        ],
+        "fixed": 11
+      }
+    }
+  ],
+  "resolve": [
+    {
+      "idx": 0,
+      "atk": {
+        "variable": [
+          3,
+          5
+        ],
+        "fixed": 4
+      },
+      "def": {
+        "variable": [
+          4,
+          6
+        ],
+        "fixed": 2
+      },
+      "dodge": {
+        "hit": false,
+        "rawDamage": 0,
+        "slancioPenalty": 4
+      },
+      "parry": {
+        "hit": false,
+        "rawDamage": 0,
+        "slancioPenalty": 0
+      },
+      "noDefense": {
+        "hit": true,
+        "rawDamage": 12,
+        "slancioPenalty": 0
+      }
+    },
+    {
+      "idx": 1,
+      "atk": {
+        "variable": [
+          6,
+          6
+        ],
+        "fixed": 4
+      },
+      "def": {
+        "variable": [
+          1,
+          1
+        ],
+        "fixed": 2
+      },
+      "dodge": {
+        "hit": true,
+        "rawDamage": 12,
+        "slancioPenalty": 0
+      },
+      "parry": {
+        "hit": true,
+        "rawDamage": 12,
+        "slancioPenalty": 0
+      },
+      "noDefense": {
+        "hit": true,
+        "rawDamage": 16,
+        "slancioPenalty": 0
+      }
+    },
+    {
+      "idx": 2,
+      "atk": {
+        "variable": [
+          3,
+          3
+        ],
+        "fixed": 2
+      },
+      "def": {
+        "variable": [
+          3,
+          3
+        ],
+        "fixed": 2
+      },
+      "dodge": {
+        "hit": false,
+        "rawDamage": 0,
+        "slancioPenalty": 2
+      },
+      "parry": {
+        "hit": false,
+        "rawDamage": 0,
+        "slancioPenalty": 0
+      },
+      "noDefense": {
+        "hit": true,
+        "rawDamage": 8,
+        "slancioPenalty": 0
+      }
+    },
+    {
+      "idx": 3,
+      "atk": {
+        "variable": [
+          5
+        ],
+        "fixed": 9
+      },
+      "def": {
+        "variable": [],
+        "fixed": 5
+      },
+      "dodge": {
+        "hit": false,
+        "rawDamage": 0,
+        "slancioPenalty": 0
+      },
+      "parry": {
+        "hit": true,
+        "rawDamage": 9,
+        "slancioPenalty": 0
+      },
+      "noDefense": {
+        "hit": true,
+        "rawDamage": 14,
+        "slancioPenalty": 0
+      }
+    },
+    {
+      "idx": 4,
+      "atk": {
+        "variable": [
+          1,
+          2
+        ],
+        "fixed": 0
+      },
+      "def": {
+        "variable": [
+          3,
+          4
+        ],
+        "fixed": 6
+      },
+      "dodge": {
+        "hit": false,
+        "rawDamage": 0,
+        "slancioPenalty": 10
+      },
+      "parry": {
+        "hit": false,
+        "rawDamage": 0,
+        "slancioPenalty": 10
+      },
+      "noDefense": {
+        "hit": true,
+        "rawDamage": 3,
+        "slancioPenalty": 0
+      }
+    }
+  ],
+  "damage": [
+    {
+      "target": "no-armor",
+      "armor": null,
+      "startHp": 20,
+      "raw": 0,
+      "effectiveDamage": 0,
+      "newHp": 20
+    },
+    {
+      "target": "no-armor",
+      "armor": null,
+      "startHp": 20,
+      "raw": 1,
+      "effectiveDamage": 1,
+      "newHp": 19
+    },
+    {
+      "target": "no-armor",
+      "armor": null,
+      "startHp": 20,
+      "raw": 5,
+      "effectiveDamage": 5,
+      "newHp": 15
+    },
+    {
+      "target": "no-armor",
+      "armor": null,
+      "startHp": 20,
+      "raw": 9,
+      "effectiveDamage": 9,
+      "newHp": 11
+    },
+    {
+      "target": "no-armor",
+      "armor": null,
+      "startHp": 20,
+      "raw": 10,
+      "effectiveDamage": 10,
+      "newHp": 10
+    },
+    {
+      "target": "no-armor",
+      "armor": null,
+      "startHp": 20,
+      "raw": 15,
+      "effectiveDamage": 15,
+      "newHp": 5
+    },
+    {
+      "target": "no-armor",
+      "armor": null,
+      "startHp": 20,
+      "raw": 25,
+      "effectiveDamage": 25,
+      "newHp": 0
+    },
+    {
+      "target": "leg-armor",
+      "armor": "armatura_leggera",
+      "startHp": 20,
+      "raw": 0,
+      "effectiveDamage": 0,
+      "newHp": 20
+    },
+    {
+      "target": "leg-armor",
+      "armor": "armatura_leggera",
+      "startHp": 20,
+      "raw": 1,
+      "effectiveDamage": 0,
+      "newHp": 20
+    },
+    {
+      "target": "leg-armor",
+      "armor": "armatura_leggera",
+      "startHp": 20,
+      "raw": 5,
+      "effectiveDamage": 2,
+      "newHp": 18
+    },
+    {
+      "target": "leg-armor",
+      "armor": "armatura_leggera",
+      "startHp": 20,
+      "raw": 9,
+      "effectiveDamage": 6,
+      "newHp": 14
+    },
+    {
+      "target": "leg-armor",
+      "armor": "armatura_leggera",
+      "startHp": 20,
+      "raw": 10,
+      "effectiveDamage": 7,
+      "newHp": 13
+    },
+    {
+      "target": "leg-armor",
+      "armor": "armatura_leggera",
+      "startHp": 20,
+      "raw": 15,
+      "effectiveDamage": 12,
+      "newHp": 8
+    },
+    {
+      "target": "leg-armor",
+      "armor": "armatura_leggera",
+      "startHp": 20,
+      "raw": 25,
+      "effectiveDamage": 22,
+      "newHp": 0
+    },
+    {
+      "target": "med-armor",
+      "armor": "armatura_media",
+      "startHp": 20,
+      "raw": 0,
+      "effectiveDamage": 0,
+      "newHp": 20
+    },
+    {
+      "target": "med-armor",
+      "armor": "armatura_media",
+      "startHp": 20,
+      "raw": 1,
+      "effectiveDamage": 0,
+      "newHp": 20
+    },
+    {
+      "target": "med-armor",
+      "armor": "armatura_media",
+      "startHp": 20,
+      "raw": 5,
+      "effectiveDamage": 0,
+      "newHp": 20
+    },
+    {
+      "target": "med-armor",
+      "armor": "armatura_media",
+      "startHp": 20,
+      "raw": 9,
+      "effectiveDamage": 3,
+      "newHp": 17
+    },
+    {
+      "target": "med-armor",
+      "armor": "armatura_media",
+      "startHp": 20,
+      "raw": 10,
+      "effectiveDamage": 4,
+      "newHp": 16
+    },
+    {
+      "target": "med-armor",
+      "armor": "armatura_media",
+      "startHp": 20,
+      "raw": 15,
+      "effectiveDamage": 9,
+      "newHp": 11
+    },
+    {
+      "target": "med-armor",
+      "armor": "armatura_media",
+      "startHp": 20,
+      "raw": 25,
+      "effectiveDamage": 19,
+      "newHp": 1
+    },
+    {
+      "target": "pes-armor",
+      "armor": "armatura_pesante",
+      "startHp": 20,
+      "raw": 0,
+      "effectiveDamage": 0,
+      "newHp": 20
+    },
+    {
+      "target": "pes-armor",
+      "armor": "armatura_pesante",
+      "startHp": 20,
+      "raw": 1,
+      "effectiveDamage": 0,
+      "newHp": 20
+    },
+    {
+      "target": "pes-armor",
+      "armor": "armatura_pesante",
+      "startHp": 20,
+      "raw": 5,
+      "effectiveDamage": 0,
+      "newHp": 20
+    },
+    {
+      "target": "pes-armor",
+      "armor": "armatura_pesante",
+      "startHp": 20,
+      "raw": 9,
+      "effectiveDamage": 0,
+      "newHp": 20
+    },
+    {
+      "target": "pes-armor",
+      "armor": "armatura_pesante",
+      "startHp": 20,
+      "raw": 10,
+      "effectiveDamage": 1,
+      "newHp": 19
+    },
+    {
+      "target": "pes-armor",
+      "armor": "armatura_pesante",
+      "startHp": 20,
+      "raw": 15,
+      "effectiveDamage": 6,
+      "newHp": 14
+    },
+    {
+      "target": "pes-armor",
+      "armor": "armatura_pesante",
+      "startHp": 20,
+      "raw": 25,
+      "effectiveDamage": 16,
+      "newHp": 4
+    }
+  ],
+  "sequence": {
+    "seed": 13344,
+    "atkPreset": "spadaccino",
+    "defPreset": "tank",
+    "atkRoll": {
+      "variable": [
+        6,
+        4,
+        3
+      ],
+      "fixed": 6
+    },
+    "dodgeRoll": {
+      "variable": [
+        3,
+        6
+      ],
+      "fixed": 2
+    },
+    "parryRoll": {
+      "variable": [
+        2,
+        4
+      ],
+      "fixed": 11
+    },
+    "finalRngState": -63927853
+  }
+}

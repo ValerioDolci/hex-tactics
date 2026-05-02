@@ -1,0 +1,577 @@
+{
+  "meta": {
+    "generated_by": "tests/sim/dump_utility_ai_golden.test.ts"
+  },
+  "scenarios": [
+    {
+      "label": "arc-vs-tank-mid-distance",
+      "presetA": "arciere",
+      "presetB": "tank",
+      "posA": {
+        "col": 4,
+        "row": 4
+      },
+      "posB": {
+        "col": 8,
+        "row": 4
+      },
+      "seed": 41001,
+      "phases": [
+        {
+          "phase": "turn-start",
+          "unit": "A-arciere",
+          "legalMoves": [
+            {
+              "type": "START_TURN",
+              "slancioDice": 0
+            },
+            {
+              "type": "START_TURN",
+              "slancioDice": 1
+            },
+            {
+              "type": "START_TURN",
+              "slancioDice": 2
+            },
+            {
+              "type": "START_TURN",
+              "slancioDice": 2,
+              "impetoToSlancio": 3
+            },
+            {
+              "type": "START_TURN",
+              "slancioDice": 2,
+              "impetoToSlancio": 6
+            },
+            {
+              "type": "START_TURN",
+              "slancioDice": 2,
+              "impetoToSlancio": 9
+            }
+          ],
+          "decision": {
+            "type": "START_TURN",
+            "slancioDice": 2
+          },
+          "scoreOfDecision": 2
+        },
+        {
+          "phase": "choosing-action",
+          "unit": "A-arciere",
+          "legalMoves": [
+            {
+              "type": "DECLARE_ATTACK",
+              "attackerId": "A-arciere",
+              "targetId": "B-tank",
+              "weaponId": "arco_lungo",
+              "attackModeIdx": 0,
+              "chosenStat": "agilità",
+              "isRanged": true
+            },
+            {
+              "type": "MOVE",
+              "unitId": "A-arciere",
+              "targetHex": {
+                "q": 3,
+                "r": 4
+              }
+            },
+            {
+              "type": "MOVE",
+              "unitId": "A-arciere",
+              "targetHex": {
+                "q": 3,
+                "r": 5
+              }
+            },
+            {
+              "type": "MOVE",
+              "unitId": "A-arciere",
+              "targetHex": {
+                "q": 3,
+                "r": 6
+              }
+            },
+            {
+              "type": "MOVE",
+              "unitId": "A-arciere",
+              "targetHex": {
+                "q": 1,
+                "r": -2
+              }
+            },
+            {
+              "type": "MOVE",
+              "unitId": "A-arciere",
+              "targetHex": {
+                "q": 2,
+                "r": -3
+              }
+            },
+            {
+              "type": "END_TURN"
+            }
+          ],
+          "decision": {
+            "type": "DECLARE_ATTACK",
+            "attackerId": "A-arciere",
+            "targetId": "B-tank",
+            "weaponId": "arco_lungo",
+            "attackModeIdx": 0,
+            "chosenStat": "agilità",
+            "isRanged": true
+          },
+          "scoreOfDecision": 8.4
+        }
+      ]
+    },
+    {
+      "label": "spadaccino-adjacent",
+      "presetA": "spadaccino",
+      "presetB": "tank",
+      "posA": {
+        "col": 4,
+        "row": 4
+      },
+      "posB": {
+        "col": 5,
+        "row": 4
+      },
+      "seed": 41002,
+      "phases": [
+        {
+          "phase": "turn-start",
+          "unit": "B-tank",
+          "legalMoves": [
+            {
+              "type": "START_TURN",
+              "slancioDice": 0
+            },
+            {
+              "type": "START_TURN",
+              "slancioDice": 1
+            },
+            {
+              "type": "START_TURN",
+              "slancioDice": 2
+            },
+            {
+              "type": "START_TURN",
+              "slancioDice": 2,
+              "impetoToSlancio": 3
+            },
+            {
+              "type": "START_TURN",
+              "slancioDice": 2,
+              "impetoToSlancio": 6
+            },
+            {
+              "type": "START_TURN",
+              "slancioDice": 2,
+              "impetoToSlancio": 9
+            }
+          ],
+          "decision": {
+            "type": "START_TURN",
+            "slancioDice": 0
+          },
+          "scoreOfDecision": 2
+        },
+        {
+          "phase": "choosing-action",
+          "unit": "B-tank",
+          "legalMoves": [
+            {
+              "type": "DECLARE_ATTACK",
+              "attackerId": "B-tank",
+              "targetId": "A-spadaccino",
+              "weaponId": "mazza",
+              "attackModeIdx": 0,
+              "chosenStat": "forza",
+              "isRanged": false
+            },
+            {
+              "type": "END_TURN"
+            }
+          ],
+          "decision": {
+            "type": "DECLARE_ATTACK",
+            "attackerId": "B-tank",
+            "targetId": "A-spadaccino",
+            "weaponId": "mazza",
+            "attackModeIdx": 0,
+            "chosenStat": "forza",
+            "isRanged": false
+          },
+          "scoreOfDecision": 3.6
+        }
+      ]
+    },
+    {
+      "label": "tank-vs-arciere-far",
+      "presetA": "tank",
+      "presetB": "arciere",
+      "posA": {
+        "col": 4,
+        "row": 4
+      },
+      "posB": {
+        "col": 12,
+        "row": 4
+      },
+      "seed": 41003,
+      "phases": [
+        {
+          "phase": "turn-start",
+          "unit": "A-tank",
+          "legalMoves": [
+            {
+              "type": "START_TURN",
+              "slancioDice": 0
+            },
+            {
+              "type": "START_TURN",
+              "slancioDice": 1
+            },
+            {
+              "type": "START_TURN",
+              "slancioDice": 2
+            },
+            {
+              "type": "START_TURN",
+              "slancioDice": 2,
+              "impetoToSlancio": 3
+            },
+            {
+              "type": "START_TURN",
+              "slancioDice": 2,
+              "impetoToSlancio": 6
+            },
+            {
+              "type": "START_TURN",
+              "slancioDice": 2,
+              "impetoToSlancio": 9
+            }
+          ],
+          "decision": {
+            "type": "START_TURN",
+            "slancioDice": 2
+          },
+          "scoreOfDecision": 2
+        },
+        {
+          "phase": "choosing-action",
+          "unit": "A-tank",
+          "legalMoves": [
+            {
+              "type": "MOVE",
+              "unitId": "A-tank",
+              "targetHex": {
+                "q": 7,
+                "r": 4
+              }
+            },
+            {
+              "type": "MOVE",
+              "unitId": "A-tank",
+              "targetHex": {
+                "q": 7,
+                "r": 5
+              }
+            },
+            {
+              "type": "MOVE",
+              "unitId": "A-tank",
+              "targetHex": {
+                "q": 7,
+                "r": 6
+              }
+            },
+            {
+              "type": "MOVE",
+              "unitId": "A-tank",
+              "targetHex": {
+                "q": 1,
+                "r": -6
+              }
+            },
+            {
+              "type": "MOVE",
+              "unitId": "A-tank",
+              "targetHex": {
+                "q": 2,
+                "r": -7
+              }
+            },
+            {
+              "type": "END_TURN"
+            }
+          ],
+          "decision": {
+            "type": "MOVE",
+            "unitId": "A-tank",
+            "targetHex": {
+              "q": 7,
+              "r": 4
+            }
+          },
+          "scoreOfDecision": 4.5
+        }
+      ]
+    }
+  ],
+  "battles": [
+    {
+      "matchup": {
+        "a": "spadaccino",
+        "b": "tank"
+      },
+      "seed": 300000,
+      "winner": "B",
+      "rounds": 10,
+      "hpA": 0,
+      "hpB": 10,
+      "events": 116,
+      "finalRngSeed": 304898385,
+      "logSize": 108
+    },
+    {
+      "matchup": {
+        "a": "spadaccino",
+        "b": "tank"
+      },
+      "seed": 300023,
+      "winner": "B",
+      "rounds": 7,
+      "hpA": 0,
+      "hpB": 15,
+      "events": 77,
+      "finalRngSeed": -703032144,
+      "logSize": 75
+    },
+    {
+      "matchup": {
+        "a": "spadaccino",
+        "b": "tank"
+      },
+      "seed": 300046,
+      "winner": "B",
+      "rounds": 5,
+      "hpA": 0,
+      "hpB": 20,
+      "events": 56,
+      "finalRngSeed": 688510613,
+      "logSize": 56
+    },
+    {
+      "matchup": {
+        "a": "spadaccino",
+        "b": "tank"
+      },
+      "seed": 300069,
+      "winner": "B",
+      "rounds": 6,
+      "hpA": 0,
+      "hpB": 20,
+      "events": 65,
+      "finalRngSeed": 1192468912,
+      "logSize": 64
+    },
+    {
+      "matchup": {
+        "a": "spadaccino",
+        "b": "tank"
+      },
+      "seed": 300092,
+      "winner": "B",
+      "rounds": 7,
+      "hpA": 0,
+      "hpB": 20,
+      "events": 77,
+      "finalRngSeed": -703032075,
+      "logSize": 74
+    },
+    {
+      "matchup": {
+        "a": "spadaccino",
+        "b": "tank"
+      },
+      "seed": 300115,
+      "winner": "A",
+      "rounds": 8,
+      "hpA": 20,
+      "hpB": 0,
+      "events": 92,
+      "finalRngSeed": 1632494037,
+      "logSize": 89
+    },
+    {
+      "matchup": {
+        "a": "arciere",
+        "b": "spadaccino"
+      },
+      "seed": 300000,
+      "winner": "B",
+      "rounds": 5,
+      "hpA": 0,
+      "hpB": 14,
+      "events": 58,
+      "finalRngSeed": 1128522646,
+      "logSize": 61
+    },
+    {
+      "matchup": {
+        "a": "arciere",
+        "b": "spadaccino"
+      },
+      "seed": 300023,
+      "winner": "B",
+      "rounds": 4,
+      "hpA": 0,
+      "hpB": 7,
+      "events": 45,
+      "finalRngSeed": 56670920,
+      "logSize": 48
+    },
+    {
+      "matchup": {
+        "a": "arciere",
+        "b": "spadaccino"
+      },
+      "seed": 300046,
+      "winner": "A",
+      "rounds": 2,
+      "hpA": 12,
+      "hpB": 0,
+      "events": 21,
+      "finalRngSeed": -887299412,
+      "logSize": 23
+    },
+    {
+      "matchup": {
+        "a": "arciere",
+        "b": "spadaccino"
+      },
+      "seed": 300069,
+      "winner": "A",
+      "rounds": 5,
+      "hpA": 5,
+      "hpB": 0,
+      "events": 60,
+      "finalRngSeed": 1760358385,
+      "logSize": 62
+    },
+    {
+      "matchup": {
+        "a": "arciere",
+        "b": "spadaccino"
+      },
+      "seed": 300092,
+      "winner": "B",
+      "rounds": 3,
+      "hpA": 0,
+      "hpB": 6,
+      "events": 34,
+      "finalRngSeed": 2016116196,
+      "logSize": 37
+    },
+    {
+      "matchup": {
+        "a": "arciere",
+        "b": "spadaccino"
+      },
+      "seed": 300115,
+      "winner": "B",
+      "rounds": 7,
+      "hpA": 0,
+      "hpB": 20,
+      "events": 74,
+      "finalRngSeed": 936710170,
+      "logSize": 76
+    },
+    {
+      "matchup": {
+        "a": "tank",
+        "b": "arciere"
+      },
+      "seed": 300000,
+      "winner": "B",
+      "rounds": 8,
+      "hpA": 0,
+      "hpB": 8,
+      "events": 94,
+      "finalRngSeed": -1022731152,
+      "logSize": 95
+    },
+    {
+      "matchup": {
+        "a": "tank",
+        "b": "arciere"
+      },
+      "seed": 300023,
+      "winner": "B",
+      "rounds": 6,
+      "hpA": 0,
+      "hpB": 1,
+      "events": 67,
+      "finalRngSeed": -766979341,
+      "logSize": 67
+    },
+    {
+      "matchup": {
+        "a": "tank",
+        "b": "arciere"
+      },
+      "seed": 300046,
+      "winner": "B",
+      "rounds": 2,
+      "hpA": 0,
+      "hpB": 20,
+      "events": 14,
+      "finalRngSeed": 1008207598,
+      "logSize": 15
+    },
+    {
+      "matchup": {
+        "a": "tank",
+        "b": "arciere"
+      },
+      "seed": 300069,
+      "winner": "B",
+      "rounds": 2,
+      "hpA": 0,
+      "hpB": 20,
+      "events": 14,
+      "finalRngSeed": 1008207621,
+      "logSize": 15
+    },
+    {
+      "matchup": {
+        "a": "tank",
+        "b": "arciere"
+      },
+      "seed": 300092,
+      "winner": "B",
+      "rounds": 6,
+      "hpA": 0,
+      "hpB": 20,
+      "events": 74,
+      "finalRngSeed": 432750871,
+      "logSize": 73
+    },
+    {
+      "matchup": {
+        "a": "tank",
+        "b": "arciere"
+      },
+      "seed": 300115,
+      "winner": "A",
+      "rounds": 4,
+      "hpA": 3,
+      "hpB": 0,
+      "events": 46,
+      "finalRngSeed": -511223461,
+      "logSize": 46
+    }
+  ]
+}

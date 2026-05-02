@@ -1,0 +1,1052 @@
+{
+  "meta": {
+    "generated_by": "tests/sim/dump_turn_round_golden.test.ts"
+  },
+  "preset_stats": [
+    {
+      "presetId": "spadaccino",
+      "maxSlancioRoll": 15,
+      "diceRecoveryNormal": 3,
+      "diceRecoveryImpetoZero": 1
+    },
+    {
+      "presetId": "arciere",
+      "maxSlancioRoll": 21,
+      "diceRecoveryNormal": 3,
+      "diceRecoveryImpetoZero": 1
+    },
+    {
+      "presetId": "tank",
+      "maxSlancioRoll": 21,
+      "diceRecoveryNormal": 3,
+      "diceRecoveryImpetoZero": 1
+    }
+  ],
+  "initial_slancio": [
+    {
+      "presetId": "spadaccino",
+      "seed": 50000,
+      "slancioAfter": 6,
+      "finalRngState": -631785670
+    },
+    {
+      "presetId": "arciere",
+      "seed": 50000,
+      "slancioAfter": 9,
+      "finalRngState": 1199780143
+    },
+    {
+      "presetId": "tank",
+      "seed": 50000,
+      "slancioAfter": 9,
+      "finalRngState": 1199780143
+    },
+    {
+      "presetId": "spadaccino",
+      "seed": 50010,
+      "slancioAfter": 9,
+      "finalRngState": -631785660
+    },
+    {
+      "presetId": "arciere",
+      "seed": 50010,
+      "slancioAfter": 13,
+      "finalRngState": 1199780153
+    },
+    {
+      "presetId": "tank",
+      "seed": 50010,
+      "slancioAfter": 13,
+      "finalRngState": 1199780153
+    },
+    {
+      "presetId": "spadaccino",
+      "seed": 50020,
+      "slancioAfter": 11,
+      "finalRngState": -631785650
+    },
+    {
+      "presetId": "arciere",
+      "seed": 50020,
+      "slancioAfter": 17,
+      "finalRngState": 1199780163
+    },
+    {
+      "presetId": "tank",
+      "seed": 50020,
+      "slancioAfter": 17,
+      "finalRngState": 1199780163
+    },
+    {
+      "presetId": "spadaccino",
+      "seed": 50030,
+      "slancioAfter": 9,
+      "finalRngState": -631785640
+    },
+    {
+      "presetId": "arciere",
+      "seed": 50030,
+      "slancioAfter": 14,
+      "finalRngState": 1199780173
+    },
+    {
+      "presetId": "tank",
+      "seed": 50030,
+      "slancioAfter": 14,
+      "finalRngState": 1199780173
+    },
+    {
+      "presetId": "spadaccino",
+      "seed": 50040,
+      "slancioAfter": 13,
+      "finalRngState": -631785630
+    },
+    {
+      "presetId": "arciere",
+      "seed": 50040,
+      "slancioAfter": 18,
+      "finalRngState": 1199780183
+    },
+    {
+      "presetId": "tank",
+      "seed": 50040,
+      "slancioAfter": 18,
+      "finalRngState": 1199780183
+    }
+  ],
+  "turn_start": [
+    {
+      "idx": 0,
+      "presetId": "spadaccino",
+      "slancioDiceN": 0,
+      "impetoToSlancio": 0,
+      "seed": 70000,
+      "input": {
+        "impeto": 12,
+        "slancio": 4,
+        "dadiAzione": 3
+      },
+      "output": {
+        "id": "A-spadaccino",
+        "hp": 20,
+        "impeto": 16,
+        "slancio": 0,
+        "dadiAzione": 6,
+        "alive": true,
+        "hexMovedThisTurn": 0,
+        "actionTakenThisTurn": false
+      },
+      "finalRngState": 70000
+    },
+    {
+      "idx": 1,
+      "presetId": "spadaccino",
+      "slancioDiceN": 0,
+      "impetoToSlancio": 5,
+      "seed": 70007,
+      "input": {
+        "impeto": 12,
+        "slancio": 4,
+        "dadiAzione": 3
+      },
+      "output": {
+        "id": "A-spadaccino",
+        "hp": 20,
+        "impeto": 11,
+        "slancio": 5,
+        "dadiAzione": 6,
+        "alive": true,
+        "hexMovedThisTurn": 0,
+        "actionTakenThisTurn": false
+      },
+      "finalRngState": 70007
+    },
+    {
+      "idx": 2,
+      "presetId": "spadaccino",
+      "slancioDiceN": 1,
+      "impetoToSlancio": 0,
+      "seed": 70014,
+      "input": {
+        "impeto": 12,
+        "slancio": 4,
+        "dadiAzione": 3
+      },
+      "output": {
+        "id": "A-spadaccino",
+        "hp": 20,
+        "impeto": 16,
+        "slancio": 4,
+        "dadiAzione": 6,
+        "alive": true,
+        "hexMovedThisTurn": 0,
+        "actionTakenThisTurn": false
+      },
+      "finalRngState": 1831635827
+    },
+    {
+      "idx": 3,
+      "presetId": "spadaccino",
+      "slancioDiceN": 1,
+      "impetoToSlancio": 5,
+      "seed": 70021,
+      "input": {
+        "impeto": 12,
+        "slancio": 4,
+        "dadiAzione": 3
+      },
+      "output": {
+        "id": "A-spadaccino",
+        "hp": 20,
+        "impeto": 11,
+        "slancio": 11,
+        "dadiAzione": 6,
+        "alive": true,
+        "hexMovedThisTurn": 0,
+        "actionTakenThisTurn": false
+      },
+      "finalRngState": 1831635834
+    },
+    {
+      "idx": 4,
+      "presetId": "spadaccino",
+      "slancioDiceN": 2,
+      "impetoToSlancio": 0,
+      "seed": 70028,
+      "input": {
+        "impeto": 12,
+        "slancio": 4,
+        "dadiAzione": 3
+      },
+      "output": {
+        "id": "A-spadaccino",
+        "hp": 20,
+        "impeto": 16,
+        "slancio": 10,
+        "dadiAzione": 6,
+        "alive": true,
+        "hexMovedThisTurn": 0,
+        "actionTakenThisTurn": false
+      },
+      "finalRngState": -631765642
+    },
+    {
+      "idx": 5,
+      "presetId": "spadaccino",
+      "slancioDiceN": 2,
+      "impetoToSlancio": 5,
+      "seed": 70035,
+      "input": {
+        "impeto": 12,
+        "slancio": 4,
+        "dadiAzione": 3
+      },
+      "output": {
+        "id": "A-spadaccino",
+        "hp": 20,
+        "impeto": 11,
+        "slancio": 15,
+        "dadiAzione": 6,
+        "alive": true,
+        "hexMovedThisTurn": 0,
+        "actionTakenThisTurn": false
+      },
+      "finalRngState": -631765635
+    },
+    {
+      "idx": 6,
+      "presetId": "spadaccino",
+      "slancioDiceN": 3,
+      "impetoToSlancio": 0,
+      "seed": 70042,
+      "input": {
+        "impeto": 12,
+        "slancio": 4,
+        "dadiAzione": 3
+      },
+      "output": {
+        "id": "A-spadaccino",
+        "hp": 20,
+        "impeto": 16,
+        "slancio": 13,
+        "dadiAzione": 6,
+        "alive": true,
+        "hexMovedThisTurn": 0,
+        "actionTakenThisTurn": false
+      },
+      "finalRngState": -631765628
+    },
+    {
+      "idx": 7,
+      "presetId": "spadaccino",
+      "slancioDiceN": 3,
+      "impetoToSlancio": 5,
+      "seed": 70049,
+      "input": {
+        "impeto": 12,
+        "slancio": 4,
+        "dadiAzione": 3
+      },
+      "output": {
+        "id": "A-spadaccino",
+        "hp": 20,
+        "impeto": 13,
+        "slancio": 15,
+        "dadiAzione": 6,
+        "alive": true,
+        "hexMovedThisTurn": 0,
+        "actionTakenThisTurn": false
+      },
+      "finalRngState": -631765621
+    },
+    {
+      "idx": 8,
+      "presetId": "arciere",
+      "slancioDiceN": 0,
+      "impetoToSlancio": 0,
+      "seed": 70056,
+      "input": {
+        "impeto": 12,
+        "slancio": 4,
+        "dadiAzione": 3
+      },
+      "output": {
+        "id": "A-arciere",
+        "hp": 20,
+        "impeto": 16,
+        "slancio": 0,
+        "dadiAzione": 6,
+        "alive": true,
+        "hexMovedThisTurn": 0,
+        "actionTakenThisTurn": false
+      },
+      "finalRngState": 70056
+    },
+    {
+      "idx": 9,
+      "presetId": "arciere",
+      "slancioDiceN": 0,
+      "impetoToSlancio": 5,
+      "seed": 70063,
+      "input": {
+        "impeto": 12,
+        "slancio": 4,
+        "dadiAzione": 3
+      },
+      "output": {
+        "id": "A-arciere",
+        "hp": 20,
+        "impeto": 11,
+        "slancio": 5,
+        "dadiAzione": 6,
+        "alive": true,
+        "hexMovedThisTurn": 0,
+        "actionTakenThisTurn": false
+      },
+      "finalRngState": 70063
+    },
+    {
+      "idx": 10,
+      "presetId": "arciere",
+      "slancioDiceN": 1,
+      "impetoToSlancio": 0,
+      "seed": 70070,
+      "input": {
+        "impeto": 12,
+        "slancio": 4,
+        "dadiAzione": 3
+      },
+      "output": {
+        "id": "A-arciere",
+        "hp": 20,
+        "impeto": 16,
+        "slancio": 5,
+        "dadiAzione": 6,
+        "alive": true,
+        "hexMovedThisTurn": 0,
+        "actionTakenThisTurn": false
+      },
+      "finalRngState": 1831635883
+    },
+    {
+      "idx": 11,
+      "presetId": "arciere",
+      "slancioDiceN": 1,
+      "impetoToSlancio": 5,
+      "seed": 70077,
+      "input": {
+        "impeto": 12,
+        "slancio": 4,
+        "dadiAzione": 3
+      },
+      "output": {
+        "id": "A-arciere",
+        "hp": 20,
+        "impeto": 11,
+        "slancio": 13,
+        "dadiAzione": 6,
+        "alive": true,
+        "hexMovedThisTurn": 0,
+        "actionTakenThisTurn": false
+      },
+      "finalRngState": 1831635890
+    },
+    {
+      "idx": 12,
+      "presetId": "arciere",
+      "slancioDiceN": 2,
+      "impetoToSlancio": 0,
+      "seed": 70084,
+      "input": {
+        "impeto": 12,
+        "slancio": 4,
+        "dadiAzione": 3
+      },
+      "output": {
+        "id": "A-arciere",
+        "hp": 20,
+        "impeto": 16,
+        "slancio": 8,
+        "dadiAzione": 6,
+        "alive": true,
+        "hexMovedThisTurn": 0,
+        "actionTakenThisTurn": false
+      },
+      "finalRngState": -631765586
+    },
+    {
+      "idx": 13,
+      "presetId": "arciere",
+      "slancioDiceN": 2,
+      "impetoToSlancio": 5,
+      "seed": 70091,
+      "input": {
+        "impeto": 12,
+        "slancio": 4,
+        "dadiAzione": 3
+      },
+      "output": {
+        "id": "A-arciere",
+        "hp": 20,
+        "impeto": 11,
+        "slancio": 19,
+        "dadiAzione": 6,
+        "alive": true,
+        "hexMovedThisTurn": 0,
+        "actionTakenThisTurn": false
+      },
+      "finalRngState": -631765579
+    },
+    {
+      "idx": 14,
+      "presetId": "arciere",
+      "slancioDiceN": 3,
+      "impetoToSlancio": 0,
+      "seed": 70098,
+      "input": {
+        "impeto": 12,
+        "slancio": 4,
+        "dadiAzione": 3
+      },
+      "output": {
+        "id": "A-arciere",
+        "hp": 20,
+        "impeto": 16,
+        "slancio": 10,
+        "dadiAzione": 6,
+        "alive": true,
+        "hexMovedThisTurn": 0,
+        "actionTakenThisTurn": false
+      },
+      "finalRngState": 1199800241
+    },
+    {
+      "idx": 15,
+      "presetId": "arciere",
+      "slancioDiceN": 3,
+      "impetoToSlancio": 5,
+      "seed": 70105,
+      "input": {
+        "impeto": 12,
+        "slancio": 4,
+        "dadiAzione": 3
+      },
+      "output": {
+        "id": "A-arciere",
+        "hp": 20,
+        "impeto": 11,
+        "slancio": 16,
+        "dadiAzione": 6,
+        "alive": true,
+        "hexMovedThisTurn": 0,
+        "actionTakenThisTurn": false
+      },
+      "finalRngState": 1199800248
+    },
+    {
+      "idx": 16,
+      "presetId": "tank",
+      "slancioDiceN": 0,
+      "impetoToSlancio": 0,
+      "seed": 70112,
+      "input": {
+        "impeto": 12,
+        "slancio": 4,
+        "dadiAzione": 3
+      },
+      "output": {
+        "id": "A-tank",
+        "hp": 20,
+        "impeto": 16,
+        "slancio": 0,
+        "dadiAzione": 6,
+        "alive": true,
+        "hexMovedThisTurn": 0,
+        "actionTakenThisTurn": false
+      },
+      "finalRngState": 70112
+    },
+    {
+      "idx": 17,
+      "presetId": "tank",
+      "slancioDiceN": 0,
+      "impetoToSlancio": 5,
+      "seed": 70119,
+      "input": {
+        "impeto": 12,
+        "slancio": 4,
+        "dadiAzione": 3
+      },
+      "output": {
+        "id": "A-tank",
+        "hp": 20,
+        "impeto": 11,
+        "slancio": 5,
+        "dadiAzione": 6,
+        "alive": true,
+        "hexMovedThisTurn": 0,
+        "actionTakenThisTurn": false
+      },
+      "finalRngState": 70119
+    },
+    {
+      "idx": 18,
+      "presetId": "tank",
+      "slancioDiceN": 1,
+      "impetoToSlancio": 0,
+      "seed": 70126,
+      "input": {
+        "impeto": 12,
+        "slancio": 4,
+        "dadiAzione": 3
+      },
+      "output": {
+        "id": "A-tank",
+        "hp": 20,
+        "impeto": 16,
+        "slancio": 4,
+        "dadiAzione": 6,
+        "alive": true,
+        "hexMovedThisTurn": 0,
+        "actionTakenThisTurn": false
+      },
+      "finalRngState": 1831635939
+    },
+    {
+      "idx": 19,
+      "presetId": "tank",
+      "slancioDiceN": 1,
+      "impetoToSlancio": 5,
+      "seed": 70133,
+      "input": {
+        "impeto": 12,
+        "slancio": 4,
+        "dadiAzione": 3
+      },
+      "output": {
+        "id": "A-tank",
+        "hp": 20,
+        "impeto": 11,
+        "slancio": 11,
+        "dadiAzione": 6,
+        "alive": true,
+        "hexMovedThisTurn": 0,
+        "actionTakenThisTurn": false
+      },
+      "finalRngState": 1831635946
+    },
+    {
+      "idx": 20,
+      "presetId": "tank",
+      "slancioDiceN": 2,
+      "impetoToSlancio": 0,
+      "seed": 70140,
+      "input": {
+        "impeto": 12,
+        "slancio": 4,
+        "dadiAzione": 3
+      },
+      "output": {
+        "id": "A-tank",
+        "hp": 20,
+        "impeto": 16,
+        "slancio": 7,
+        "dadiAzione": 6,
+        "alive": true,
+        "hexMovedThisTurn": 0,
+        "actionTakenThisTurn": false
+      },
+      "finalRngState": -631765530
+    },
+    {
+      "idx": 21,
+      "presetId": "tank",
+      "slancioDiceN": 2,
+      "impetoToSlancio": 5,
+      "seed": 70147,
+      "input": {
+        "impeto": 12,
+        "slancio": 4,
+        "dadiAzione": 3
+      },
+      "output": {
+        "id": "A-tank",
+        "hp": 20,
+        "impeto": 11,
+        "slancio": 14,
+        "dadiAzione": 6,
+        "alive": true,
+        "hexMovedThisTurn": 0,
+        "actionTakenThisTurn": false
+      },
+      "finalRngState": -631765523
+    },
+    {
+      "idx": 22,
+      "presetId": "tank",
+      "slancioDiceN": 3,
+      "impetoToSlancio": 0,
+      "seed": 70154,
+      "input": {
+        "impeto": 12,
+        "slancio": 4,
+        "dadiAzione": 3
+      },
+      "output": {
+        "id": "A-tank",
+        "hp": 20,
+        "impeto": 16,
+        "slancio": 20,
+        "dadiAzione": 6,
+        "alive": true,
+        "hexMovedThisTurn": 0,
+        "actionTakenThisTurn": false
+      },
+      "finalRngState": 1199800297
+    },
+    {
+      "idx": 23,
+      "presetId": "tank",
+      "slancioDiceN": 3,
+      "impetoToSlancio": 5,
+      "seed": 70161,
+      "input": {
+        "impeto": 12,
+        "slancio": 4,
+        "dadiAzione": 3
+      },
+      "output": {
+        "id": "A-tank",
+        "hp": 20,
+        "impeto": 11,
+        "slancio": 18,
+        "dadiAzione": 6,
+        "alive": true,
+        "hexMovedThisTurn": 0,
+        "actionTakenThisTurn": false
+      },
+      "finalRngState": 1199800304
+    }
+  ],
+  "slancio_penalty": [
+    {
+      "startSlancio": 0,
+      "startImpeto": 10,
+      "penalty": 0,
+      "slancioAfter": 0,
+      "impetoAfter": 10
+    },
+    {
+      "startSlancio": 0,
+      "startImpeto": 10,
+      "penalty": 2,
+      "slancioAfter": 0,
+      "impetoAfter": 8
+    },
+    {
+      "startSlancio": 0,
+      "startImpeto": 10,
+      "penalty": 5,
+      "slancioAfter": 0,
+      "impetoAfter": 5
+    },
+    {
+      "startSlancio": 0,
+      "startImpeto": 10,
+      "penalty": 10,
+      "slancioAfter": 0,
+      "impetoAfter": 0
+    },
+    {
+      "startSlancio": 0,
+      "startImpeto": 14,
+      "penalty": 0,
+      "slancioAfter": 0,
+      "impetoAfter": 14
+    },
+    {
+      "startSlancio": 0,
+      "startImpeto": 14,
+      "penalty": 2,
+      "slancioAfter": 0,
+      "impetoAfter": 12
+    },
+    {
+      "startSlancio": 0,
+      "startImpeto": 14,
+      "penalty": 5,
+      "slancioAfter": 0,
+      "impetoAfter": 9
+    },
+    {
+      "startSlancio": 0,
+      "startImpeto": 14,
+      "penalty": 10,
+      "slancioAfter": 0,
+      "impetoAfter": 4
+    },
+    {
+      "startSlancio": 0,
+      "startImpeto": 20,
+      "penalty": 0,
+      "slancioAfter": 0,
+      "impetoAfter": 20
+    },
+    {
+      "startSlancio": 0,
+      "startImpeto": 20,
+      "penalty": 2,
+      "slancioAfter": 0,
+      "impetoAfter": 18
+    },
+    {
+      "startSlancio": 0,
+      "startImpeto": 20,
+      "penalty": 5,
+      "slancioAfter": 0,
+      "impetoAfter": 15
+    },
+    {
+      "startSlancio": 0,
+      "startImpeto": 20,
+      "penalty": 10,
+      "slancioAfter": 0,
+      "impetoAfter": 10
+    },
+    {
+      "startSlancio": 3,
+      "startImpeto": 10,
+      "penalty": 0,
+      "slancioAfter": 3,
+      "impetoAfter": 10
+    },
+    {
+      "startSlancio": 3,
+      "startImpeto": 10,
+      "penalty": 2,
+      "slancioAfter": 1,
+      "impetoAfter": 10
+    },
+    {
+      "startSlancio": 3,
+      "startImpeto": 10,
+      "penalty": 5,
+      "slancioAfter": 0,
+      "impetoAfter": 8
+    },
+    {
+      "startSlancio": 3,
+      "startImpeto": 10,
+      "penalty": 10,
+      "slancioAfter": 0,
+      "impetoAfter": 3
+    },
+    {
+      "startSlancio": 3,
+      "startImpeto": 14,
+      "penalty": 0,
+      "slancioAfter": 3,
+      "impetoAfter": 14
+    },
+    {
+      "startSlancio": 3,
+      "startImpeto": 14,
+      "penalty": 2,
+      "slancioAfter": 1,
+      "impetoAfter": 14
+    },
+    {
+      "startSlancio": 3,
+      "startImpeto": 14,
+      "penalty": 5,
+      "slancioAfter": 0,
+      "impetoAfter": 12
+    },
+    {
+      "startSlancio": 3,
+      "startImpeto": 14,
+      "penalty": 10,
+      "slancioAfter": 0,
+      "impetoAfter": 7
+    },
+    {
+      "startSlancio": 3,
+      "startImpeto": 20,
+      "penalty": 0,
+      "slancioAfter": 3,
+      "impetoAfter": 20
+    },
+    {
+      "startSlancio": 3,
+      "startImpeto": 20,
+      "penalty": 2,
+      "slancioAfter": 1,
+      "impetoAfter": 20
+    },
+    {
+      "startSlancio": 3,
+      "startImpeto": 20,
+      "penalty": 5,
+      "slancioAfter": 0,
+      "impetoAfter": 18
+    },
+    {
+      "startSlancio": 3,
+      "startImpeto": 20,
+      "penalty": 10,
+      "slancioAfter": 0,
+      "impetoAfter": 13
+    },
+    {
+      "startSlancio": 8,
+      "startImpeto": 10,
+      "penalty": 0,
+      "slancioAfter": 8,
+      "impetoAfter": 10
+    },
+    {
+      "startSlancio": 8,
+      "startImpeto": 10,
+      "penalty": 2,
+      "slancioAfter": 6,
+      "impetoAfter": 10
+    },
+    {
+      "startSlancio": 8,
+      "startImpeto": 10,
+      "penalty": 5,
+      "slancioAfter": 3,
+      "impetoAfter": 10
+    },
+    {
+      "startSlancio": 8,
+      "startImpeto": 10,
+      "penalty": 10,
+      "slancioAfter": 0,
+      "impetoAfter": 8
+    },
+    {
+      "startSlancio": 8,
+      "startImpeto": 14,
+      "penalty": 0,
+      "slancioAfter": 8,
+      "impetoAfter": 14
+    },
+    {
+      "startSlancio": 8,
+      "startImpeto": 14,
+      "penalty": 2,
+      "slancioAfter": 6,
+      "impetoAfter": 14
+    },
+    {
+      "startSlancio": 8,
+      "startImpeto": 14,
+      "penalty": 5,
+      "slancioAfter": 3,
+      "impetoAfter": 14
+    },
+    {
+      "startSlancio": 8,
+      "startImpeto": 14,
+      "penalty": 10,
+      "slancioAfter": 0,
+      "impetoAfter": 12
+    },
+    {
+      "startSlancio": 8,
+      "startImpeto": 20,
+      "penalty": 0,
+      "slancioAfter": 8,
+      "impetoAfter": 20
+    },
+    {
+      "startSlancio": 8,
+      "startImpeto": 20,
+      "penalty": 2,
+      "slancioAfter": 6,
+      "impetoAfter": 20
+    },
+    {
+      "startSlancio": 8,
+      "startImpeto": 20,
+      "penalty": 5,
+      "slancioAfter": 3,
+      "impetoAfter": 20
+    },
+    {
+      "startSlancio": 8,
+      "startImpeto": 20,
+      "penalty": 10,
+      "slancioAfter": 0,
+      "impetoAfter": 18
+    }
+  ],
+  "turn_order": [
+    {
+      "label": "distinct-impetos",
+      "seed": 88000,
+      "unitInputs": [
+        {
+          "id": "A1",
+          "faction": "A",
+          "impeto": 14,
+          "slancio": 0,
+          "alive": true
+        },
+        {
+          "id": "B1",
+          "faction": "B",
+          "impeto": 16,
+          "slancio": 3,
+          "alive": true
+        }
+      ],
+      "order": [
+        "B1",
+        "A1"
+      ],
+      "finalRngState": -631747670
+    },
+    {
+      "label": "tie-impeto-distinct-slancio",
+      "seed": 88001,
+      "unitInputs": [
+        {
+          "id": "A1",
+          "faction": "A",
+          "impeto": 14,
+          "slancio": 5,
+          "alive": true
+        },
+        {
+          "id": "B1",
+          "faction": "B",
+          "impeto": 14,
+          "slancio": 2,
+          "alive": true
+        }
+      ],
+      "order": [
+        "A1",
+        "B1"
+      ],
+      "finalRngState": -631747669
+    },
+    {
+      "label": "full-tie-rng-decides",
+      "seed": 88002,
+      "unitInputs": [
+        {
+          "id": "A1",
+          "faction": "A",
+          "impeto": 14,
+          "slancio": 0,
+          "alive": true
+        },
+        {
+          "id": "B1",
+          "faction": "B",
+          "impeto": 14,
+          "slancio": 0,
+          "alive": true
+        }
+      ],
+      "order": [
+        "B1",
+        "A1"
+      ],
+      "finalRngState": -631747668
+    },
+    {
+      "label": "with-dead-unit-skipped",
+      "seed": 88003,
+      "unitInputs": [
+        {
+          "id": "A1",
+          "faction": "A",
+          "impeto": 14,
+          "slancio": 5,
+          "alive": true
+        },
+        {
+          "id": "A2",
+          "faction": "A",
+          "impeto": 20,
+          "slancio": 0,
+          "alive": false
+        },
+        {
+          "id": "B1",
+          "faction": "B",
+          "impeto": 16,
+          "slancio": 0,
+          "alive": true
+        }
+      ],
+      "order": [
+        "B1",
+        "A1"
+      ],
+      "finalRngState": -631747667
+    }
+  ],
+  "game_over": [
+    {
+      "label": "both-alive",
+      "result": null
+    },
+    {
+      "label": "A-wins",
+      "result": "A"
+    },
+    {
+      "label": "B-wins",
+      "result": "B"
+    },
+    {
+      "label": "all-dead-draw",
+      "result": "draw"
+    }
+  ]
+}

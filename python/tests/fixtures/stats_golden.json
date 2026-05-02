@@ -1,0 +1,195 @@
+{
+  "meta": {
+    "generated_by": "tests/sim/dump_stats_golden.test.ts"
+  },
+  "presets": [
+    {
+      "id": "spadaccino",
+      "impedimentTotal": 0,
+      "pieces": [
+        {
+          "id": "spada_lunga",
+          "category": "spade",
+          "impediment": 6,
+          "reduction": 6
+        },
+        {
+          "id": "armatura_media",
+          "category": "armature",
+          "impediment": 6,
+          "reduction": 6
+        }
+      ],
+      "attack": {
+        "ctx": {
+          "azione": "attaccare",
+          "stat": null,
+          "classeOggetto": "spade",
+          "oggettoSpecifico": "spada_lunga"
+        },
+        "flat": 2,
+        "forced": 0,
+        "maxExtra": 0
+      },
+      "parry": {
+        "ctx": {
+          "azione": "parare",
+          "stat": null,
+          "classeOggetto": "spade",
+          "oggettoSpecifico": "spada_lunga"
+        },
+        "flat": 0,
+        "forced": 0,
+        "maxExtra": 0
+      },
+      "dodge": {
+        "ctx": {
+          "azione": "schivare",
+          "stat": "agilità",
+          "classeOggetto": null,
+          "oggettoSpecifico": null
+        },
+        "flat": 0,
+        "forced": 0,
+        "maxExtra": 0
+      },
+      "slancio": {
+        "ctx": {
+          "azione": "slancio",
+          "stat": "agilità",
+          "classeOggetto": null,
+          "oggettoSpecifico": null
+        },
+        "flat": 1,
+        "forced": 0,
+        "maxExtra": 0
+      }
+    },
+    {
+      "id": "arciere",
+      "impedimentTotal": 0,
+      "pieces": [
+        {
+          "id": "arco_lungo",
+          "category": "archi",
+          "impediment": 6,
+          "reduction": 6
+        },
+        {
+          "id": "pugnale",
+          "category": "pugnali",
+          "impediment": 0,
+          "reduction": 3
+        },
+        {
+          "id": "armatura_leggera",
+          "category": "armature",
+          "impediment": 3,
+          "reduction": 3
+        }
+      ],
+      "attack": {
+        "ctx": {
+          "azione": "attaccare",
+          "stat": null,
+          "classeOggetto": "archi",
+          "oggettoSpecifico": "arco_lungo"
+        },
+        "flat": 2,
+        "forced": 0,
+        "maxExtra": 0
+      },
+      "parry": null,
+      "dodge": {
+        "ctx": {
+          "azione": "schivare",
+          "stat": "agilità",
+          "classeOggetto": null,
+          "oggettoSpecifico": null
+        },
+        "flat": 0,
+        "forced": 0,
+        "maxExtra": 0
+      },
+      "slancio": {
+        "ctx": {
+          "azione": "slancio",
+          "stat": "agilità",
+          "classeOggetto": null,
+          "oggettoSpecifico": null
+        },
+        "flat": 1,
+        "forced": 0,
+        "maxExtra": 1
+      }
+    },
+    {
+      "id": "tank",
+      "impedimentTotal": 0,
+      "pieces": [
+        {
+          "id": "mazza",
+          "category": "mazze",
+          "impediment": 3,
+          "reduction": 3
+        },
+        {
+          "id": "scudo_medio",
+          "category": "scudi",
+          "impediment": 6,
+          "reduction": 6
+        },
+        {
+          "id": "armatura_media",
+          "category": "armature",
+          "impediment": 6,
+          "reduction": 6
+        }
+      ],
+      "attack": {
+        "ctx": {
+          "azione": "attaccare",
+          "stat": null,
+          "classeOggetto": "mazze",
+          "oggettoSpecifico": "mazza"
+        },
+        "flat": 0,
+        "forced": 0,
+        "maxExtra": 0
+      },
+      "parry": {
+        "ctx": {
+          "azione": "parare",
+          "stat": null,
+          "classeOggetto": "scudi",
+          "oggettoSpecifico": "scudo_medio"
+        },
+        "flat": 1,
+        "forced": 0,
+        "maxExtra": 0
+      },
+      "dodge": {
+        "ctx": {
+          "azione": "schivare",
+          "stat": "agilità",
+          "classeOggetto": null,
+          "oggettoSpecifico": null
+        },
+        "flat": 0,
+        "forced": 0,
+        "maxExtra": 0
+      },
+      "slancio": {
+        "ctx": {
+          "azione": "slancio",
+          "stat": "agilità",
+          "classeOggetto": null,
+          "oggettoSpecifico": null
+        },
+        "flat": 1,
+        "forced": 0,
+        "maxExtra": 1
+      }
+    }
+  ]
+}

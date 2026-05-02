@@ -1,0 +1,1074 @@
+{
+  "meta": {
+    "generated_by": "tests/sim/dump_ai_battle_golden.test.ts"
+  },
+  "ai_decisions": [
+    {
+      "label": "arciere-vs-tank-decideSlancio",
+      "forUnit": "A-arciere",
+      "input": {
+        "phase": "turn-start",
+        "round": 1
+      },
+      "output": 0
+    },
+    {
+      "label": "arciere-vs-tank-decideAction",
+      "forUnit": "A-arciere",
+      "output": {
+        "type": "DECLARE_ATTACK",
+        "attackerId": "A-arciere",
+        "targetId": "B-tank",
+        "weaponId": "arco_lungo",
+        "attackModeIdx": 0,
+        "chosenStat": "forza",
+        "isRanged": false
+      }
+    },
+    {
+      "label": "arciere-vs-tank-decideAttackerDice",
+      "forUnit": "A-arciere",
+      "output": 2
+    },
+    {
+      "label": "arciere-vs-tank-decideDefense-no-pendingAction",
+      "forUnit": "B-tank",
+      "output": {
+        "defenseType": "parry",
+        "parryWith": "offhand",
+        "diceN": 2
+      }
+    },
+    {
+      "label": "spadaccino-vs-spadaccino-decideDefense-pa-2D6",
+      "forUnit": "B-spadaccino",
+      "output": {
+        "defenseType": "parry",
+        "parryWith": "weapon",
+        "diceN": 2
+      }
+    }
+  ],
+  "battles": [
+    {
+      "matchup": {
+        "a": "spadaccino",
+        "b": "tank"
+      },
+      "seed": 200000,
+      "winner": "A",
+      "rounds": 13,
+      "hpA": 14,
+      "hpB": 0,
+      "events": 135,
+      "finalState": {
+        "phase": "game-over",
+        "currentTurnIdx": 0,
+        "rngSeed": -1462793231,
+        "logSize": 126,
+        "units": {
+          "A-spadaccino": {
+            "hp": 14,
+            "slancio": 0,
+            "impeto": 6,
+            "dadiAzione": 1,
+            "alive": true
+          },
+          "B-tank": {
+            "hp": 0,
+            "slancio": 0,
+            "impeto": -26,
+            "dadiAzione": 0,
+            "alive": false
+          }
+        }
+      }
+    },
+    {
+      "matchup": {
+        "a": "spadaccino",
+        "b": "tank"
+      },
+      "seed": 200017,
+      "winner": "A",
+      "rounds": 9,
+      "hpA": 13,
+      "hpB": 0,
+      "events": 83,
+      "finalState": {
+        "phase": "game-over",
+        "currentTurnIdx": 0,
+        "rngSeed": 688436584,
+        "logSize": 79,
+        "units": {
+          "A-spadaccino": {
+            "hp": 13,
+            "slancio": 0,
+            "impeto": 3,
+            "dadiAzione": 4,
+            "alive": true
+          },
+          "B-tank": {
+            "hp": 0,
+            "slancio": 0,
+            "impeto": -15,
+            "dadiAzione": 0,
+            "alive": false
+          }
+        }
+      }
+    },
+    {
+      "matchup": {
+        "a": "spadaccino",
+        "b": "tank"
+      },
+      "seed": 200034,
+      "winner": "A",
+      "rounds": 9,
+      "hpA": 4,
+      "hpB": 0,
+      "events": 83,
+      "finalState": {
+        "phase": "game-over",
+        "currentTurnIdx": 0,
+        "rngSeed": 688436601,
+        "logSize": 81,
+        "units": {
+          "A-spadaccino": {
+            "hp": 4,
+            "slancio": 0,
+            "impeto": -5,
+            "dadiAzione": 2,
+            "alive": true
+          },
+          "B-tank": {
+            "hp": 0,
+            "slancio": 0,
+            "impeto": -19,
+            "dadiAzione": 0,
+            "alive": false
+          }
+        }
+      }
+    },
+    {
+      "matchup": {
+        "a": "spadaccino",
+        "b": "tank"
+      },
+      "seed": 200051,
+      "winner": null,
+      "rounds": 6,
+      "hpA": 20,
+      "hpB": 20,
+      "events": 5001,
+      "finalState": {
+        "phase": "choosing-action",
+        "currentTurnIdx": 1,
+        "rngSeed": 944180406,
+        "logSize": 4995,
+        "units": {
+          "A-spadaccino": {
+            "hp": 20,
+            "slancio": 0,
+            "impeto": 23,
+            "dadiAzione": 6,
+            "alive": true
+          },
+          "B-tank": {
+            "hp": 20,
+            "slancio": 0,
+            "impeto": 28,
+            "dadiAzione": 5,
+            "alive": true
+          }
+        }
+      }
+    },
+    {
+      "matchup": {
+        "a": "spadaccino",
+        "b": "tank"
+      },
+      "seed": 200068,
+      "winner": "A",
+      "rounds": 10,
+      "hpA": 20,
+      "hpB": 0,
+      "events": 97,
+      "finalState": {
+        "phase": "game-over",
+        "currentTurnIdx": 0,
+        "rngSeed": 1824234581,
+        "logSize": 91,
+        "units": {
+          "A-spadaccino": {
+            "hp": 20,
+            "slancio": 0,
+            "impeto": 22,
+            "dadiAzione": 3,
+            "alive": true
+          },
+          "B-tank": {
+            "hp": 0,
+            "slancio": 0,
+            "impeto": -16,
+            "dadiAzione": 0,
+            "alive": false
+          }
+        }
+      }
+    },
+    {
+      "matchup": {
+        "a": "arciere",
+        "b": "spadaccino"
+      },
+      "seed": 200000,
+      "winner": "A",
+      "rounds": 2,
+      "hpA": 20,
+      "hpB": 0,
+      "events": 15,
+      "finalState": {
+        "phase": "game-over",
+        "currentTurnIdx": 0,
+        "rngSeed": 440213079,
+        "logSize": 16,
+        "units": {
+          "A-arciere": {
+            "hp": 20,
+            "slancio": 7,
+            "impeto": 24,
+            "dadiAzione": 7,
+            "alive": true
+          },
+          "B-spadaccino": {
+            "hp": 0,
+            "slancio": 0,
+            "impeto": 7,
+            "dadiAzione": 9,
+            "alive": false
+          }
+        }
+      }
+    },
+    {
+      "matchup": {
+        "a": "arciere",
+        "b": "spadaccino"
+      },
+      "seed": 200017,
+      "winner": "A",
+      "rounds": 2,
+      "hpA": 20,
+      "hpB": 0,
+      "events": 15,
+      "finalState": {
+        "phase": "game-over",
+        "currentTurnIdx": 1,
+        "rngSeed": 1703884436,
+        "logSize": 14,
+        "units": {
+          "A-arciere": {
+            "hp": 20,
+            "slancio": 4,
+            "impeto": 21,
+            "dadiAzione": 7,
+            "alive": true
+          },
+          "B-spadaccino": {
+            "hp": 0,
+            "slancio": 0,
+            "impeto": 22,
+            "dadiAzione": 9,
+            "alive": false
+          }
+        }
+      }
+    },
+    {
+      "matchup": {
+        "a": "arciere",
+        "b": "spadaccino"
+      },
+      "seed": 200034,
+      "winner": "A",
+      "rounds": 1,
+      "hpA": 20,
+      "hpB": 0,
+      "events": 7,
+      "finalState": {
+        "phase": "game-over",
+        "currentTurnIdx": 0,
+        "rngSeed": 504153310,
+        "logSize": 8,
+        "units": {
+          "A-arciere": {
+            "hp": 20,
+            "slancio": 0,
+            "impeto": 26,
+            "dadiAzione": 7,
+            "alive": true
+          },
+          "B-spadaccino": {
+            "hp": 0,
+            "slancio": 8,
+            "impeto": 14,
+            "dadiAzione": 6,
+            "alive": false
+          }
+        }
+      }
+    },
+    {
+      "matchup": {
+        "a": "arciere",
+        "b": "spadaccino"
+      },
+      "seed": 200051,
+      "winner": "A",
+      "rounds": 2,
+      "hpA": 20,
+      "hpB": 0,
+      "events": 15,
+      "finalState": {
+        "phase": "game-over",
+        "currentTurnIdx": 0,
+        "rngSeed": 440213130,
+        "logSize": 16,
+        "units": {
+          "A-arciere": {
+            "hp": 20,
+            "slancio": 4,
+            "impeto": 29,
+            "dadiAzione": 7,
+            "alive": true
+          },
+          "B-spadaccino": {
+            "hp": 0,
+            "slancio": 0,
+            "impeto": 8,
+            "dadiAzione": 9,
+            "alive": false
+          }
+        }
+      }
+    },
+    {
+      "matchup": {
+        "a": "arciere",
+        "b": "spadaccino"
+      },
+      "seed": 200068,
+      "winner": null,
+      "rounds": 2,
+      "hpA": 20,
+      "hpB": 20,
+      "events": 5001,
+      "finalState": {
+        "phase": "choosing-action",
+        "currentTurnIdx": 0,
+        "rngSeed": -1391352666,
+        "logSize": 5001,
+        "units": {
+          "A-arciere": {
+            "hp": 20,
+            "slancio": 3,
+            "impeto": 30,
+            "dadiAzione": 7,
+            "alive": true
+          },
+          "B-spadaccino": {
+            "hp": 20,
+            "slancio": 0,
+            "impeto": 19,
+            "dadiAzione": 7,
+            "alive": true
+          }
+        }
+      }
+    },
+    {
+      "matchup": {
+        "a": "tank",
+        "b": "arciere"
+      },
+      "seed": 200000,
+      "winner": "A",
+      "rounds": 3,
+      "hpA": 20,
+      "hpB": 0,
+      "events": 27,
+      "finalState": {
+        "phase": "game-over",
+        "currentTurnIdx": 0,
+        "rngSeed": 1576004025,
+        "logSize": 28,
+        "units": {
+          "A-tank": {
+            "hp": 20,
+            "slancio": 0,
+            "impeto": 22,
+            "dadiAzione": 7,
+            "alive": true
+          },
+          "B-arciere": {
+            "hp": 0,
+            "slancio": 0,
+            "impeto": 13,
+            "dadiAzione": 3,
+            "alive": false
+          }
+        }
+      }
+    },
+    {
+      "matchup": {
+        "a": "tank",
+        "b": "arciere"
+      },
+      "seed": 200017,
+      "winner": "B",
+      "rounds": 2,
+      "hpA": 0,
+      "hpB": 20,
+      "events": 15,
+      "finalState": {
+        "phase": "game-over",
+        "currentTurnIdx": 0,
+        "rngSeed": -2023188387,
+        "logSize": 16,
+        "units": {
+          "A-tank": {
+            "hp": 0,
+            "slancio": 0,
+            "impeto": 10,
+            "dadiAzione": 9,
+            "alive": false
+          },
+          "B-arciere": {
+            "hp": 20,
+            "slancio": 9,
+            "impeto": 24,
+            "dadiAzione": 7,
+            "alive": true
+          }
+        }
+      }
+    },
+    {
+      "matchup": {
+        "a": "tank",
+        "b": "arciere"
+      },
+      "seed": 200034,
+      "winner": null,
+      "rounds": 2,
+      "hpA": 1,
+      "hpB": 20,
+      "events": 5001,
+      "finalState": {
+        "phase": "choosing-action",
+        "currentTurnIdx": 1,
+        "rngSeed": -759517030,
+        "logSize": 5000,
+        "units": {
+          "A-tank": {
+            "hp": 1,
+            "slancio": 0,
+            "impeto": 7,
+            "dadiAzione": 9,
+            "alive": true
+          },
+          "B-arciere": {
+            "hp": 20,
+            "slancio": 1,
+            "impeto": 26,
+            "dadiAzione": 7,
+            "alive": true
+          }
+        }
+      }
+    },
+    {
+      "matchup": {
+        "a": "tank",
+        "b": "arciere"
+      },
+      "seed": 200051,
+      "winner": null,
+      "rounds": 4,
+      "hpA": 19,
+      "hpB": 9,
+      "events": 5001,
+      "finalState": {
+        "phase": "choosing-action",
+        "currentTurnIdx": 0,
+        "rngSeed": -447382328,
+        "logSize": 5000,
+        "units": {
+          "A-tank": {
+            "hp": 19,
+            "slancio": 0,
+            "impeto": 19,
+            "dadiAzione": 6,
+            "alive": true
+          },
+          "B-arciere": {
+            "hp": 9,
+            "slancio": 0,
+            "impeto": 12,
+            "dadiAzione": 1,
+            "alive": true
+          }
+        }
+      }
+    },
+    {
+      "matchup": {
+        "a": "tank",
+        "b": "arciere"
+      },
+      "seed": 200068,
+      "winner": "B",
+      "rounds": 7,
+      "hpA": 0,
+      "hpB": 11,
+      "events": 78,
+      "finalState": {
+        "phase": "game-over",
+        "currentTurnIdx": 0,
+        "rngSeed": -1902862242,
+        "logSize": 77,
+        "units": {
+          "A-tank": {
+            "hp": 0,
+            "slancio": 0,
+            "impeto": -11,
+            "dadiAzione": 0,
+            "alive": false
+          },
+          "B-arciere": {
+            "hp": 11,
+            "slancio": 0,
+            "impeto": 6,
+            "dadiAzione": 3,
+            "alive": true
+          }
+        }
+      }
+    },
+    {
+      "matchup": {
+        "a": "spadaccino",
+        "b": "spadaccino"
+      },
+      "seed": 200000,
+      "winner": null,
+      "rounds": 6,
+      "hpA": 13,
+      "hpB": 19,
+      "events": 5001,
+      "finalState": {
+        "phase": "choosing-action",
+        "currentTurnIdx": 1,
+        "rngSeed": 944180355,
+        "logSize": 4998,
+        "units": {
+          "A-spadaccino": {
+            "hp": 13,
+            "slancio": 0,
+            "impeto": 4,
+            "dadiAzione": 6,
+            "alive": true
+          },
+          "B-spadaccino": {
+            "hp": 19,
+            "slancio": 0,
+            "impeto": 13,
+            "dadiAzione": 5,
+            "alive": true
+          }
+        }
+      }
+    },
+    {
+      "matchup": {
+        "a": "spadaccino",
+        "b": "spadaccino"
+      },
+      "seed": 200017,
+      "winner": "A",
+      "rounds": 9,
+      "hpA": 16,
+      "hpB": 0,
+      "events": 83,
+      "finalState": {
+        "phase": "game-over",
+        "currentTurnIdx": 0,
+        "rngSeed": 56600914,
+        "logSize": 79,
+        "units": {
+          "A-spadaccino": {
+            "hp": 16,
+            "slancio": 0,
+            "impeto": 2,
+            "dadiAzione": 4,
+            "alive": true
+          },
+          "B-spadaccino": {
+            "hp": 0,
+            "slancio": 0,
+            "impeto": -17,
+            "dadiAzione": 0,
+            "alive": false
+          }
+        }
+      }
+    },
+    {
+      "matchup": {
+        "a": "spadaccino",
+        "b": "spadaccino"
+      },
+      "seed": 200034,
+      "winner": null,
+      "rounds": 6,
+      "hpA": 5,
+      "hpB": 20,
+      "events": 5001,
+      "finalState": {
+        "phase": "choosing-action",
+        "currentTurnIdx": 1,
+        "rngSeed": 944180389,
+        "logSize": 4997,
+        "units": {
+          "A-spadaccino": {
+            "hp": 5,
+            "slancio": 0,
+            "impeto": -7,
+            "dadiAzione": 4,
+            "alive": true
+          },
+          "B-spadaccino": {
+            "hp": 20,
+            "slancio": 0,
+            "impeto": 23,
+            "dadiAzione": 5,
+            "alive": true
+          }
+        }
+      }
+    },
+    {
+      "matchup": {
+        "a": "spadaccino",
+        "b": "spadaccino"
+      },
+      "seed": 200051,
+      "winner": "A",
+      "rounds": 10,
+      "hpA": 10,
+      "hpB": 0,
+      "events": 97,
+      "finalState": {
+        "phase": "game-over",
+        "currentTurnIdx": 0,
+        "rngSeed": 1824234564,
+        "logSize": 92,
+        "units": {
+          "A-spadaccino": {
+            "hp": 10,
+            "slancio": 0,
+            "impeto": 9,
+            "dadiAzione": 3,
+            "alive": true
+          },
+          "B-spadaccino": {
+            "hp": 0,
+            "slancio": 0,
+            "impeto": -30,
+            "dadiAzione": 0,
+            "alive": false
+          }
+        }
+      }
+    },
+    {
+      "matchup": {
+        "a": "spadaccino",
+        "b": "spadaccino"
+      },
+      "seed": 200068,
+      "winner": "A",
+      "rounds": 10,
+      "hpA": 13,
+      "hpB": 0,
+      "events": 97,
+      "finalState": {
+        "phase": "game-over",
+        "currentTurnIdx": 0,
+        "rngSeed": -1271002572,
+        "logSize": 92,
+        "units": {
+          "A-spadaccino": {
+            "hp": 13,
+            "slancio": 0,
+            "impeto": 7,
+            "dadiAzione": 3,
+            "alive": true
+          },
+          "B-spadaccino": {
+            "hp": 0,
+            "slancio": 0,
+            "impeto": -12,
+            "dadiAzione": 0,
+            "alive": false
+          }
+        }
+      }
+    },
+    {
+      "matchup": {
+        "a": "arciere",
+        "b": "arciere"
+      },
+      "seed": 200000,
+      "winner": null,
+      "rounds": 1,
+      "hpA": 20,
+      "hpB": 12,
+      "events": 5001,
+      "finalState": {
+        "phase": "choosing-action",
+        "currentTurnIdx": 1,
+        "rngSeed": -759518064,
+        "logSize": 5001,
+        "units": {
+          "A-arciere": {
+            "hp": 20,
+            "slancio": 3,
+            "impeto": 24,
+            "dadiAzione": 7,
+            "alive": true
+          },
+          "B-arciere": {
+            "hp": 12,
+            "slancio": 0,
+            "impeto": 15,
+            "dadiAzione": 7,
+            "alive": true
+          }
+        }
+      }
+    },
+    {
+      "matchup": {
+        "a": "arciere",
+        "b": "arciere"
+      },
+      "seed": 200017,
+      "winner": "B",
+      "rounds": 1,
+      "hpA": 0,
+      "hpB": 20,
+      "events": 7,
+      "finalState": {
+        "phase": "game-over",
+        "currentTurnIdx": 0,
+        "rngSeed": -1959248190,
+        "logSize": 8,
+        "units": {
+          "A-arciere": {
+            "hp": 0,
+            "slancio": 7,
+            "impeto": 14,
+            "dadiAzione": 6,
+            "alive": false
+          },
+          "B-arciere": {
+            "hp": 20,
+            "slancio": 0,
+            "impeto": 24,
+            "dadiAzione": 7,
+            "alive": true
+          }
+        }
+      }
+    },
+    {
+      "matchup": {
+        "a": "arciere",
+        "b": "arciere"
+      },
+      "seed": 200034,
+      "winner": "B",
+      "rounds": 2,
+      "hpA": 0,
+      "hpB": 20,
+      "events": 17,
+      "finalState": {
+        "phase": "game-over",
+        "currentTurnIdx": 0,
+        "rngSeed": -1455293897,
+        "logSize": 18,
+        "units": {
+          "A-arciere": {
+            "hp": 0,
+            "slancio": 0,
+            "impeto": 6,
+            "dadiAzione": 5,
+            "alive": false
+          },
+          "B-arciere": {
+            "hp": 20,
+            "slancio": 0,
+            "impeto": 26,
+            "dadiAzione": 7,
+            "alive": true
+          }
+        }
+      }
+    },
+    {
+      "matchup": {
+        "a": "arciere",
+        "b": "arciere"
+      },
+      "seed": 200051,
+      "winner": "A",
+      "rounds": 1,
+      "hpA": 8,
+      "hpB": 0,
+      "events": 12,
+      "finalState": {
+        "phase": "game-over",
+        "currentTurnIdx": 1,
+        "rngSeed": -1391353683,
+        "logSize": 13,
+        "units": {
+          "A-arciere": {
+            "hp": 8,
+            "slancio": 8,
+            "impeto": 17,
+            "dadiAzione": 7,
+            "alive": true
+          },
+          "B-arciere": {
+            "hp": 0,
+            "slancio": 0,
+            "impeto": 30,
+            "dadiAzione": 7,
+            "alive": false
+          }
+        }
+      }
+    },
+    {
+      "matchup": {
+        "a": "arciere",
+        "b": "arciere"
+      },
+      "seed": 200068,
+      "winner": "B",
+      "rounds": 2,
+      "hpA": 0,
+      "hpB": 20,
+      "events": 17,
+      "finalState": {
+        "phase": "game-over",
+        "currentTurnIdx": 0,
+        "rngSeed": 1008107620,
+        "logSize": 18,
+        "units": {
+          "A-arciere": {
+            "hp": 0,
+            "slancio": 0,
+            "impeto": 15,
+            "dadiAzione": 5,
+            "alive": false
+          },
+          "B-arciere": {
+            "hp": 20,
+            "slancio": 0,
+            "impeto": 27,
+            "dadiAzione": 7,
+            "alive": true
+          }
+        }
+      }
+    },
+    {
+      "matchup": {
+        "a": "tank",
+        "b": "tank"
+      },
+      "seed": 200000,
+      "winner": null,
+      "rounds": 6,
+      "hpA": 20,
+      "hpB": 20,
+      "events": 5001,
+      "finalState": {
+        "phase": "choosing-action",
+        "currentTurnIdx": 1,
+        "rngSeed": 376285882,
+        "logSize": 4995,
+        "units": {
+          "A-tank": {
+            "hp": 20,
+            "slancio": 0,
+            "impeto": 20,
+            "dadiAzione": 7,
+            "alive": true
+          },
+          "B-tank": {
+            "hp": 20,
+            "slancio": 0,
+            "impeto": 21,
+            "dadiAzione": 5,
+            "alive": true
+          }
+        }
+      }
+    },
+    {
+      "matchup": {
+        "a": "tank",
+        "b": "tank"
+      },
+      "seed": 200017,
+      "winner": null,
+      "rounds": 6,
+      "hpA": 20,
+      "hpB": 20,
+      "events": 5001,
+      "finalState": {
+        "phase": "choosing-action",
+        "currentTurnIdx": 1,
+        "rngSeed": 376285899,
+        "logSize": 4995,
+        "units": {
+          "A-tank": {
+            "hp": 20,
+            "slancio": 0,
+            "impeto": 19,
+            "dadiAzione": 7,
+            "alive": true
+          },
+          "B-tank": {
+            "hp": 20,
+            "slancio": 0,
+            "impeto": 22,
+            "dadiAzione": 5,
+            "alive": true
+          }
+        }
+      }
+    },
+    {
+      "matchup": {
+        "a": "tank",
+        "b": "tank"
+      },
+      "seed": 200034,
+      "winner": null,
+      "rounds": 6,
+      "hpA": 20,
+      "hpB": 10,
+      "events": 5001,
+      "finalState": {
+        "phase": "choosing-action",
+        "currentTurnIdx": 1,
+        "rngSeed": 376285916,
+        "logSize": 4996,
+        "units": {
+          "A-tank": {
+            "hp": 20,
+            "slancio": 0,
+            "impeto": 26,
+            "dadiAzione": 7,
+            "alive": true
+          },
+          "B-tank": {
+            "hp": 10,
+            "slancio": 0,
+            "impeto": -1,
+            "dadiAzione": 5,
+            "alive": true
+          }
+        }
+      }
+    },
+    {
+      "matchup": {
+        "a": "tank",
+        "b": "tank"
+      },
+      "seed": 200051,
+      "winner": null,
+      "rounds": 6,
+      "hpA": 20,
+      "hpB": 20,
+      "events": 5001,
+      "finalState": {
+        "phase": "choosing-action",
+        "currentTurnIdx": 1,
+        "rngSeed": 376285933,
+        "logSize": 4995,
+        "units": {
+          "A-tank": {
+            "hp": 20,
+            "slancio": 0,
+            "impeto": 28,
+            "dadiAzione": 7,
+            "alive": true
+          },
+          "B-tank": {
+            "hp": 20,
+            "slancio": 0,
+            "impeto": 27,
+            "dadiAzione": 5,
+            "alive": true
+          }
+        }
+      }
+    },
+    {
+      "matchup": {
+        "a": "tank",
+        "b": "tank"
+      },
+      "seed": 200068,
+      "winner": "A",
+      "rounds": 10,
+      "hpA": 20,
+      "hpB": 0,
+      "events": 93,
+      "finalState": {
+        "phase": "game-over",
+        "currentTurnIdx": 0,
+        "rngSeed": -1774955848,
+        "logSize": 87,
+        "units": {
+          "A-tank": {
+            "hp": 20,
+            "slancio": 0,
+            "impeto": 25,
+            "dadiAzione": 3,
+            "alive": true
+          },
+          "B-tank": {
+            "hp": 0,
+            "slancio": 0,
+            "impeto": -28,
+            "dadiAzione": 0,
+            "alive": false
+          }
+        }
+      }
+    }
+  ]
+}

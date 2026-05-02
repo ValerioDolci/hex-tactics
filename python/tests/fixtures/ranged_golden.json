@@ -1,0 +1,520 @@
+{
+  "meta": {
+    "generated_by": "tests/sim/dump_ranged_golden.test.ts"
+  },
+  "los": [
+    {
+      "label": "clear-line-far",
+      "attackerPos": {
+        "col": 0,
+        "row": 0
+      },
+      "targetPos": {
+        "col": 10,
+        "row": 0
+      },
+      "blockerPositions": [],
+      "fromHex": {
+        "q": 1,
+        "r": 0
+      },
+      "visibility": 7,
+      "distance": 8
+    },
+    {
+      "label": "clear-line-mid",
+      "attackerPos": {
+        "col": 0,
+        "row": 0
+      },
+      "targetPos": {
+        "col": 5,
+        "row": 5
+      },
+      "blockerPositions": [],
+      "fromHex": {
+        "q": 0,
+        "r": 1
+      },
+      "visibility": 7,
+      "distance": 6
+    },
+    {
+      "label": "blocker-mid",
+      "attackerPos": {
+        "col": 0,
+        "row": 0
+      },
+      "targetPos": {
+        "col": 10,
+        "row": 0
+      },
+      "blockerPositions": [
+        {
+          "col": 5,
+          "row": 0
+        }
+      ],
+      "fromHex": {
+        "q": 1,
+        "r": 0
+      },
+      "visibility": 0,
+      "distance": 8
+    },
+    {
+      "label": "blocker-near-atk",
+      "attackerPos": {
+        "col": 0,
+        "row": 0
+      },
+      "targetPos": {
+        "col": 8,
+        "row": 0
+      },
+      "blockerPositions": [
+        {
+          "col": 4,
+          "row": 0
+        }
+      ],
+      "fromHex": {
+        "q": 1,
+        "r": 0
+      },
+      "visibility": 0,
+      "distance": 6
+    },
+    {
+      "label": "blocker-multiple",
+      "attackerPos": {
+        "col": 0,
+        "row": 0
+      },
+      "targetPos": {
+        "col": 8,
+        "row": 0
+      },
+      "blockerPositions": [
+        {
+          "col": 4,
+          "row": 0
+        },
+        {
+          "col": 6,
+          "row": 1
+        }
+      ],
+      "fromHex": {
+        "q": 1,
+        "r": 0
+      },
+      "visibility": 0,
+      "distance": 6
+    },
+    {
+      "label": "adjacent",
+      "attackerPos": {
+        "col": 0,
+        "row": 0
+      },
+      "targetPos": {
+        "col": 3,
+        "row": 0
+      },
+      "blockerPositions": [],
+      "fromHex": {
+        "q": 1,
+        "r": 0
+      },
+      "visibility": 7,
+      "distance": 1
+    }
+  ],
+  "can_fire": [
+    {
+      "label": "arco-lungo-in-range",
+      "atkPreset": "arciere",
+      "weapon": "arco_lungo",
+      "attackerPos": {
+        "col": 0,
+        "row": 0
+      },
+      "targetPos": {
+        "col": 7,
+        "row": 0
+      },
+      "blockerPositions": [],
+      "weaponLoaded": true,
+      "ok": false,
+      "reason": "fuori range (5 > 4)",
+      "los": {
+        "fromHex": {
+          "q": 1,
+          "r": 0
+        },
+        "visibility": 7,
+        "distance": 5
+      }
+    },
+    {
+      "label": "arco-lungo-out-of-range",
+      "atkPreset": "arciere",
+      "weapon": "arco_lungo",
+      "attackerPos": {
+        "col": 0,
+        "row": 0
+      },
+      "targetPos": {
+        "col": 12,
+        "row": 0
+      },
+      "blockerPositions": [],
+      "weaponLoaded": true,
+      "ok": false,
+      "reason": "fuori range (10 > 4)",
+      "los": {
+        "fromHex": {
+          "q": 1,
+          "r": 0
+        },
+        "visibility": 7,
+        "distance": 10
+      }
+    },
+    {
+      "label": "arco-lungo-blocked",
+      "atkPreset": "arciere",
+      "weapon": "arco_lungo",
+      "attackerPos": {
+        "col": 0,
+        "row": 0
+      },
+      "targetPos": {
+        "col": 7,
+        "row": 0
+      },
+      "blockerPositions": [
+        {
+          "col": 4,
+          "row": 0
+        }
+      ],
+      "weaponLoaded": true,
+      "ok": false,
+      "reason": "nessuna linea di vista",
+      "los": {
+        "fromHex": {
+          "q": 1,
+          "r": 0
+        },
+        "visibility": 0,
+        "distance": 5
+      }
+    },
+    {
+      "label": "balestra-loaded",
+      "atkPreset": "tank",
+      "weapon": "balestra",
+      "attackerPos": {
+        "col": 0,
+        "row": 0
+      },
+      "targetPos": {
+        "col": 5,
+        "row": 0
+      },
+      "blockerPositions": [],
+      "weaponLoaded": true,
+      "ok": false,
+      "reason": "fuori range (3 > 2)",
+      "los": {
+        "fromHex": {
+          "q": 1,
+          "r": 0
+        },
+        "visibility": 7,
+        "distance": 3
+      }
+    },
+    {
+      "label": "balestra-unloaded",
+      "atkPreset": "tank",
+      "weapon": "balestra",
+      "attackerPos": {
+        "col": 0,
+        "row": 0
+      },
+      "targetPos": {
+        "col": 5,
+        "row": 0
+      },
+      "blockerPositions": [],
+      "weaponLoaded": false,
+      "ok": false,
+      "reason": "Balestra è scarica — serve ricarica",
+      "los": null
+    },
+    {
+      "label": "mazza-non-ranged",
+      "atkPreset": "tank",
+      "weapon": "mazza",
+      "attackerPos": {
+        "col": 0,
+        "row": 0
+      },
+      "targetPos": {
+        "col": 5,
+        "row": 0
+      },
+      "blockerPositions": [],
+      "weaponLoaded": true,
+      "ok": false,
+      "reason": "arma non utilizzabile a distanza",
+      "los": null
+    },
+    {
+      "label": "giavellotto-throw",
+      "atkPreset": "spadaccino",
+      "weapon": "giavellotto",
+      "attackerPos": {
+        "col": 0,
+        "row": 0
+      },
+      "targetPos": {
+        "col": 5,
+        "row": 0
+      },
+      "blockerPositions": [],
+      "weaponLoaded": true,
+      "ok": true,
+      "reason": null,
+      "los": {
+        "fromHex": {
+          "q": 1,
+          "r": 0
+        },
+        "visibility": 7,
+        "distance": 3
+      }
+    }
+  ],
+  "ranged_attack": [
+    {
+      "idx": 0,
+      "atkPreset": "arciere",
+      "weapon": "arco_lungo",
+      "targetPreset": "tank",
+      "targetPos": {
+        "col": 5,
+        "row": 0
+      },
+      "targetSlancio": 0,
+      "visibility": 7,
+      "distance": 3,
+      "seed": 999000,
+      "diceN": 2,
+      "roll": {
+        "variable": [
+          2,
+          1,
+          2,
+          4
+        ],
+        "fixed": 3
+      }
+    },
+    {
+      "idx": 1,
+      "atkPreset": "arciere",
+      "weapon": "arco_lungo",
+      "targetPreset": "tank",
+      "targetPos": {
+        "col": 5,
+        "row": 0
+      },
+      "targetSlancio": 3,
+      "visibility": 7,
+      "distance": 3,
+      "seed": 999001,
+      "diceN": 2,
+      "roll": {
+        "variable": [
+          2,
+          3,
+          5,
+          4
+        ],
+        "fixed": 0
+      }
+    },
+    {
+      "idx": 2,
+      "atkPreset": "arciere",
+      "weapon": "arco_lungo",
+      "targetPreset": "tank",
+      "targetPos": {
+        "col": 5,
+        "row": 0
+      },
+      "targetSlancio": 6,
+      "visibility": 7,
+      "distance": 3,
+      "seed": 999002,
+      "diceN": 2,
+      "roll": {
+        "variable": [
+          6,
+          5,
+          3,
+          5
+        ],
+        "fixed": -3
+      }
+    },
+    {
+      "idx": 3,
+      "atkPreset": "arciere",
+      "weapon": "arco_lungo",
+      "targetPreset": "arciere",
+      "targetPos": {
+        "col": 5,
+        "row": 0
+      },
+      "targetSlancio": 0,
+      "visibility": 7,
+      "distance": 3,
+      "seed": 999003,
+      "diceN": 2,
+      "roll": {
+        "variable": [
+          1,
+          5,
+          6,
+          2
+        ],
+        "fixed": 14
+      }
+    },
+    {
+      "idx": 4,
+      "atkPreset": "arciere",
+      "weapon": "arco_lungo",
+      "targetPreset": "arciere",
+      "targetPos": {
+        "col": 5,
+        "row": 0
+      },
+      "targetSlancio": 3,
+      "visibility": 7,
+      "distance": 3,
+      "seed": 999004,
+      "diceN": 2,
+      "roll": {
+        "variable": [
+          4,
+          3,
+          2,
+          1
+        ],
+        "fixed": 11
+      }
+    },
+    {
+      "idx": 5,
+      "atkPreset": "arciere",
+      "weapon": "arco_lungo",
+      "targetPreset": "arciere",
+      "targetPos": {
+        "col": 5,
+        "row": 0
+      },
+      "targetSlancio": 6,
+      "visibility": 7,
+      "distance": 3,
+      "seed": 999005,
+      "diceN": 2,
+      "roll": {
+        "variable": [
+          3,
+          6,
+          1,
+          3
+        ],
+        "fixed": 8
+      }
+    },
+    {
+      "idx": 6,
+      "atkPreset": "arciere",
+      "weapon": "arco_lungo",
+      "targetPreset": "spadaccino",
+      "targetPos": {
+        "col": 5,
+        "row": 0
+      },
+      "targetSlancio": 0,
+      "visibility": 7,
+      "distance": 3,
+      "seed": 999006,
+      "diceN": 2,
+      "roll": {
+        "variable": [
+          1,
+          4,
+          6,
+          1
+        ],
+        "fixed": 11
+      }
+    },
+    {
+      "idx": 7,
+      "atkPreset": "arciere",
+      "weapon": "arco_lungo",
+      "targetPreset": "spadaccino",
+      "targetPos": {
+        "col": 5,
+        "row": 0
+      },
+      "targetSlancio": 3,
+      "visibility": 7,
+      "distance": 3,
+      "seed": 999007,
+      "diceN": 2,
+      "roll": {
+        "variable": [
+          1,
+          1,
+          1,
+          2
+        ],
+        "fixed": 8
+      }
+    },
+    {
+      "idx": 8,
+      "atkPreset": "arciere",
+      "weapon": "arco_lungo",
+      "targetPreset": "spadaccino",
+      "targetPos": {
+        "col": 5,
+        "row": 0
+      },
+      "targetSlancio": 6,
+      "visibility": 7,
+      "distance": 3,
+      "seed": 999008,
+      "diceN": 2,
+      "roll": {
+        "variable": [
+          3,
+          2,
+          3,
+          6
+        ],
+        "fixed": 5
+      }
+    }
+  ]
+}
