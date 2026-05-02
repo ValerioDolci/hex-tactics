@@ -18,20 +18,18 @@ const initialWidth = Math.max(window.innerWidth || 0, 800);
 const initialHeight = Math.max(window.innerHeight || 0, 600);
 
 const config: Phaser.Types.Core.GameConfig = {
-  // Phaser.CANVAS forza Canvas2D (skip WebGL, che ha bug DPR su alcuni browser/Windows scaling).
-  type: Phaser.CANVAS,
+  type: Phaser.AUTO,
   parent: 'game-container',
   width: initialWidth,
   height: initialHeight,
   backgroundColor: GAME_CONFIG.backgroundColor,
   scale: {
-    // Scale.NONE = niente auto-scaling Phaser. Il canvas avrà esattamente width × height
-    // e niente trasformazioni implicite. Le coord pointer Phaser saranno in CSS pixel
-    // identiche al clientX/clientY del browser, eliminando l'offset DPR su Windows.
-    mode: Phaser.Scale.NONE,
+    // Scale.RESIZE: default Phaser, canvas si adatta al parent. Su Windows DPR > 1
+    // è ben testato. Il bug pointer in BattleScene era CAMERA-SIDE (cam.centerOn con
+    // viewport > bounds) — fixato lì, non qui.
+    mode: Phaser.Scale.RESIZE,
     width: initialWidth,
     height: initialHeight,
-    zoom: 1,
   },
   render: {
     antialias: true,
@@ -54,24 +52,17 @@ const game = new Phaser.Game(config);
 // `window.__hexGame` è un appiglio per script di test, non viene usato dal runtime.
 (window as unknown as { __hexGame?: Phaser.Game }).__hexGame = game;
 
-// Manual resize handler per Scale.NONE: aggiorna size canvas + emette resize event Phaser
-// così le scene possono riposizionare la UI.
-function manualResize(): void {
-  const w = window.innerWidth;
-  const h = window.innerHeight;
-  if (!game.canvas) return;
-  // Scale.NONE: canvas internal size = CSS size = viewport. 1 CSS pixel = 1 Phaser pixel.
-  game.scale.resize(w, h);
-  // Forza CSS canvas a riempire viewport (sicurezza)
-  game.canvas.style.width = w + 'px';
-  game.canvas.style.height = h + 'px';
-}
+// Phaser Scale.RESIZE gestisce tutto in autonomia. Manteniamo solo un refresh dopo `load`
+// (utile su mobile dove l'address bar fa layout shift).
 window.addEventListener('load', () => {
-  manualResize();
-  setTimeout(manualResize, 250);
+  setTimeout(() => {
+    try {
+      game.scale.refresh();
+    } catch {
+      /* ignora */
+    }
+  }, 250);
 });
-window.addEventListener('resize', manualResize);
-window.addEventListener('orientationchange', () => setTimeout(manualResize, 200));
 
 // Debug overlay puntatore: attivabile con ?debug=1 nell'URL.
 // Mostra un puntino rosso alla posizione che PHASER pensa sia il cursore.

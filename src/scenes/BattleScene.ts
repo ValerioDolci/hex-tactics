@@ -90,9 +90,6 @@ export class BattleScene extends Phaser.Scene {
   private panStartY = 0;
   private panCamStartX = 0;
   private panCamStartY = 0;
-  /** Touch: distanza tra 2 dita all'inizio del pinch */
-  private pinchStartDist = 0;
-  private pinchStartZoom = 1;
   /** Drag-pan a un dito (touch): scattato dopo che il dito si è mosso > soglia */
   private touchPanActive = false;
   private touchPanStartX = 0;
@@ -294,25 +291,17 @@ export class BattleScene extends Phaser.Scene {
 
   private setupCamera(): void {
     const cam = this.cameras.main;
-    const bounds = this.board.getWorldBounds();
-    // NIENTE setBounds + centerOn. Quando il viewport è più grande dei bounds della mappa
-    // (es. viewport 1528×732 vs mappa 1320×864), `centerOn` setta scrollX/Y negativi che
-    // possono causare offset nei pointer event (anche con setScrollFactor=0 sui menu UI).
-    // Lasciamo camera default a (0, 0) zoom 1. L'utente può scrollare con drag se serve.
+    // Camera fissa a (0, 0) zoom 1 — niente bound/center per evitare offset coord
+    // pointer dovuto a viewport > bounds (su Windows DPR 1.25 specifico).
     cam.setZoom(1.0);
     cam.setScroll(0, 0);
-    void bounds;
 
-    this.input.on('wheel', (_p: Phaser.Input.Pointer, _g: unknown, _dx: number, dy: number) => {
-      const newZoom = Phaser.Math.Clamp(
-        cam.zoom - Math.sign(dy) * GAME_CONFIG.camera.zoomStep,
-        GAME_CONFIG.camera.zoomMin,
-        GAME_CONFIG.camera.zoomMax,
-      );
-      cam.setZoom(newZoom);
-    });
+    // NIENTE wheel zoom. Lo zoom della camera scala TUTTO inclusi gli UI con scrollFactor(0):
+    // se per caso l'utente scrollasse la rotellina, i menu finiscono in coord scalate
+    // mentre il pointer resta in CSS pixel → click "off" rispetto a quello che vedi.
+    // L'utente può sempre fare zoom del browser con Ctrl+Wheel.
 
-    // Pan camera con tasto destro/medio (mouse desktop)
+    // Pan camera con tasto destro/medio del mouse (per esplorare la mappa).
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       if (pointer.button === 1 || pointer.button === 2) {
         this.isPanning = true;
@@ -324,8 +313,8 @@ export class BattleScene extends Phaser.Scene {
     });
     this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
       if (!this.isPanning) return;
-      const dx = (pointer.x - this.panStartX) / cam.zoom;
-      const dy = (pointer.y - this.panStartY) / cam.zoom;
+      const dx = pointer.x - this.panStartX;
+      const dy = pointer.y - this.panStartY;
       cam.scrollX = this.panCamStartX - dx;
       cam.scrollY = this.panCamStartY - dy;
     });
@@ -335,7 +324,8 @@ export class BattleScene extends Phaser.Scene {
     this.game.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
     this.input.mouse?.disableContextMenu();
 
-    // Touch: pinch-zoom + drag-pan a un dito
+    // Touch: pinch-zoom RIMOSSO per consistenza (non vogliamo zoom della camera).
+    // Lasciamo solo drag-pan a un dito.
     this.setupTouchGestures(cam);
   }
 
@@ -346,15 +336,8 @@ export class BattleScene extends Phaser.Scene {
     canvas.addEventListener(
       'touchstart',
       (e: TouchEvent) => {
-        if (e.touches.length === 2) {
-          // Pinch start
-          const t0 = e.touches[0];
-          const t1 = e.touches[1];
-          this.pinchStartDist = Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY);
-          this.pinchStartZoom = cam.zoom;
-          this.touchPanActive = false;
-        } else if (e.touches.length === 1) {
-          // Setup potential pan
+        if (e.touches.length === 1) {
+          // Setup potential pan a un dito
           const t0 = e.touches[0];
           this.touchPanStartX = t0.clientX;
           this.touchPanStartY = t0.clientY;
@@ -362,6 +345,7 @@ export class BattleScene extends Phaser.Scene {
           this.touchPanCamStartY = cam.scrollY;
           this.touchPanActive = false; // attivato solo dopo movimento > threshold
         }
+        // 2 dita: niente pinch-zoom (rimosso per stabilità)
       },
       { passive: false },
     );
@@ -369,18 +353,9 @@ export class BattleScene extends Phaser.Scene {
     canvas.addEventListener(
       'touchmove',
       (e: TouchEvent) => {
-        if (e.touches.length === 2 && this.pinchStartDist > 0) {
+        if (e.touches.length === 2) {
+          // Pinch-zoom RIMOSSO per stabilità coord pointer (zoom camera scala UI in scrollFactor 0).
           e.preventDefault();
-          const t0 = e.touches[0];
-          const t1 = e.touches[1];
-          const newDist = Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY);
-          const ratio = newDist / this.pinchStartDist;
-          const newZoom = Phaser.Math.Clamp(
-            this.pinchStartZoom * ratio,
-            GAME_CONFIG.camera.zoomMin,
-            GAME_CONFIG.camera.zoomMax,
-          );
-          cam.setZoom(newZoom);
         } else if (e.touches.length === 1) {
           const t0 = e.touches[0];
           const dx = t0.clientX - this.touchPanStartX;
@@ -404,7 +379,6 @@ export class BattleScene extends Phaser.Scene {
     canvas.addEventListener(
       'touchend',
       () => {
-        this.pinchStartDist = 0;
         // Non resettare touchPanActive subito — Phaser pointerup viene processato dopo;
         // se touchPanActive è true, vogliamo bloccare il "click" finale.
         // Strategia: lasciamo che il flag persista per ~50ms, poi reset.
