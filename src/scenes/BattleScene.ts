@@ -86,19 +86,7 @@ export class BattleScene extends Phaser.Scene {
     G: Phaser.Input.Keyboard.Key;
     SPACE: Phaser.Input.Keyboard.Key;
   };
-  private isPanning = false;
-  private panStartX = 0;
-  private panStartY = 0;
-  private panCamStartX = 0;
-  private panCamStartY = 0;
-  /** Drag-pan a un dito (touch): scattato dopo che il dito si è mosso > soglia */
-  private touchPanActive = false;
-  private touchPanStartX = 0;
-  private touchPanStartY = 0;
-  private touchPanCamStartX = 0;
-  private touchPanCamStartY = 0;
-  /** Soglia in px per considerare un drag (deadzone). Sotto = click, sopra = pan. */
-  private static readonly TOUCH_DRAG_THRESHOLD = 12;
+  // Pan camera state RIMOSSO: la camera è fissa per evitare input mismatch UI.
 
   private incomingSetup?: BattleSetup;
 
@@ -292,113 +280,19 @@ export class BattleScene extends Phaser.Scene {
 
   private setupCamera(): void {
     const cam = this.cameras.main;
-    // Camera fissa a (0, 0) zoom 1 — niente bound/center per evitare offset coord
-    // pointer dovuto a viewport > bounds (su Windows DPR 1.25 specifico).
+    // CAMERA TOTALMENTE FISSA. Il pan camera (drag right/middle/touch) causava
+    // input mismatch sui menu UI (Phaser hit-test dipende dalla camera principale
+    // anche con setScrollFactor=0). Soluzione: niente movimento camera.
     cam.setZoom(1.0);
     cam.setScroll(0, 0);
-
-    // NIENTE wheel zoom. Lo zoom della camera scala TUTTO inclusi gli UI con scrollFactor(0):
-    // se per caso l'utente scrollasse la rotellina, i menu finiscono in coord scalate
-    // mentre il pointer resta in CSS pixel → click "off" rispetto a quello che vedi.
-    // L'utente può sempre fare zoom del browser con Ctrl+Wheel.
-
-    // Pan camera con tasto destro/medio del mouse (per esplorare la mappa).
-    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      if (pointer.button === 1 || pointer.button === 2) {
-        this.isPanning = true;
-        this.panStartX = pointer.x;
-        this.panStartY = pointer.y;
-        this.panCamStartX = cam.scrollX;
-        this.panCamStartY = cam.scrollY;
-      }
-    });
-    this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
-      if (!this.isPanning) return;
-      const dx = pointer.x - this.panStartX;
-      const dy = pointer.y - this.panStartY;
-      cam.scrollX = this.panCamStartX - dx;
-      cam.scrollY = this.panCamStartY - dy;
-    });
-    this.input.on('pointerup', () => {
-      this.isPanning = false;
-    });
     this.game.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
     this.input.mouse?.disableContextMenu();
-
-    // Touch: pinch-zoom RIMOSSO per consistenza (non vogliamo zoom della camera).
-    // Lasciamo solo drag-pan a un dito.
-    this.setupTouchGestures(cam);
+    // NB: setupTouchGestures rimosso. Niente pan touch, niente pinch zoom.
   }
 
-  /** Gesture touch: pan-1-dito (con deadzone) + pinch-zoom-2-dita */
-  private setupTouchGestures(cam: Phaser.Cameras.Scene2D.Camera): void {
-    const canvas = this.game.canvas;
-
-    canvas.addEventListener(
-      'touchstart',
-      (e: TouchEvent) => {
-        if (e.touches.length === 1) {
-          // Setup potential pan a un dito
-          const t0 = e.touches[0];
-          this.touchPanStartX = t0.clientX;
-          this.touchPanStartY = t0.clientY;
-          this.touchPanCamStartX = cam.scrollX;
-          this.touchPanCamStartY = cam.scrollY;
-          this.touchPanActive = false; // attivato solo dopo movimento > threshold
-        }
-        // 2 dita: niente pinch-zoom (rimosso per stabilità)
-      },
-      { passive: false },
-    );
-
-    canvas.addEventListener(
-      'touchmove',
-      (e: TouchEvent) => {
-        if (e.touches.length === 2) {
-          // Pinch-zoom RIMOSSO per stabilità coord pointer (zoom camera scala UI in scrollFactor 0).
-          e.preventDefault();
-        } else if (e.touches.length === 1) {
-          const t0 = e.touches[0];
-          const dx = t0.clientX - this.touchPanStartX;
-          const dy = t0.clientY - this.touchPanStartY;
-          const dist = Math.hypot(dx, dy);
-
-          // Attiva pan solo dopo soglia (deadzone — sotto è considerato click/tap)
-          if (!this.touchPanActive && dist > BattleScene.TOUCH_DRAG_THRESHOLD) {
-            this.touchPanActive = true;
-          }
-          if (this.touchPanActive) {
-            e.preventDefault();
-            cam.scrollX = this.touchPanCamStartX - dx / cam.zoom;
-            cam.scrollY = this.touchPanCamStartY - dy / cam.zoom;
-          }
-        }
-      },
-      { passive: false },
-    );
-
-    canvas.addEventListener(
-      'touchend',
-      () => {
-        // Non resettare touchPanActive subito — Phaser pointerup viene processato dopo;
-        // se touchPanActive è true, vogliamo bloccare il "click" finale.
-        // Strategia: lasciamo che il flag persista per ~50ms, poi reset.
-        if (this.touchPanActive) {
-          // Notifica HexBoard di ignorare l'imminente pointerup come click
-          // Lo facciamo via flag globale leggibile da HexBoard / handler.
-          // (Implementato in pointerdown/up handler della scene: vedi sotto.)
-          setTimeout(() => {
-            this.touchPanActive = false;
-          }, 50);
-        }
-      },
-      { passive: true },
-    );
-  }
-
-  /** True se l'ultimo touch è stato un drag-pan (non un click). HexBoard lo legge per ignorare il click. */
+  /** True se l'ultimo touch è stato un drag-pan (legacy, ora sempre false: pan rimosso). */
   isTouchPanActive(): boolean {
-    return this.touchPanActive;
+    return false;
   }
 
   private setupKeys(): void {
@@ -466,20 +360,10 @@ export class BattleScene extends Phaser.Scene {
     this.refreshUI();
   }
 
-  override update(_time: number, deltaMs: number): void {
-    if (!this.keys) return;
-    const cam = this.cameras.main;
-    const dt = deltaMs / 1000;
-    const speed = GAME_CONFIG.camera.panSpeed / cam.zoom;
-    let dx = 0, dy = 0;
-    if (this.keys.A.isDown || this.keys.LEFT.isDown) dx -= speed * dt;
-    if (this.keys.D.isDown || this.keys.RIGHT.isDown) dx += speed * dt;
-    if (this.keys.W.isDown || this.keys.UP.isDown) dy -= speed * dt;
-    if (this.keys.S.isDown || this.keys.DOWN.isDown) dy += speed * dt;
-    if (dx !== 0 || dy !== 0) {
-      cam.scrollX += dx;
-      cam.scrollY += dy;
-    }
+  override update(_time: number, _deltaMs: number): void {
+    void _deltaMs;
+    // Pan camera con WASD/frecce RIMOSSO: la camera è fissa per evitare input mismatch
+    // sui menu UI (Phaser hit-test dipende dalla camera principale).
   }
 
   /** Aggiorna UI a partire dallo state corrente */
