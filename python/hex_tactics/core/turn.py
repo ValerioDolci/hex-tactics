@@ -79,7 +79,11 @@ def apply_turn_start(
     ctx = make_slancio_context()
     extra_max = count_max_dice_extra(unit.skills, ctx)
     max_slancio_dice = 2 + extra_max
-    clamped_dice_n = max(0, min(slancio_dice_n, max_slancio_dice))
+    # Clamp al pool: non puoi tirare più dadi di quelli che hai
+    clamped_dice_n = max(0, min(slancio_dice_n, max_slancio_dice, new_unit.dadi_azione))
+
+    # Costo dadi azione: il tiro slancio costa N dadi (eccetto applyInitialSlancio setup)
+    new_unit.dadi_azione = max(0, new_unit.dadi_azione - clamped_dice_n)
 
     actual_dice_n = get_actual_dice_count(unit, ctx, clamped_dice_n)
 

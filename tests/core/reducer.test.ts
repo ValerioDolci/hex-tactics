@@ -41,9 +41,9 @@ describe('reducer — base flow', () => {
     s = reduce(s, { type: 'START_TURN', slancioDice: 2 });
     const after = s.units[firstId];
 
-    // dadi azione: al PRIMO turno (turnsPlayed===0) il recovery è 0 → restano 6 iniziali.
-    // Dal 2° turno in poi: recovery = ⌊(F+A+V)/2⌋ = 3, cap a dadiAzioneMax=9.
-    expect(after.dadiAzione).toBe(6);
+    // dadi azione: 1° turno → recovery 0 → 6 dadi iniziali.
+    // Tiro slancio con 2 dadi: costa 2 → 6-2=4 dadi rimanenti.
+    expect(after.dadiAzione).toBe(4);
     // impeto = 14 + 0 (slancio era 0) = 14
     expect(after.impeto).toBe(before.impeto + before.slancio);
     // slancio nuovo = 2 d6 + 2 - imp(spada 3 + arm leggera 3 = 6), può essere negativo

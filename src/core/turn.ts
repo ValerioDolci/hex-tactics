@@ -73,6 +73,10 @@ export function applyTurnStart(
   const recovery = unit.turnsPlayed === 0 ? 0 : computeDiceRecovery(unit);
   let newDadi = Math.min(unit.dadiAzioneMax, unit.dadiAzione + recovery);
 
+  // Costo dadi azione del tiro slancio: la scelta del giocatore (clampedDiceN)
+  // viene SOTTRATTA. I dadi forced via skill (+1dado) NON sono pagati — sono bonus skill.
+  // Eccezione: `applyInitialSlancio` (round 0 setup) tira gratis senza passare di qui.
+
   // 2. Slancio → impeto
   let newImpeto = unit.impeto + unit.slancio;
   let newSlancio = 0;
@@ -81,9 +85,13 @@ export function applyTurnStart(
   const ctx = makeSlancioContext();
   const extraMax = countMaxDiceExtra(unit.skills, ctx);
   const maxSlancioDice = 2 + extraMax;
-  const clampedDiceN = Math.max(0, Math.min(slancioDiceN, maxSlancioDice));
+  // Clamp anche al pool corrente: non puoi tirare più dadi di quelli che hai.
+  const clampedDiceN = Math.max(0, Math.min(slancioDiceN, maxSlancioDice, newDadi));
 
-  // +1 dado forzato (se skill matcha)
+  // SOTTRAGGO i dadi pagati per il tiro slancio (la scelta del giocatore).
+  newDadi = Math.max(0, newDadi - clampedDiceN);
+
+  // +1 dado forzato (se skill matcha) — è bonus skill, non si paga.
   const actualDiceN = getActualDiceCount(unit, ctx, clampedDiceN);
 
   if (actualDiceN > 0) {
