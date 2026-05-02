@@ -16,6 +16,7 @@ import { Unit, UnitId } from '@entities/Unit';
 import { hexDistance, hexesInRange, neighbors } from '@core/hex/distance';
 import { Axial } from '@core/hex/coords';
 import { baseDistance, getBaseHexes } from '@core/hex/base';
+import { hexLine } from '@core/hex/line';
 import { getWeapon } from '@data/weapons';
 import { getShield } from '@data/shields';
 import { getArmor } from '@data/armors';
@@ -184,35 +185,50 @@ export function aiDecideAction(state: GameState, unitId: UnitId): GameEvent {
   return end;
 }
 
-/** Trova la mossa migliore per avvicinarsi al nemico, rispettando slancio e ostacoli */
+/** Trova la mossa migliore per avvicinarsi al nemico, rispettando slancio e ostacoli.
+ *
+ *  CRITICO: oltre a verificare che il TARGET sia valido (basetta non in overlap),
+ *  simula l'intero path (hexLine) per garantire che ogni step intermedio sia libero.
+ *  Senza questo controllo, advanceMovement nel reducer fermerebbe il MOVE a metà
+ *  e il prossimo aiDecideAction riproporrebbe lo stesso MOVE → LOOP.
+ */
 function findBestMoveToward(state: GameState, me: Unit, enemy: Unit, moveRange?: number): Axial | null {
-  // Default: usa slancio + 1 (compatibilità con chiamate vecchie senza param)
   const range = moveRange ?? me.slancio + 1;
   const reachable = hexesInRange(me.position, range);
 
-  // Esclude posizioni occupate (basetta sovrapposta)
+  // Set di hex bloccati (basetta di altre unità vive)
   const blockedSet = new Set<string>();
   for (const u of Object.values(state.units)) {
     if (u.id === me.id || !u.alive) continue;
     for (const h of getBaseHexes(u.position)) blockedSet.add(`${h.q},${h.r}`);
   }
 
+  /** True se la basetta centrata in `h` si sovrappone a unità altre. */
+  const baseOverlap = (h: Axial): boolean => {
+    for (const bh of getBaseHexes(h)) {
+      if (blockedSet.has(`${bh.q},${bh.r}`)) return true;
+    }
+    return false;
+  };
+
+  /** True se il path da `from` a `to` è interamente valido (niente overlap step-by-step). */
+  const pathIsClear = (from: Axial, to: Axial): boolean => {
+    const fullLine = hexLine(from, to);
+    // Skip primo (start) e ultimo (target già controllato sopra). Verifica intermedi.
+    for (let i = 1; i < fullLine.length; i++) {
+      if (baseOverlap(fullLine[i])) return false;
+    }
+    return true;
+  };
+
   let best: Axial | null = null;
   let bestScore = Infinity;
   for (const h of reachable) {
-    // Il centro destinazione non deve essere in basetta nemica
+    if (h.q === me.position.q && h.r === me.position.r) continue;
     if (blockedSet.has(`${h.q},${h.r}`)) continue;
-    // La basetta destinazione non deve sovrapporsi
-    let overlap = false;
-    for (const bh of getBaseHexes(h)) {
-      if (blockedSet.has(`${bh.q},${bh.r}`)) {
-        overlap = true;
-        break;
-      }
-    }
-    if (overlap) continue;
-    // Verifica bounds della mappa: se centro fuori, scarta (semplificato)
-    // (i bounds sono in board.cols/rows in offset; per semplicità accetto qualunque axial qui)
+    if (baseOverlap(h)) continue;
+    // CRITICO: il path INTERO deve essere libero (no blocco mid-step)
+    if (!pathIsClear(me.position, h)) continue;
     const score = baseDistance(h, enemy.position);
     if (score < bestScore) {
       bestScore = score;

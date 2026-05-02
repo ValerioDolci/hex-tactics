@@ -28,6 +28,7 @@ import {
 } from '@core/stats';
 import { baseDistance, getBaseHexes } from '@core/hex/base';
 import { reachableHexes } from '@core/hex/pathfinding';
+import { hexLine } from '@core/hex/line';
 import { Axial } from '@core/hex/coords';
 import { getWeapon } from '@data/weapons';
 import { getShield } from '@data/shields';
@@ -658,7 +659,21 @@ export class BattleScene extends Phaser.Scene {
     // Modalità Hard: usa il DT distillato per scegliere l'azione (e tutte le fasi successive)
     const isHard = this.aiLevel[unit.faction] === 'hard';
     const event = isHard ? aiDecideHard(this.state, unit.id) : aiDecideAction(this.state, unit.id);
+    // Defensive: traccia state pre-dispatch. Se l'event è MOVE e dopo il dispatch
+    // la posizione NON è cambiata (rifiuto del reducer per overlap basetta o path
+    // bloccato), evita il loop infinito facendo END_TURN.
+    const prevPos = unit.position;
     this.dispatch(event);
+    if (event.type === 'MOVE') {
+      const after = this.state.units[unit.id];
+      const moved = after && (after.position.q !== prevPos.q || after.position.r !== prevPos.r);
+      if (!moved) {
+        // MOVE rifiutato → AI fallback: passa turno
+        this.dispatch({ type: 'END_TURN' });
+        this.startCurrentTurnFlow();
+        return;
+      }
+    }
 
     if (event.type === 'DECLARE_ATTACK') {
       // Fase 1: gestisci awaiting-carica per AI.
@@ -941,7 +956,7 @@ export class BattleScene extends Phaser.Scene {
     const unit = this.state.units[unitId];
     if (!unit) return;
 
-    // Calcola passable: esclude basette di unità altre vive
+    // Calcola blocked: hex coperti da basette di altre unità vive.
     const blocked = new Set<string>();
     for (const other of Object.values(this.state.units)) {
       if (other.id === unit.id || !other.alive) continue;
@@ -952,7 +967,32 @@ export class BattleScene extends Phaser.Scene {
     // Range = slancio + (1 se non ho ancora mosso questo turno, altrimenti 0)
     const freeHex = unit.hexMovedThisTurn === 0 ? 1 : 0;
     const reachable = reachableHexes(unit.position, unit.slancio + freeHex, { passable });
-    const reachHexes: Axial[] = Array.from(reachable.values()).map((r) => r.hex);
+
+    // Filtra: highlight solo hex DAVVERO raggiungibili = basetta destinazione non
+    // overlap + path intero (hexLine) senza step in overlap. Cosi il giocatore
+    // NON vede hex gialli "trappola" che il reducer poi rifiuta.
+    const baseOverlap = (h: Axial): boolean => {
+      for (const bh of getBaseHexes(h)) {
+        if (blocked.has(`${bh.q},${bh.r}`)) return true;
+      }
+      return false;
+    };
+    const pathClear = (to: Axial): boolean => {
+      const line = hexLine(unit.position, to);
+      for (let i = 1; i < line.length; i++) {
+        if (baseOverlap(line[i])) return false;
+      }
+      return true;
+    };
+    const reachHexes: Axial[] = [];
+    for (const r of reachable.values()) {
+      if (r.hex.q === unit.position.q && r.hex.r === unit.position.r) continue;
+      if (baseOverlap(r.hex)) continue;
+      if (!pathClear(r.hex)) continue;
+      reachHexes.push(r.hex);
+    }
+    // Re-build set di hex validi (per check al click)
+    const validKeys = new Set(reachHexes.map((h) => `${h.q},${h.r}`));
     this.board.setHighlightedMove(reachHexes);
     this.menu.setItems([
       {
@@ -968,21 +1008,8 @@ export class BattleScene extends Phaser.Scene {
     this.board.setExternalClickHandler((hex) => {
       if (hex === null) return;
       const k = `${hex.q},${hex.r}`;
-      if (!reachable.has(k)) return; // click su esagono fuori range, ignorato
-      // Verifica che la basetta destinazione non si sovrapponga
-      const targetBase = new Set(getBaseHexes(hex).map((h) => `${h.q},${h.r}`));
-      let overlap = false;
-      for (const other of Object.values(this.state.units)) {
-        if (other.id === unit.id || !other.alive) continue;
-        for (const h of getBaseHexes(other.position)) {
-          if (targetBase.has(`${h.q},${h.r}`)) {
-            overlap = true;
-            break;
-          }
-        }
-        if (overlap) break;
-      }
-      if (overlap) return;
+      // Solo hex evidenziati (già filtrati per overlap basetta + path)
+      if (!validKeys.has(k)) return;
 
       this.dispatch({ type: 'MOVE', unitId: unit.id, targetHex: hex });
       this.board.clearHighlightedMove();
