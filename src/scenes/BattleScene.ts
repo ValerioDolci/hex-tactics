@@ -530,7 +530,8 @@ export class BattleScene extends Phaser.Scene {
     if (this.controlMode[unit.faction] !== 'ai') return;
 
     // Piccolo delay per dare tempo al giocatore di vedere lo stato
-    this.time.delayedCall(600, () => this.executeAiAction());
+    // Delay aumentato per leggibilità: l'AI è troppo veloce, il giocatore non vede cosa fa.
+    this.time.delayedCall(1100, () => this.executeAiAction());
   }
 
   private executeAiAction(): void {
@@ -543,6 +544,22 @@ export class BattleScene extends Phaser.Scene {
     // Modalità Hard: usa il DT distillato per scegliere l'azione (e tutte le fasi successive)
     const isHard = this.aiLevel[unit.faction] === 'hard';
     const event = isHard ? aiDecideHard(this.state, unit.id) : aiDecideAction(this.state, unit.id);
+    // Diagnostica: aggiungi al log la decisione AI cosi è visibile durante playtest.
+    // Util per capire perché AI sceglie MOVE invece di ATTACK in qualche edge case.
+    const choice =
+      event.type === 'DECLARE_ATTACK' ? `attack ${event.isRanged ? 'ranged' : 'mischia'}` :
+      event.type === 'MOVE' ? 'muovi' :
+      event.type === 'RELOAD' ? 'ricarica' :
+      event.type === 'END_TURN' ? 'passa turno' :
+      event.type;
+    this.state = {
+      ...this.state,
+      log: [...this.state.log, {
+        round: this.state.round,
+        turnUnitId: unit.id,
+        message: `${unit.name}: scelta AI = ${choice}`,
+      }],
+    };
     // Defensive: traccia state pre-dispatch. Per MOVE rilevo loop quando il
     // movimento è completamente rifiutato (phase resta choosing-action e position invariata).
     // NB: se phase passa a awaiting-attacker-bid, NON è rifiuto — è asta in corso → processMovementPhase
@@ -800,7 +817,7 @@ export class BattleScene extends Phaser.Scene {
     // Cleanup difensivo: nessun overlay residuo, niente move mode
     this.handoff.hide();
     this.diceUI.hide();
-    this.board.clearHighlightedMove();
+    this.board.clearHighlightedMove(); this.board.clearHighlightedThreat();
     this.board.setExternalClickHandler(null);
     // Svuota menu per evitare doppi click
     this.menu.setItems([]);
@@ -898,11 +915,35 @@ export class BattleScene extends Phaser.Scene {
     // Re-build set di hex validi (per check al click)
     const validKeys = new Set(reachHexes.map((h) => `${h.q},${h.r}`));
     this.board.setHighlightedMove(reachHexes);
+
+    // Zone di minaccia: hex entro reach >= 4 di nemici eligibili (lance, slancio>0).
+    // L'utente vede in rosso/arancio dove rischia di entrare in asta.
+    const threatHexes: Axial[] = [];
+    for (const other of Object.values(this.state.units)) {
+      if (other.id === unit.id || !other.alive) continue;
+      if (other.faction === unit.faction) continue;
+      if (other.slancio <= 0) continue;
+      if (!other.weapon) continue;
+      const w = getWeapon(other.weapon);
+      if (!w || !w.range || w.range.reach == null || w.range.reach < 4) continue;
+      // Tutti gli hex entro reach del centro nemico
+      const reach = w.range.reach;
+      const otherPos = other.position;
+      const inThreatRange = reachHexes.filter(
+        (h) => Math.max(
+          Math.abs(h.q - otherPos.q),
+          Math.abs(h.r - otherPos.r),
+          Math.abs((h.q + h.r) - (otherPos.q + otherPos.r)),
+        ) <= reach,
+      );
+      threatHexes.push(...inThreatRange);
+    }
+    this.board.setHighlightedThreat(threatHexes);
     this.menu.setItems([
       {
         label: 'Annulla movimento',
         onClick: () => {
-          this.board.clearHighlightedMove();
+          this.board.clearHighlightedMove(); this.board.clearHighlightedThreat();
           this.board.setExternalClickHandler(null);
           this.showActionMenu();
         },
@@ -916,7 +957,7 @@ export class BattleScene extends Phaser.Scene {
       if (!validKeys.has(k)) return;
 
       this.dispatch({ type: 'MOVE', unitId: unit.id, targetHex: hex });
-      this.board.clearHighlightedMove();
+      this.board.clearHighlightedMove(); this.board.clearHighlightedThreat();
       this.board.setExternalClickHandler(null);
       // Fase 1: il dispatch può aver portato in awaiting-attacker-bid (zona di controllo).
       this.processMovementPhase();
@@ -1349,7 +1390,7 @@ export class BattleScene extends Phaser.Scene {
     this.menu.setItems([]);
     this.handoff.hide();
     this.diceUI.hide();
-    this.board.clearHighlightedMove();
+    this.board.clearHighlightedMove(); this.board.clearHighlightedThreat();
     this.board.setExternalClickHandler(null);
 
     // Audio: vittoria/sconfitta in base al vincitore.

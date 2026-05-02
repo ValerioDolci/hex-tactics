@@ -54,6 +54,7 @@ export class HexBoard {
   private labels: Phaser.GameObjects.Text[] = [];
   /** Esagoni evidenziati come raggiungibili (movimento) */
   private highlightedMove: Set<string> = new Set();
+  private highlightedThreat: Set<string> = new Set();
   /** Callback esterna per click su hex (es. selezione target movimento) */
   private externalClickHandler: ((hex: Axial | null) => void) | null = null;
 
@@ -130,6 +131,16 @@ export class HexBoard {
     this.render();
   }
 
+  /** Hex sotto minaccia (es. zone di controllo lance reach >= 4). */
+  setHighlightedThreat(hexes: Axial[]): void {
+    this.highlightedThreat = new Set(hexes.map((h) => this.key(h)));
+    this.render();
+  }
+  clearHighlightedThreat(): void {
+    this.highlightedThreat.clear();
+    this.render();
+  }
+
   /** Imposta il callback per click su hex (sostituisce il behaviour di default) */
   setExternalClickHandler(handler: ((hex: Axial | null) => void) | null): void {
     this.externalClickHandler = handler;
@@ -157,7 +168,10 @@ export class HexBoard {
     if (this.selectedHex && axialEquals(this.selectedHex, hex)) return GAME_CONFIG.colors.hexSelected;
     if (this.hoveredHex && axialEquals(this.hoveredHex, hex)) return GAME_CONFIG.colors.hexHover;
     const k = this.key(hex);
-    if (this.highlightedMove.has(k)) return 0x44aa88; // ciano-verde per range movimento
+    // Priorità: hex sotto minaccia (rosso scuro) > range movimento (verde) > deploy zone
+    if (this.highlightedThreat.has(k) && this.highlightedMove.has(k)) return 0xcc6633; // arancio: hex muovibile MA in minaccia
+    if (this.highlightedThreat.has(k)) return 0xaa3322; // rosso scuro: zona controllo nemica
+    if (this.highlightedMove.has(k)) return 0x44aa88;
     if (this.deployHexesA.has(k)) return GAME_CONFIG.colors.deployZoneA;
     if (this.deployHexesB.has(k)) return GAME_CONFIG.colors.deployZoneB;
     return GAME_CONFIG.colors.hexFill;
