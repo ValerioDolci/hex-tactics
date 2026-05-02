@@ -543,16 +543,17 @@ export class BattleScene extends Phaser.Scene {
     // Modalità Hard: usa il DT distillato per scegliere l'azione (e tutte le fasi successive)
     const isHard = this.aiLevel[unit.faction] === 'hard';
     const event = isHard ? aiDecideHard(this.state, unit.id) : aiDecideAction(this.state, unit.id);
-    // Defensive: traccia state pre-dispatch. Se l'event è MOVE e dopo il dispatch
-    // la posizione NON è cambiata (rifiuto del reducer per overlap basetta o path
-    // bloccato), evita il loop infinito facendo END_TURN.
+    // Defensive: traccia state pre-dispatch. Per MOVE rilevo loop quando il
+    // movimento è completamente rifiutato (phase resta choosing-action e position invariata).
+    // NB: se phase passa a awaiting-attacker-bid, NON è rifiuto — è asta in corso → processMovementPhase
     const prevPos = unit.position;
     this.dispatch(event);
     if (event.type === 'MOVE') {
       const after = this.state.units[unit.id];
       const moved = after && (after.position.q !== prevPos.q || after.position.r !== prevPos.r);
-      if (!moved) {
-        // MOVE rifiutato → AI fallback: passa turno
+      const stillChoosingAction = this.state.phase === 'choosing-action';
+      if (!moved && stillChoosingAction) {
+        // MOVE rifiutato (overlap basetta / path bloccato) → AI fallback: passa turno
         this.dispatch({ type: 'END_TURN' });
         this.startCurrentTurnFlow();
         return;
