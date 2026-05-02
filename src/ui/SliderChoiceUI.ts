@@ -124,14 +124,32 @@ export class SliderChoiceUI {
     // Pulisci elementi precedenti se ricreati (per show multipli)
     this.destroySliderElements();
 
-    // Geometria slider: barra orizzontale a metà altezza box, sotto info
-    const sliderY = by + boxH - 180;
+    // Layout (boxH=420, top→bottom):
+    //   title (by+20) | subtitle (by+56) | info (by+96..by+~190 wordwrap)
+    //   valueText centrato y=by+220 (font 50px, height ~50, top by+195 — margine 5px da info)
+    //   slider y=by+290 con bottoni −/+ ai lati (non sopra)
+    //   CONFERMA y=by+boxH-36 = by+384
+    const valueY = by + 220;
+    const sliderY = by + 290;
     const sliderH = 14;
-    const padX = 56;
-    this.trackX0 = bx + padX;
-    this.trackX1 = bx + boxW - padX;
+    const sideBtnSize = 44;
+    const sideMargin = 24;
+    // Track va da subito dopo bottone − a subito prima bottone +
+    this.trackX0 = bx + sideMargin + sideBtnSize + 18;
+    this.trackX1 = bx + boxW - sideMargin - sideBtnSize - 18;
     this.trackY = sliderY;
     const trackW = this.trackX1 - this.trackX0;
+
+    // Label valore corrente, in mezzo sopra slider, separato da info da margine
+    this.valueText = this.scene.add.text(w / 2, valueY, '0', {
+      fontFamily: 'monospace',
+      fontSize: '50px',
+      color: '#ffd966',
+      fontStyle: 'bold',
+      stroke: '#000',
+      strokeThickness: 4,
+    });
+    this.valueText.setOrigin(0.5, 0.5);
 
     // Track (sfondo)
     this.track = this.scene.add.rectangle(
@@ -156,21 +174,10 @@ export class SliderChoiceUI {
     );
     this.fill.setOrigin(0, 0.5);
 
-    // Knob (cerchietto draggabile)
-    this.knob = this.scene.add.circle(this.trackX0, sliderY, 16, 0xffd966, 1);
+    // Knob (cerchietto draggabile, più grande per hit-test agevole)
+    this.knob = this.scene.add.circle(this.trackX0, sliderY, 18, 0xffd966, 1);
     this.knob.setStrokeStyle(3, 0x886622);
     this.knob.setInteractive({ draggable: true, useHandCursor: true });
-
-    // Label valore corrente, sopra il knob
-    this.valueText = this.scene.add.text(w / 2, sliderY - 60, '0', {
-      fontFamily: 'monospace',
-      fontSize: '46px',
-      color: '#ffd966',
-      fontStyle: 'bold',
-      stroke: '#000',
-      strokeThickness: 4,
-    });
-    this.valueText.setOrigin(0.5, 0.5);
 
     // Track click anche fuori dal knob: snap immediato
     this.track.setInteractive({ useHandCursor: true });
@@ -188,16 +195,18 @@ export class SliderChoiceUI {
       this.dragHandlerAttached = true;
     }
 
-    // Bottoni −/+ accanto al valore
-    this.minusBtn = this.makeIconButton(w / 2 - 100, sliderY - 60, '−', () => {
+    // Bottoni −/+ ai lati dello slider (non sopra: evita sovrapposizione con valueText/info)
+    const minusX = bx + sideMargin + sideBtnSize / 2;
+    const plusX = bx + boxW - sideMargin - sideBtnSize / 2;
+    this.minusBtn = this.makeIconButton(minusX, sliderY, '−', sideBtnSize, () => {
       this.setValue(this.value - 1);
     });
-    this.plusBtn = this.makeIconButton(w / 2 + 100, sliderY - 60, '+', () => {
+    this.plusBtn = this.makeIconButton(plusX, sliderY, '+', sideBtnSize, () => {
       this.setValue(this.value + 1);
     });
 
     // Bottone CONFERMA in basso al box
-    this.confirmBtn = this.makeConfirmButton(w / 2, by + boxH - 56, () => {
+    this.confirmBtn = this.makeConfirmButton(w / 2, by + boxH - 36, () => {
       const v = this.value;
       this.hide();
       opts.onConfirm(v);
@@ -247,14 +256,15 @@ export class SliderChoiceUI {
     cx: number,
     cy: number,
     label: string,
+    size: number,
     onClick: () => void,
   ): Phaser.GameObjects.Container {
     const c = this.scene.add.container(cx, cy);
-    const r = this.scene.add.rectangle(0, 0, 50, 50, 0x335577, 1);
+    const r = this.scene.add.rectangle(0, 0, size, size, 0x335577, 1);
     r.setStrokeStyle(2, 0x6699bb);
     const t = this.scene.add.text(0, 0, label, {
       fontFamily: 'monospace',
-      fontSize: '32px',
+      fontSize: `${Math.round(size * 0.6)}px`,
       color: '#fff',
       fontStyle: 'bold',
     });

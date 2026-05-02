@@ -607,8 +607,8 @@ export class BattleScene extends Phaser.Scene {
         this.tweens.add({
           targets: t,
           alpha: 0,
-          duration: 600,
-          delay: 700,
+          duration: 700,
+          delay: 1100, // hold più lungo per leggere chi gioca
           onComplete: () => t.destroy(),
         });
       },
@@ -838,28 +838,53 @@ export class BattleScene extends Phaser.Scene {
 
   /**
    * Step 2 turn-start (D-044): trasferisce N punti da impeto a slancio (1:1, gratis).
-   * Cap upper = `min(impeto_attuale, getMaxSlancioRoll(unit))`.
-   * Il reducer fa il clamp finale su `headroom = maxRoll - newSlancio` (post-tiro),
-   * quindi anche se il giocatore mette il valore al massimo teorico, viene tagliato
-   * automaticamente a quanto resta di "spazio" nello slancio dopo il tiro.
    *
-   * UI: slider continuo (più immediato di N bottoni quando il cap è alto).
+   * Cap stretto = `min(impeto, headroomMin)` dove
+   *   `headroomMin = getMaxSlancioRoll(unit) - slancioMaxThisTurn`
+   *   `slancioMaxThisTurn = clampedDiceN*6 + flatBonus - impedimento` (tiro MAX possibile coi dadi scelti).
+   *
+   * Questo è il cap GARANTITO: anche col tiro più fortunato il transfer rientra completamente.
+   * Esempi (spadaccino base maxRoll=14):
+   *  - 0 dadi: cap = 14 (transfer pieno)
+   *  - 1 dado: cap = 14 − 8 = 6
+   *  - 2 dadi: cap = 14 − 14 = 0 (niente transfer possibile)
+   *
+   * Il reducer fa comunque clamp finale sull'headroom REALE post-tiro — qui mostriamo
+   * solo il cap conservativo per non promettere transfer che potrebbero essere troncati.
    */
   private askImpetoTransfer(unitId: UnitId, slancioDiceN: number): void {
     const unit = this.state.units[unitId];
     if (!unit) return;
-    const cap = Math.min(unit.impeto, getMaxSlancioRoll(unit));
+
+    const ctx = makeSlancioContext();
+    const flat = countFlatBonuses(unit.skills, ctx);
+    const imp = getImpedimentTotal(unit);
+    const maxDice = 2 + countMaxDiceExtra(unit.skills, ctx);
+    // Effective dice tirabili: clamp anche al pool dadi azione corrente (come fa applyTurnStart)
+    const effectiveDice = Math.max(0, Math.min(slancioDiceN, maxDice, unit.dadiAzione));
+    const slancioMaxThisTurn = Math.max(0, effectiveDice * 6 + (effectiveDice > 0 ? flat - imp : 0));
+    const maxRoll = getMaxSlancioRoll(unit);
+    const headroomMin = Math.max(0, maxRoll - slancioMaxThisTurn);
+    const cap = Math.max(0, Math.min(unit.impeto, headroomMin));
 
     const info: string[] = [
       `Impeto attuale: ${unit.impeto}`,
-      `Cap massimo trasferibile: ${cap} (limitato da impeto e dal tetto slancio)`,
-      `Trasferimento 1:1 → slancio (gratis, una volta a inizio turno)`,
-      `Più impeto = giochi prima nel round; più slancio = mobilità + scudo passivo ranged`,
+      `Slancio max dal tiro (${effectiveDice}d6+${Math.max(0, flat - imp)}): ${slancioMaxThisTurn}`,
+      `Headroom slancio: ${maxRoll} − ${slancioMaxThisTurn} = ${headroomMin}`,
+      `Cap garantito trasferibile: ${cap}`,
+      `(transfer 1:1 gratis, una volta a turno)`,
     ];
+
+    if (cap === 0) {
+      // Niente transfer possibile: skip dialog e prosegui direttamente.
+      this.dispatch({ type: 'START_TURN', slancioDice: slancioDiceN, impetoToSlancio: 0 });
+      this.showActionMenu();
+      return;
+    }
 
     this.sliderUI.show({
       title: `${unit.name} — Impeto → Slancio (2/2)`,
-      subtitle: `Trascina lo slider o usa −/+ (0 = skip, conferma per chiudere)`,
+      subtitle: `Trascina lo slider o usa −/+ (0 = skip)`,
       infoLines: info,
       max: cap,
       initial: 0,

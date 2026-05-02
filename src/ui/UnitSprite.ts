@@ -332,18 +332,19 @@ export class UnitSprite {
     });
     t.setOrigin(0.5, 0.5);
     t.setScale(0.3);
-    // Fase 1: pop-in con scale dramatic. Fase 2: drift up + fade.
+    // Fase 1: pop-in con scale dramatic. Fase 2: hold + drift up + fade (più lungo per leggibilità).
     scene.tweens.add({
       targets: t,
       scale: 1.0,
-      duration: 180,
+      duration: 200,
       ease: 'Back.easeOut',
       onComplete: () => {
         scene.tweens.add({
           targets: t,
           y: center.y - this.hexSize * 2.8,
           alpha: 0,
-          duration: 1100,
+          duration: 1700,
+          delay: 250, // hold ben visibile prima di iniziare il drift
           onComplete: () => t.destroy(),
         });
       },
@@ -366,14 +367,15 @@ export class UnitSprite {
     scene.tweens.add({
       targets: t,
       scale: 1.0,
-      duration: 180,
+      duration: 200,
       ease: 'Back.easeOut',
       onComplete: () => {
         scene.tweens.add({
           targets: t,
           y: center.y - this.hexSize * 2.5,
           alpha: 0,
-          duration: 1100,
+          duration: 1700,
+          delay: 250,
           onComplete: () => t.destroy(),
         });
       },
@@ -411,7 +413,8 @@ export class UnitSprite {
           targets: t,
           alpha: 0,
           x: center.x + this.hexSize * 2.6,
-          duration: 800,
+          duration: 1300,
+          delay: 350, // hold per leggere il valore prima del fade
           onComplete: () => t.destroy(),
         });
       },
