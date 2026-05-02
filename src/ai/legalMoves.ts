@@ -40,12 +40,45 @@ export function legalMoves(state: GameState, unitId: UnitId): GameEvent[] {
       return legalDefenseMoves(state, unit);
     case 'resolving':
       return [{ type: 'RESOLVE_COMBAT' }];
+    case 'awaiting-attacker-bid':
+    case 'awaiting-defender-bid':
+      return legalBidMoves(state, unit);
+    case 'awaiting-carica':
+      return legalCaricaMoves(state, unit);
     case 'turn-end':
     case 'round-end':
     case 'game-over':
     default:
       return [];
   }
+}
+
+/** Bid options per asta movimento (meccanica A): {0, 1, 2, 4, slancio_max}. */
+function legalBidMoves(_state: GameState, unit: Unit): GameEvent[] {
+  void _state;
+  const maxSla = Math.max(0, unit.slancio);
+  const cands = Array.from(new Set([0, 1, 2, 4, maxSla])).sort((a, b) => a - b);
+  return cands
+    .filter((c) => c >= 0 && c <= maxSla)
+    .map((c) => ({ type: 'BID_MOVEMENT' as const, amount: c }));
+}
+
+/** Carica options: {0, 1, 3, max} clampato a [0, min(delta, slancio)]. */
+function legalCaricaMoves(state: GameState, unit: Unit): GameEvent[] {
+  if (!state.pendingAction) return [{ type: 'CHOOSE_CARICA', amount: 0 }];
+  const target = state.units[state.pendingAction.targetId];
+  if (!target) return [{ type: 'CHOOSE_CARICA', amount: 0 }];
+  let delta = 0;
+  if (unit.positionAtTurnStart) {
+    const dStart = baseDistance(unit.positionAtTurnStart, target.position);
+    const dNow = baseDistance(unit.position, target.position);
+    delta = Math.max(0, dStart - dNow);
+  }
+  const maxCarica = Math.max(0, Math.min(delta, unit.slancio));
+  const cands = Array.from(new Set([0, 1, 3, maxCarica])).sort((a, b) => a - b);
+  return cands
+    .filter((c) => c >= 0 && c <= maxCarica)
+    .map((c) => ({ type: 'CHOOSE_CARICA' as const, amount: c }));
 }
 
 /** Mosse legali per la fase turn-start (scelta dadi slancio + transfer impeto→slancio D-044) */
@@ -154,6 +187,11 @@ function legalActionMoves(state: GameState, unit: Unit): GameEvent[] {
     for (const c of [...closer, ...farther]) {
       moves.push({ type: 'MOVE', unitId: unit.id, targetHex: c.hex });
     }
+  }
+
+  // Fase 1: TOGGLE_DEFENSIVE (gratuita, max 1/turno, solo con scudo offhand)
+  if (!unit.defensiveToggledThisTurn && unit.offhand && getShield(unit.offhand)) {
+    moves.push({ type: 'TOGGLE_DEFENSIVE', unitId: unit.id });
   }
 
   // END_TURN sempre disponibile

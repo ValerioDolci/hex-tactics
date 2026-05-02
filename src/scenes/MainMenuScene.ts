@@ -313,6 +313,31 @@ export class MainMenuScene extends Phaser.Scene {
       yy += btnSpacing;
     }
 
+    // Difficoltà AI: visibile solo se la fazione è AI
+    if (getMode() === 'ai') {
+      yy += 4;
+      const aiLabel = this.add
+        .text(x, yy, 'Difficoltà AI:', { fontFamily: 'monospace', fontSize: '14px', color: '#aaa' })
+        .setOrigin(0.5, 0);
+      this.addToContent(aiLabel);
+      yy += labelGap;
+      const getLevel = (): 'easy' | 'hard' =>
+        (faction === 'A' ? this.setup.aiLevelA : this.setup.aiLevelB) ?? 'easy';
+      const setLevel = (lv: 'easy' | 'hard') => {
+        if (faction === 'A') this.setup.aiLevelA = lv;
+        else this.setup.aiLevelB = lv;
+      };
+      for (const lv of ['easy', 'hard'] as const) {
+        const isSelected = getLevel() === lv;
+        this.makeChoiceButton(x, yy, lv === 'easy' ? 'Facile' : '★ Difficile (DT)', isSelected, () => {
+          setLevel(lv);
+          saveSetup(this.setup);
+          this.refresh();
+        });
+        yy += btnSpacing;
+      }
+    }
+
     return yy;
   }
 

@@ -40,6 +40,7 @@ import {
   aiDecideDefense,
   aiDecideSlancio,
 } from '@ai/basicAi';
+import { aiDecideHard } from '@ai/dtAI';
 import { FactionId } from '@entities/Unit';
 import { getScenario, TutorialScenario, TutorialStep } from '@data/tutorial';
 import { TutorialOverlay } from '@ui/TutorialOverlay';
@@ -68,6 +69,8 @@ export class BattleScene extends Phaser.Scene {
 
   /** Modalità di controllo per fazione (default: A umano vs B AI) */
   private controlMode: Record<FactionId, 'human' | 'ai'> = { A: 'human', B: 'ai' };
+  /** Livello AI per fazione (default 'easy' = basicAi heuristic). 'hard' usa DT distillato v14. */
+  private aiLevel: Record<FactionId, 'easy' | 'hard'> = { A: 'easy', B: 'easy' };
 
   // Camera state (replicato da M2)
   private keys!: {
@@ -135,6 +138,10 @@ export class BattleScene extends Phaser.Scene {
     if (data && (data as Partial<BattleSetup>).presetA) {
       this.incomingSetup = data as BattleSetup;
       this.controlMode = { A: this.incomingSetup.modeA, B: this.incomingSetup.modeB };
+      this.aiLevel = {
+        A: this.incomingSetup.aiLevelA ?? 'easy',
+        B: this.incomingSetup.aiLevelB ?? 'easy',
+      };
     }
   }
 
@@ -632,8 +639,21 @@ export class BattleScene extends Phaser.Scene {
 
     // Se l'unità è AI: salta handoff e gioca automaticamente
     if (this.controlMode[unit.faction] === 'ai') {
-      const slancioN = aiDecideSlancio(this.state, unit.id);
-      this.dispatch({ type: 'START_TURN', slancioDice: slancioN });
+      const isHard = this.aiLevel[unit.faction] === 'hard';
+      let slancioN: number;
+      let impetoToSlancio: number | undefined;
+      if (isHard) {
+        const e = aiDecideHard(this.state, unit.id);
+        if (e.type === 'START_TURN') {
+          slancioN = e.slancioDice;
+          impetoToSlancio = e.impetoToSlancio;
+        } else {
+          slancioN = aiDecideSlancio(this.state, unit.id);
+        }
+      } else {
+        slancioN = aiDecideSlancio(this.state, unit.id);
+      }
+      this.dispatch({ type: 'START_TURN', slancioDice: slancioN, impetoToSlancio });
       this.scheduleAiTurn();
       return;
     }
@@ -661,43 +681,75 @@ export class BattleScene extends Phaser.Scene {
     if (!unit) return;
     if (this.controlMode[unit.faction] !== 'ai') return;
 
-    const event = aiDecideAction(this.state, unit.id);
+    // Modalità Hard: usa il DT distillato per scegliere l'azione (e tutte le fasi successive)
+    const isHard = this.aiLevel[unit.faction] === 'hard';
+    const event = isHard ? aiDecideHard(this.state, unit.id) : aiDecideAction(this.state, unit.id);
     this.dispatch(event);
 
     if (event.type === 'DECLARE_ATTACK') {
       // Fase 1: gestisci awaiting-carica per AI.
-      // Cast a string per la narrowing di TS dopo dispatch (modifica side-effect non tracciata).
       if ((this.state.phase as string) === 'awaiting-carica') {
-        const amount = aiDecideCarica(this.state, unit.id);
+        let amount: number;
+        if (isHard) {
+          const e = aiDecideHard(this.state, unit.id);
+          amount = e.type === 'CHOOSE_CARICA' ? e.amount : aiDecideCarica(this.state, unit.id);
+        } else {
+          amount = aiDecideCarica(this.state, unit.id);
+        }
         this.dispatch({ type: 'CHOOSE_CARICA', amount });
       }
-      const diceN = aiDecideAttackerDice(this.state, unit.id);
+      // CHOOSE_ATTACKER_DICE: usa hard se attivo, altrimenti basic
+      let diceN: number;
+      if (isHard) {
+        const e = aiDecideHard(this.state, unit.id);
+        diceN = e.type === 'CHOOSE_ATTACKER_DICE' ? e.diceN : aiDecideAttackerDice(this.state, unit.id);
+      } else {
+        diceN = aiDecideAttackerDice(this.state, unit.id);
+      }
       this.dispatch({ type: 'CHOOSE_ATTACKER_DICE', diceN });
 
       if (event.isRanged) {
-        // Risolvi direttamente
         this.dispatch({ type: 'RESOLVE_COMBAT' });
         this.afterCombat();
         this.scheduleAiTurn();
         return;
       }
 
-      // Mischia: difensore decide
       const targetId = event.targetId;
       const target = this.state.units[targetId];
       if (this.controlMode[target.faction] === 'ai') {
-        const def = aiDecideDefense(this.state, targetId);
+        const targetHard = this.aiLevel[target.faction] === 'hard';
+        let defType: 'parry' | 'dodge' | 'none';
+        let parryWith: 'weapon' | 'offhand' | undefined;
+        let defDice: number;
+        if (targetHard) {
+          const e = aiDecideHard(this.state, targetId);
+          if (e.type === 'CHOOSE_DEFENSE') {
+            defType = e.defenseType;
+            parryWith = e.parryWith;
+            defDice = e.diceN;
+          } else {
+            const def = aiDecideDefense(this.state, targetId);
+            defType = def.defenseType;
+            parryWith = def.parryWith;
+            defDice = def.diceN;
+          }
+        } else {
+          const def = aiDecideDefense(this.state, targetId);
+          defType = def.defenseType;
+          parryWith = def.parryWith;
+          defDice = def.diceN;
+        }
         this.dispatch({
           type: 'CHOOSE_DEFENSE',
-          defenseType: def.defenseType,
-          parryWith: def.parryWith,
-          diceN: def.diceN,
+          defenseType: defType,
+          parryWith,
+          diceN: defDice,
         });
         this.dispatch({ type: 'RESOLVE_COMBAT' });
         this.afterCombat();
         this.scheduleAiTurn();
       } else {
-        // Difensore umano: scelta manuale immediata (no handoff)
         this.askDefense(targetId, /*resumeAiAfter=*/true);
       }
       return;

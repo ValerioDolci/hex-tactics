@@ -15,6 +15,10 @@ export interface BattleSetup {
   customBuildIdA?: string;
   /** Se presente, ignora `presetB`. */
   customBuildIdB?: string;
+  /** Difficoltà AI per fazione A (default 'easy'). 'hard' usa il DT distillato dal v14. */
+  aiLevelA?: 'easy' | 'hard';
+  /** Difficoltà AI per fazione B. */
+  aiLevelB?: 'easy' | 'hard';
 }
 
 export function saveSetup(setup: BattleSetup): void {
