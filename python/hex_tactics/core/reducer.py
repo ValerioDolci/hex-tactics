@@ -165,6 +165,7 @@ def _do_start_turn(state: GameState, slancio_dice: int, impeto_to_slancio: int) 
         action_taken_this_turn=updated.action_taken_this_turn,
         position_at_turn_start=updated.position_at_turn_start,
         defensive_toggled_this_turn=updated.defensive_toggled_this_turn,
+        turns_played=updated.turns_played,
     )
     new_state = append_log(
         new_state,

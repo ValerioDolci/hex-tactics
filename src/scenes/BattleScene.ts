@@ -295,9 +295,13 @@ export class BattleScene extends Phaser.Scene {
   private setupCamera(): void {
     const cam = this.cameras.main;
     const bounds = this.board.getWorldBounds();
-    cam.setBounds(0, 0, bounds.width, bounds.height);
+    // NIENTE setBounds + centerOn. Quando il viewport è più grande dei bounds della mappa
+    // (es. viewport 1528×732 vs mappa 1320×864), `centerOn` setta scrollX/Y negativi che
+    // possono causare offset nei pointer event (anche con setScrollFactor=0 sui menu UI).
+    // Lasciamo camera default a (0, 0) zoom 1. L'utente può scrollare con drag se serve.
     cam.setZoom(1.0);
-    cam.centerOn(bounds.width / 2, bounds.height / 2);
+    cam.setScroll(0, 0);
+    void bounds;
 
     this.input.on('wheel', (_p: Phaser.Input.Pointer, _g: unknown, _dx: number, dy: number) => {
       const newZoom = Phaser.Math.Clamp(
@@ -482,12 +486,8 @@ export class BattleScene extends Phaser.Scene {
     this.log.relayout?.(20, this.scale.height - logH - 20, logW, logH);
     this.menu.setPosition(this.scale.width - 300, 140);
 
-    // Camera: i bounds della mappa restano gli stessi (la mappa è fissa);
-    // ricentra solo se l'attuale scroll è fuori dai nuovi limiti del viewport.
-    const cam = this.cameras.main;
-    const bounds = this.board.getWorldBounds();
-    cam.setBounds(0, 0, bounds.width, bounds.height);
-
+    // Camera: niente setBounds (vedi setupCamera per motivazione anti-offset)
+    void this.cameras.main;
     this.refreshUI();
   }
 

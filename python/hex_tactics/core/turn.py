@@ -65,8 +65,10 @@ def apply_turn_start(
     """Steps 1-3 (+4 D-044) inizio turno. Ritorna nuovo Unit (immutabile)."""
     new_unit = _clone_unit(unit)
 
-    # 1. Recupero dadi
-    recovery = compute_dice_recovery(unit)
+    # 1. Recupero dadi.
+    # Regola: al PRIMO turno (turns_played==0) il recovery è 0, il PG parte col pool
+    # iniziale baseline (6 dadi). Dal 2° turno in poi: recovery normale.
+    recovery = 0 if getattr(unit, "turns_played", 0) == 0 else compute_dice_recovery(unit)
     new_unit.dadi_azione = min(unit.dadi_azione_max, unit.dadi_azione + recovery)
 
     # 2. Slancio → impeto
@@ -109,6 +111,8 @@ def apply_turn_start(
     # Fase 1: snapshot posizione per calcolo carica + reset toggle stance
     new_unit.position_at_turn_start = unit.position
     new_unit.defensive_toggled_this_turn = False
+    # Increment turn counter (per regola "no recovery al 1° turno")
+    new_unit.turns_played = getattr(unit, "turns_played", 0) + 1
     return new_unit
 
 

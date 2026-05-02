@@ -82,6 +82,11 @@ class Unit:
     defensive_stance: bool = False  # se True: scudo offhand RD raddoppia, imp scudo raddoppia
     defensive_toggled_this_turn: bool = False  # max 1 toggle per turno
 
+    # Numero di turni giocati dall'unità (incrementato in apply_turn_start).
+    # Al primo turno (turns_played==0) NON c'è recovery dadi: il PG parte con 6 dadi
+    # (pool iniziale baseline). Recovery scatta dal 2° turno in poi.
+    turns_played: int = 0
+
 
 def create_baseline_unit(
     *, id: str, name: str, faction: FactionId, position: Axial
