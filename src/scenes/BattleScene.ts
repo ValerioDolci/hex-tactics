@@ -692,84 +692,103 @@ export class BattleScene extends Phaser.Scene {
     const enemies = Object.values(this.state.units).filter(
       (u) => u.faction !== unit.faction && u.alive,
     );
+    // Helper: aggiunge una voce al menu, eventualmente disabled con motivo nel label.
+    const addItem = (
+      baseLabel: string,
+      onClick: () => void,
+      disabledReason: string | null = null,
+    ): void => {
+      if (disabledReason) {
+        items.push({ label: `${baseLabel} — ${disabledReason}`, onClick: () => {}, disabled: true });
+      } else {
+        items.push({ label: baseLabel, onClick });
+      }
+    };
+
     if (unit.weapon) {
       const w = getWeapon(unit.weapon);
       if (w) {
         for (const enemy of enemies) {
-          // Mischia (anche reach se l'arma ha portata)
           const dist = baseDistance(unit.position, enemy.position);
           const meleeRange = w.range?.reach ?? 1;
-          if (dist <= meleeRange) {
-            for (let mi = 0; mi < w.attackModes.length; mi++) {
-              const mode = w.attackModes[mi];
-              items.push({
-                label: `Attacca ${enemy.name} (${w.name} · ${mode.label})`,
-                onClick: () => this.startAttackFlow(unit.id, enemy.id, w.id, mi, mode.stat === 'either' ? undefined : mode.stat, false),
-              });
-            }
+          // Mischia per ogni mode, con motivazione disabilitazione
+          for (let mi = 0; mi < w.attackModes.length; mi++) {
+            const mode = w.attackModes[mi];
+            const label = `Attacca ${enemy.name} (${w.name} · ${mode.label})`;
+            let reason: string | null = null;
+            if (unit.actionTakenThisTurn) reason = 'azione già usata';
+            else if (unit.dadiAzione < 1) reason = 'no dadi';
+            else if (dist > meleeRange) reason = `fuori portata (${dist} > ${meleeRange})`;
+            addItem(
+              label,
+              () => this.startAttackFlow(unit.id, enemy.id, w.id, mi, mode.stat === 'either' ? undefined : mode.stat, false),
+              reason,
+            );
           }
-
-          // Ranged
-          const canRanged = canFireRanged(unit, enemy, w.id, this.state.units);
-          if (canRanged.ok) {
-            const losInfo = canRanged.los!;
+          // Ranged: mostra solo se arma ha capacità ranged
+          const isRangedCapable = w.range && (w.range.distance != null || w.range.throw != null);
+          if (isRangedCapable) {
+            const canRanged = canFireRanged(unit, enemy, w.id, this.state.units);
             for (let mi = 0; mi < w.attackModes.length; mi++) {
               const mode = w.attackModes[mi];
-              items.push({
-                label: `Spara a ${enemy.name} (${w.name} · vis ${losInfo.visibility}/7 · dist ${losInfo.distance})`,
-                onClick: () => this.startAttackFlow(unit.id, enemy.id, w.id, mi, mode.stat === 'either' ? undefined : mode.stat, true),
-              });
+              const losInfo = canRanged.los;
+              const labelExtra = losInfo ? ` · vis ${losInfo.visibility}/7 · dist ${losInfo.distance}` : '';
+              const label = `Spara a ${enemy.name} (${w.name}${labelExtra})`;
+              let reason: string | null = null;
+              if (unit.actionTakenThisTurn) reason = 'azione già usata';
+              else if (unit.dadiAzione < 1) reason = 'no dadi';
+              else if (!canRanged.ok) reason = canRanged.reason ?? 'non sparabile';
+              addItem(
+                label,
+                () => this.startAttackFlow(unit.id, enemy.id, w.id, mi, mode.stat === 'either' ? undefined : mode.stat, true),
+                reason,
+              );
             }
           }
         }
       }
     }
 
-    // Ricarica arma (es. balestra): se scarica, offri azione di ricarica
+    // Ricarica arma (es. balestra)
     if (unit.weapon) {
       const w = getWeapon(unit.weapon);
-      if (w && w.range?.reload != null && !unit.weaponLoaded && unit.dadiAzione > 0) {
-        items.push({
-          label: `Ricarica ${w.name} (diff ${w.range.reload}, Forza)`,
-          onClick: () => this.startReloadFlow(unit.id),
-        });
+      if (w && w.range?.reload != null) {
+        const label = `Ricarica ${w.name} (diff ${w.range.reload}, Forza)`;
+        let reason: string | null = null;
+        if (unit.weaponLoaded) reason = 'arma già carica';
+        else if (unit.actionTakenThisTurn) reason = 'azione già usata';
+        else if (unit.dadiAzione < 1) reason = 'no dadi';
+        addItem(label, () => this.startReloadFlow(unit.id), reason);
       }
     }
 
-    // Movimento: range = slancio + (1 se non ho ancora mosso, altrimenti 0)
+    // Movimento: range = slancio + freeHex
     const freeHex = unit.hexMovedThisTurn === 0 ? 1 : 0;
     const moveRange = unit.slancio + freeHex;
-    if (moveRange > 0) {
-      items.push({
-        label: `Muovi (range ${moveRange}, slancio ${unit.slancio}${freeHex ? ' +1 gratis' : ''})`,
-        onClick: () => this.startMoveMode(unit.id),
-      });
+    {
+      const label = `Muovi (range ${moveRange}, slancio ${unit.slancio}${freeHex ? ' +1 gratis' : ''})`;
+      const reason = moveRange === 0 ? 'no slancio' : null;
+      addItem(label, () => this.startMoveMode(unit.id), reason);
     }
 
-    // Fase 1: posizione difensiva con scudo (gratuita, max 1 toggle/turno, solo scudi veri)
-    if (unit.offhand && !unit.defensiveToggledThisTurn) {
+    // Posizione difensiva (solo se ha scudo offhand)
+    if (unit.offhand) {
       const offShield = getShield(unit.offhand);
       if (offShield) {
         const label = unit.defensiveStance
           ? `🛡 Esci posizione difensiva (${offShield.name})`
           : `🛡 Posizione difensiva (${offShield.name}: imp ×2, RD ×2)`;
-        items.push({
-          label,
-          onClick: () => {
-            this.dispatch({ type: 'TOGGLE_DEFENSIVE', unitId: unit.id });
-            this.startCurrentTurnFlow();
-          },
-        });
+        const reason = unit.defensiveToggledThisTurn ? 'già toggled questo turno' : null;
+        addItem(label, () => {
+          this.dispatch({ type: 'TOGGLE_DEFENSIVE', unitId: unit.id });
+          this.startCurrentTurnFlow();
+        }, reason);
       }
     }
 
     items.push({
       label: 'Passa turno (Spazio)',
-      onClick: () => {
-        // eslint-disable-next-line no-console
-        console.info('[BattleScene] Passa turno cliccato. Phase:', this.state.phase, 'unit:', unit.id);
-        this.passTurn();
-      },
+      onClick: () => this.passTurn(),
     });
 
     this.menu.setItems(items);
