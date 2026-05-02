@@ -1098,7 +1098,42 @@ export class BattleScene extends Phaser.Scene {
           this.afterCombat();
           return;
         }
-        // Mischia: vai diretto alla scelta difensiva (no handoff intermedio)
+        // Mischia: difensore decide. Se è AI, scegli auto e risolvi.
+        const target2 = this.state.units[targetId];
+        if (target2 && this.controlMode[target2.faction] === 'ai') {
+          const isHard = this.aiLevel[target2.faction] === 'hard';
+          let defType: 'parry' | 'dodge' | 'none';
+          let parryWith: 'weapon' | 'offhand' | undefined;
+          let defDice: number;
+          if (isHard) {
+            const e = aiDecideHard(this.state, targetId);
+            if (e.type === 'CHOOSE_DEFENSE') {
+              defType = e.defenseType;
+              parryWith = e.parryWith;
+              defDice = e.diceN;
+            } else {
+              const def = aiDecideDefense(this.state, targetId);
+              defType = def.defenseType;
+              parryWith = def.parryWith;
+              defDice = def.diceN;
+            }
+          } else {
+            const def = aiDecideDefense(this.state, targetId);
+            defType = def.defenseType;
+            parryWith = def.parryWith;
+            defDice = def.diceN;
+          }
+          this.dispatch({
+            type: 'CHOOSE_DEFENSE',
+            defenseType: defType,
+            parryWith,
+            diceN: defDice,
+          });
+          this.dispatch({ type: 'RESOLVE_COMBAT' });
+          this.afterCombat();
+          return;
+        }
+        // Difensore umano: scelta manuale immediata
         this.askDefense(targetId);
       },
     });
