@@ -100,17 +100,33 @@ export interface GameState {
 
   /**
    * Risultato dell'ULTIMA risoluzione di combat (RESOLVE_COMBAT).
-   * Esposto per UI animazione dadi: contiene i d6 attaccante/difensore reali.
+   * Esposto per UI animazione dadi: contiene i d6 attaccante/difensore reali +
+   * breakdown numerico + esito finale.
    * Resettato a undefined a START_TURN/START_ROUND.
    */
   lastResolution?: {
     attackerName: string;
     attackerDice: number[];
     attackerFixed: number;
+    /** Variabile post-floor (impedimento applicato). */
+    attackerVariable: number;
+    /** Totale (variabile + fissa). */
+    attackerTotal: number;
     defenderName: string;
     defenderDice: number[]; // [] se nessuna difesa attiva
     defenderFixed: number;
+    defenderTotal: number; // 0 se no defense
     isRanged: boolean;
+    /** Tipo di difesa attiva del difensore. */
+    defenseType: 'parry' | 'dodge' | 'none';
+    /** Residuo del confronto (variabile-vs-schivata o totale-vs-parata). */
+    residual: number;
+    /** Hit/miss finale. */
+    hit: boolean;
+    /** Danno raw (pre-armor). */
+    rawDamage: number;
+    /** Danno effettivo (post-armor RD per CaC, raw per ranged D-043). */
+    effectiveDamage: number;
   };
 }
 

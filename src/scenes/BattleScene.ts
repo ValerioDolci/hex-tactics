@@ -6,7 +6,7 @@ import { CombatLog } from '@ui/CombatLog';
 import { ActionMenu, ActionMenuItem } from '@ui/ActionMenu';
 import { DiceChoiceUI } from '@ui/DiceChoiceUI';
 import { SliderChoiceUI } from '@ui/SliderChoiceUI';
-import { playDiceRoll } from '@ui/DiceRollAnimation';
+import { playCombatRoll } from '@ui/DiceRollAnimation';
 import { HandoffOverlay } from '@ui/HandoffOverlay';
 import { GameOverOverlay } from '@ui/GameOverOverlay';
 import { GAME_CONFIG } from '@/config';
@@ -581,35 +581,48 @@ export class BattleScene extends Phaser.Scene {
 
   /**
    * Legge `state.lastResolution` (popolato dal reducer dopo RESOLVE_COMBAT)
-   * e mostra l'animazione dadi attaccante (e difensore se presente).
-   * Posiziona il gruppo dadi nella metà alta dello schermo.
+   * e mostra l'animazione completa: titolo, dadi atk + def, breakdown e esito.
    */
   private playRollAnimation(): void {
     const lr = this.state.lastResolution;
     if (!lr) return;
-    const w = this.scale.width;
-    const yAtk = this.scale.height * 0.30;
-    const yDef = this.scale.height * 0.45;
-    // Attaccante: dadi gialli
-    if (lr.attackerDice.length > 0) {
-      void playDiceRoll(this, {
+    let title: string;
+    if (lr.isRanged) {
+      title = 'ATTACCO RANGED';
+    } else if (lr.defenseType === 'parry') {
+      title = 'ATTACCO vs PARATA';
+    } else if (lr.defenseType === 'dodge') {
+      title = 'ATTACCO vs SCHIVATA';
+    } else {
+      title = 'ATTACCO (no difesa)';
+    }
+    const subtitle = `${lr.attackerName} → ${lr.defenderName}`;
+    void playCombatRoll(this, {
+      title,
+      subtitle,
+      attacker: {
+        name: lr.attackerName,
         dice: lr.attackerDice,
-        centerX: w / 2,
-        centerY: yAtk,
-        label: `${lr.attackerName} tira ${lr.attackerDice.length}d6 + ${lr.attackerFixed} fissi`,
-        color: 0xffee66,
-      });
-    }
-    // Difensore: dadi azzurri (solo se ha tirato, no per ranged o no-defense)
-    if (lr.defenderDice.length > 0) {
-      void playDiceRoll(this, {
+        variable: lr.attackerVariable,
+        fixed: lr.attackerFixed,
+        total: lr.attackerTotal,
+      },
+      defender: {
+        name: lr.defenderName,
         dice: lr.defenderDice,
-        centerX: w / 2,
-        centerY: yDef,
-        label: `${lr.defenderName} difende ${lr.defenderDice.length}d6 + ${lr.defenderFixed} fissi`,
-        color: 0x88ccff,
-      });
-    }
+        fixed: lr.defenderFixed,
+        total: lr.defenderTotal,
+      },
+      outcome: {
+        residual: lr.residual,
+        hit: lr.hit,
+        rawDamage: lr.rawDamage,
+        effectiveDamage: lr.effectiveDamage,
+        defenseType: lr.defenseType,
+      },
+      centerX: this.scale.width / 2,
+      topY: this.scale.height * 0.18,
+    });
   }
 
   /**

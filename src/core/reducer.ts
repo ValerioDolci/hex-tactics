@@ -502,6 +502,8 @@ function doResolveCombat(state: GameState): GameState {
     newState = appendLog(newState, `${target.name} tira ${pa.defense.type}: ${defDescr}`);
   }
 
+  // V2: tracking per lastResolution
+  let trackedEffectiveDamage = 0;
   // Applica risultato
   if (result.hit) {
     // D-043: per ranged "il tiro è il danno" — RD armatura già pagata al tiro
@@ -509,6 +511,7 @@ function doResolveCombat(state: GameState): GameState {
     const dmg = pa.isRanged
       ? { effectiveDamage: result.rawDamage, newHp: Math.max(0, target.hp - result.rawDamage) }
       : applyDamageWithArmor(target, result.rawDamage);
+    trackedEffectiveDamage = dmg.effectiveDamage;
     newState = updateUnit(newState, target.id, {
       hp: dmg.newHp,
       alive: dmg.newHp > 0,
@@ -590,15 +593,34 @@ function doResolveCombat(state: GameState): GameState {
     }
   }
 
-  // V2: esposto lastResolution per UI animazione dadi
+  // V2: esposto lastResolution per UI animazione dadi (con breakdown numerico + esito)
+  const defType: 'parry' | 'dodge' | 'none' = (pa.defense?.type ?? 'none') as 'parry' | 'dodge' | 'none';
+  // Residuo: per dodge = variabile_atk - totale_def; per parry = totale_atk - totale_def
+  let residual = 0;
+  if (defType === 'dodge') {
+    residual = variableSum(attRoll) - rollTotal(result.defenderRoll);
+  } else if (defType === 'parry') {
+    residual = rollTotal(attRoll) - rollTotal(result.defenderRoll);
+  } else {
+    // No defense (incl. ranged): residuo = totale_atk
+    residual = rollTotal(attRoll);
+  }
   const lastResolution = {
     attackerName: attacker.name,
     attackerDice: [...attRoll.variable],
     attackerFixed: attRoll.fixed,
+    attackerVariable: variableSum(attRoll),
+    attackerTotal: rollTotal(attRoll),
     defenderName: target.name,
     defenderDice: [...result.defenderRoll.variable],
     defenderFixed: result.defenderRoll.fixed,
+    defenderTotal: rollTotal(result.defenderRoll),
     isRanged: pa.isRanged,
+    defenseType: defType,
+    residual,
+    hit: result.hit,
+    rawDamage: result.rawDamage,
+    effectiveDamage: trackedEffectiveDamage,
   };
 
   return {
