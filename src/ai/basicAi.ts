@@ -126,9 +126,17 @@ export function aiDecideAction(state: GameState, unitId: UnitId): GameEvent {
   // Se ho già usato l'azione del turno, o ho 0 dadi azione, posso solo muovere o passare
   const canAct = !me.actionTakenThisTurn && me.dadiAzione >= 1;
 
+  // V2 D-049: solo armi con `range.reach` esplicito sono melee-capable (le ranged-only
+  // come archi/balestra hanno solo .distance, niente reach → niente attacco mischia).
+  const meleeCapable = w?.range?.reach != null;
+  // Threat in mischia: nemico melee con slancio>0 → ranged vietato.
+  const inMeleeThreat = (() => {
+    const enemies = Object.values(state.units).filter((u) => u.faction !== me.faction && u.alive);
+    return enemies.some((e) => baseDistance(me.position, e.position) <= 1 && e.slancio > 0);
+  })();
   // Mischia: se in range portata → attacco (se posso ancora agire)
-  if (canAct && w) {
-    const meleeRange = w.range?.reach ?? 1;
+  if (canAct && w && meleeCapable) {
+    const meleeRange = w.range?.reach ?? 0;
     if (dist <= meleeRange) {
       const attack: EventDeclareAttack = {
         type: 'DECLARE_ATTACK',
@@ -141,8 +149,10 @@ export function aiDecideAction(state: GameState, unitId: UnitId): GameEvent {
       };
       return attack;
     }
+  }
 
-    // Ranged: se l'arma è ranged-capable e il bersaglio è in range
+  // Ranged: se l'arma è ranged-capable e il bersaglio è in range. Bloccato se in melee threat.
+  if (canAct && w && !inMeleeThreat) {
     const can = canFireRanged(me, enemy, w.id, state.units);
     if (can.ok) {
       const attack: EventDeclareAttack = {
@@ -156,12 +166,11 @@ export function aiDecideAction(state: GameState, unitId: UnitId): GameEvent {
       };
       return attack;
     }
-
-    // Arma scarica con reload (es. balestra) → ricarica invece di fare nient'altro
-    if (w.range?.reload != null && !me.weaponLoaded && me.dadiAzione > 0) {
-      const dice = Math.min(2, me.dadiAzione);
-      return { type: 'RELOAD', unitId: me.id, diceN: dice };
-    }
+  }
+  // Arma scarica con reload (es. balestra) → ricarica anche in mischia (azione difensiva)
+  if (canAct && w && w.range?.reload != null && !me.weaponLoaded && me.dadiAzione > 0) {
+    const dice = Math.min(2, me.dadiAzione);
+    return { type: 'RELOAD', unitId: me.id, diceN: dice };
   }
   // Se non ho più la mia azione di turno (o non avrei niente da fare), prova solo a muovere/passare
   if (!canAct && w) {

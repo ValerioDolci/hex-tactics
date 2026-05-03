@@ -193,9 +193,19 @@ def ai_decide_action(state: GameState, unit_id: str) -> GameEvent:
     dist = base_distance(me.position, enemy.position)
     can_act = (not me.action_taken_this_turn) and me.dadi_azione >= 1
 
-    if can_act and w is not None:
-        # Mischia
-        melee_range = w.range.reach if (w.range is not None and w.range.reach is not None) else 1
+    # V2 D-049: solo armi con `range.reach` esplicito sono melee-capable (le ranged-only
+    # come archi/balestra hanno solo .distance, niente reach → niente attacco mischia).
+    melee_capable = w is not None and w.range is not None and w.range.reach is not None
+    # Threat in mischia: nemico melee con slancio>0 → ranged vietato.
+    in_melee_threat = any(
+        u.faction != me.faction and u.alive
+        and base_distance(me.position, u.position) <= 1 and u.slancio > 0
+        for u in state.units.values()
+    )
+
+    # Mischia: solo se l'arma è melee-capable
+    if can_act and w is not None and melee_capable:
+        melee_range = w.range.reach if w.range.reach is not None else 0
         if dist <= melee_range:
             stat = w.attack_modes[0].stat
             chosen = "forza" if stat == "either" else stat
@@ -208,7 +218,8 @@ def ai_decide_action(state: GameState, unit_id: str) -> GameEvent:
                 is_ranged=False,
             )
 
-        # Ranged
+    # Ranged: bloccato se in melee threat
+    if can_act and w is not None and not in_melee_threat:
         can = can_fire_ranged(me, enemy, w.id, state.units)
         if can.ok:
             stat = w.attack_modes[0].stat
@@ -222,15 +233,17 @@ def ai_decide_action(state: GameState, unit_id: str) -> GameEvent:
                 is_ranged=True,
             )
 
-        # Reload (balestra scarica)
-        if (
-            w.range is not None
-            and w.range.reload is not None
-            and not me.weapon_loaded
-            and me.dadi_azione > 0
-        ):
-            dice = min(2, me.dadi_azione)
-            return EventReload(unit_id=me.id, dice_n=dice)
+    # Reload (balestra scarica) — anche in mischia (azione difensiva)
+    if (
+        can_act
+        and w is not None
+        and w.range is not None
+        and w.range.reload is not None
+        and not me.weapon_loaded
+        and me.dadi_azione > 0
+    ):
+        dice = min(2, me.dadi_azione)
+        return EventReload(unit_id=me.id, dice_n=dice)
 
     # Movimento
     free_hex = 1 if me.hex_moved_this_turn == 0 else 0

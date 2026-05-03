@@ -1013,24 +1013,34 @@ export class BattleScene extends Phaser.Scene {
     if (unit.weapon) {
       const w = getWeapon(unit.weapon);
       if (w) {
+        // V2: armi ranged (archi, balestra) NON hanno reach esplicito → niente
+        // attacco mischia. Le melee tutte hanno reach=1 (D-049).
+        const meleeCapable = w.range?.reach != null;
+        // Threat in mischia: nemico melee con slancio > 0 minaccia → ranged vietato.
+        const inMeleeThreat = enemies.some((e) => {
+          const d = baseDistance(unit.position, e.position);
+          return d <= 1 && e.slancio > 0;
+        });
         for (const enemy of enemies) {
           const dist = baseDistance(unit.position, enemy.position);
-          const meleeRange = w.range?.reach ?? 1;
-          // Mischia per ogni mode, con motivazione disabilitazione
-          for (let mi = 0; mi < w.attackModes.length; mi++) {
-            const mode = w.attackModes[mi];
-            const label = `Attacca ${enemy.name} (${w.name} · ${mode.label})`;
-            let reason: string | null = null;
-            if (unit.actionTakenThisTurn) reason = 'azione già usata';
-            else if (unit.dadiAzione < 1) reason = 'no dadi';
-            else if (dist > meleeRange) reason = `fuori portata (${dist} > ${meleeRange})`;
-            addItem(
-              label,
-              () => this.startAttackFlow(unit.id, enemy.id, w.id, mi, mode.stat === 'either' ? undefined : mode.stat, false),
-              reason,
-            );
+          const meleeRange = w.range?.reach ?? 0; // 0 se no melee
+          // Mischia: solo per armi melee-capable
+          if (meleeCapable) {
+            for (let mi = 0; mi < w.attackModes.length; mi++) {
+              const mode = w.attackModes[mi];
+              const label = `Attacca ${enemy.name} (${w.name} · ${mode.label})`;
+              let reason: string | null = null;
+              if (unit.actionTakenThisTurn) reason = 'azione già usata';
+              else if (unit.dadiAzione < 1) reason = 'no dadi';
+              else if (dist > meleeRange) reason = `fuori portata (${dist} > ${meleeRange})`;
+              addItem(
+                label,
+                () => this.startAttackFlow(unit.id, enemy.id, w.id, mi, mode.stat === 'either' ? undefined : mode.stat, false),
+                reason,
+              );
+            }
           }
-          // Ranged: mostra solo se arma ha capacità ranged
+          // Ranged: mostra solo se arma ha capacità ranged. Bloccato se in melee threat.
           const isRangedCapable = w.range && (w.range.distance != null || w.range.throw != null);
           if (isRangedCapable) {
             const canRanged = canFireRanged(unit, enemy, w.id, this.state.units);
@@ -1042,6 +1052,7 @@ export class BattleScene extends Phaser.Scene {
               let reason: string | null = null;
               if (unit.actionTakenThisTurn) reason = 'azione già usata';
               else if (unit.dadiAzione < 1) reason = 'no dadi';
+              else if (inMeleeThreat) reason = 'minacciato in mischia (no ranged)';
               else if (!canRanged.ok) reason = canRanged.reason ?? 'non sparabile';
               addItem(
                 label,
@@ -1296,7 +1307,8 @@ export class BattleScene extends Phaser.Scene {
     const weapon = getWeapon(weaponId)!;
     const mode = weapon.attackModes[modeIdx];
     const ctx = makeAttackContext(weaponId, weapon.category, chosenStat);
-    const maxN = Math.min(attacker.dadiAzione, 2 + countMaxDiceExtra(attacker.skills, ctx));
+    const standardMax = 2 + countMaxDiceExtra(attacker.skills, ctx);
+    const maxN = Math.min(attacker.dadiAzione, standardMax);
     const minN = Math.min(1, maxN);
     const choices: number[] = [];
     for (let i = minN; i <= maxN; i++) choices.push(i);
@@ -1308,7 +1320,7 @@ export class BattleScene extends Phaser.Scene {
     const carica = this.state.pendingAction?.caricaAmount ?? 0;
     const info: string[] = [
       `Arma: ${weapon.name} — ${mode.label}`,
-      `Tiro PG: 1-${maxN} d6 + 2 fissi`,
+      `Tiro PG: 1-${maxN} d6 + 2 fissi  (pool dadi: ${attacker.dadiAzione}, cap regola: ${standardMax})`,
       `Bonus arma: ${mode.diceVariable > 0 ? `+${mode.diceVariable}d6 ` : ''}+${mode.fixedBonus} fissi`,
     ];
     if (forced > 0) info.push(`+${forced} dado/i forzati (skill)`);

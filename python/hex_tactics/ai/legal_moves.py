@@ -80,13 +80,19 @@ def _legal_action_moves(state: GameState, unit: Unit) -> List[GameEvent]:
     enemy = find_closest_enemy(state, unit)
     weapon = get_weapon(unit.weapon) if unit.weapon is not None else None
 
-    # ATTACCO
+    # ATTACCO (V2 D-049)
     if enemy is not None and weapon is not None and not unit.action_taken_this_turn and unit.dadi_azione >= 1:
         dist = base_distance(unit.position, enemy.position)
-        melee_range = (
-            weapon.range.reach if (weapon.range is not None and weapon.range.reach is not None) else 1
+        # V2 D-049: solo armi con reach esplicito sono melee-capable
+        melee_capable = weapon.range is not None and weapon.range.reach is not None
+        melee_range = weapon.range.reach if (weapon.range is not None and weapon.range.reach is not None) else 0
+        # Threat in mischia: nemico (anche altro) melee con slancio>0 → ranged vietato
+        in_melee_threat = any(
+            u.faction != unit.faction and u.alive
+            and base_distance(unit.position, u.position) <= 1 and u.slancio > 0
+            for u in state.units.values()
         )
-        if dist <= melee_range:
+        if melee_capable and dist <= melee_range:
             for mi, mode in enumerate(weapon.attack_modes):
                 stat = "forza" if mode.stat == "either" else mode.stat
                 moves.append(
@@ -99,21 +105,22 @@ def _legal_action_moves(state: GameState, unit: Unit) -> List[GameEvent]:
                         is_ranged=False,
                     )
                 )
-        # Ranged
-        can = can_fire_ranged(unit, enemy, weapon.id, state.units)
-        if can.ok:
-            for mi, mode in enumerate(weapon.attack_modes):
-                stat = "agilità" if mode.stat == "either" else mode.stat
-                moves.append(
-                    EventDeclareAttack(
-                        attacker_id=unit.id,
-                        target_id=enemy.id,
-                        weapon_id=weapon.id,
-                        attack_mode_idx=mi,
-                        chosen_stat=stat,  # type: ignore[arg-type]
-                        is_ranged=True,
+        # Ranged: bloccato se in melee threat
+        if not in_melee_threat:
+            can = can_fire_ranged(unit, enemy, weapon.id, state.units)
+            if can.ok:
+                for mi, mode in enumerate(weapon.attack_modes):
+                    stat = "agilità" if mode.stat == "either" else mode.stat
+                    moves.append(
+                        EventDeclareAttack(
+                            attacker_id=unit.id,
+                            target_id=enemy.id,
+                            weapon_id=weapon.id,
+                            attack_mode_idx=mi,
+                            chosen_stat=stat,  # type: ignore[arg-type]
+                            is_ranged=True,
+                        )
                     )
-                )
 
     # RELOAD
     if (

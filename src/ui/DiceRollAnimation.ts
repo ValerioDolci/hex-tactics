@@ -260,25 +260,28 @@ export function playDiceRoll(
 }
 
 /**
- * Animazione completa di un combat: titolo, dadi attaccante + breakdown numerico,
- * dadi difensore + breakdown, ed esito (HIT/MISS, residuo, danno).
+ * Animazione completa di un combat con layout 2 COLONNE chiaro:
  *
- * Layout (top-down):
- *   ┌─────────────────────────────────────────────┐
- *   │           ATTACCO vs SCHIVATA                │ titolo
- *   │           Alpha → Bravo (mischia)            │ subtitle
- *   │  [d][d][d]  3+5+2 = 10 + 4 fix = 14 (totale)│ atk row
- *   │  [d][d]     2+4 = 6 + 2 fix = 8 (totale)    │ def row
- *   │  ▓▓ HIT  variabile 10 − difesa 8 = +2 → 6 dmg (RD 4) = 2 ▓▓│ esito
- *   └─────────────────────────────────────────────┘
+ *   ┌──────────────────────────────────────────────┐
+ *   │            ATTACCO vs SCHIVATA               │
+ *   │                                              │
+ *   │  ⚔️ Alpha            VS      🛡 Bravo         │
+ *   │  [d][d][d]                  [d][d]           │
+ *   │  3+5+2=10                  2+4=6             │
+ *   │  + 4 fissi                  + 2 fissi        │
+ *   │  ─────                      ─────            │
+ *   │  TOTALE 14                  TOTALE 8         │
+ *   │                                              │
+ *   │  ▓▓ HIT  14 − 8 = +6 → 6 raw → 4 dmg ▓▓     │
+ *   └──────────────────────────────────────────────┘
  */
 export function playCombatRoll(
   scene: Phaser.Scene,
   opts: CombatRollOptions,
 ): Promise<void> {
   return new Promise((resolve) => {
-    const W = 560;
-    const H = 270;
+    const W = 600;
+    const H = 360;
     const bx = opts.centerX - W / 2;
     const by = opts.topY;
 
@@ -287,7 +290,7 @@ export function playCombatRoll(
     group.setAlpha(0);
 
     // Sfondo box
-    const bg = scene.add.rectangle(bx, by, W, H, 0x0c1218, 0.92);
+    const bg = scene.add.rectangle(bx, by, W, H, 0x0c1218, 0.94);
     bg.setOrigin(0, 0);
     bg.setStrokeStyle(2, 0x6699bb);
     group.add(bg);
@@ -295,73 +298,142 @@ export function playCombatRoll(
     // Titolo
     const titleColor = opts.outcome.hit ? '#ffaaaa' : '#88ccff';
     const title = scene.add.text(opts.centerX, by + 14, opts.title, {
-      fontFamily: 'monospace', fontSize: '20px', color: titleColor,
+      fontFamily: 'monospace', fontSize: '22px', color: titleColor,
       fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
     });
     title.setOrigin(0.5, 0);
     group.add(title);
 
     if (opts.subtitle) {
-      const sub = scene.add.text(opts.centerX, by + 42, opts.subtitle, {
-        fontFamily: 'monospace', fontSize: '13px', color: '#cdd9e3',
+      const sub = scene.add.text(opts.centerX, by + 46, opts.subtitle, {
+        fontFamily: 'monospace', fontSize: '13px', color: '#aab',
       });
       sub.setOrigin(0.5, 0);
       group.add(sub);
     }
 
-    // Riga attaccante: dadi a sinistra, breakdown a destra
-    const yAtk = by + 78;
+    // Layout 2 colonne: atk a sx (x=bx + W/4), def a dx (x=bx + 3W/4), VS in mezzo
+    const colAtkX = bx + W / 4;
+    const colDefX = bx + 3 * W / 4;
+    const yHeader = by + 78;
+    const yDice = by + 108;
+    const yBreakdown = by + 168;
+    const yFissa = by + 192;
+    const ySepLine = by + 215;
+    const yTotale = by + 230;
+
+    // Header colonna ATK (giallo)
+    const atkHeader = scene.add.text(colAtkX, yHeader, `⚔ ${opts.attacker.name}`, {
+      fontFamily: 'monospace', fontSize: '15px', color: '#ffee66', fontStyle: 'bold',
+    });
+    atkHeader.setOrigin(0.5, 0);
+    group.add(atkHeader);
+
+    // Header colonna DEF (azzurro) — anche se no defense, mostra il nome
+    const defLabel = opts.defender.dice.length > 0 ? `🛡 ${opts.defender.name}` : `🎯 ${opts.defender.name}`;
+    const defHeader = scene.add.text(colDefX, yHeader, defLabel, {
+      fontFamily: 'monospace', fontSize: '15px', color: '#88ccff', fontStyle: 'bold',
+    });
+    defHeader.setOrigin(0.5, 0);
+    group.add(defHeader);
+
+    // Etichetta VS centrale grande
+    const vsLabel = scene.add.text(opts.centerX, yDice + DICE_SIZE / 2, 'VS', {
+      fontFamily: 'monospace', fontSize: '24px', color: '#ddd',
+      fontStyle: 'bold', stroke: '#000', strokeThickness: 4,
+    });
+    vsLabel.setOrigin(0.5, 0.5);
+    group.add(vsLabel);
+
+    // Dadi ATK centrati sotto colAtkX
     const atkDies: Phaser.GameObjects.Container[] = [];
     const atkN = opts.attacker.dice.length;
-    const dieRowX = bx + 18;
+    const atkRowW = atkN * DICE_SIZE + (atkN - 1) * DICE_GAP;
+    const atkRowStartX = colAtkX - atkRowW / 2 + DICE_SIZE / 2;
     for (let i = 0; i < atkN; i++) {
       const die = makeDie(scene, 1 + Math.floor(Math.random() * 6), 0xffee66);
-      die.x = dieRowX + DICE_SIZE / 2 + i * (DICE_SIZE + DICE_GAP);
-      die.y = yAtk + DICE_SIZE / 2;
+      die.x = atkRowStartX + i * (DICE_SIZE + DICE_GAP);
+      die.y = yDice + DICE_SIZE / 2;
       die.setScale(0.2);
       group.add(die);
       atkDies.push(die);
     }
-    const atkBreakdownX = dieRowX + Math.max(atkN, 1) * (DICE_SIZE + DICE_GAP) + 12;
-    const atkBreakdown = scene.add.text(atkBreakdownX, yAtk + DICE_SIZE / 2, '', {
-      fontFamily: 'monospace', fontSize: '14px', color: '#ffee66',
-      fontStyle: 'bold',
-    });
-    atkBreakdown.setOrigin(0, 0.5);
-    atkBreakdown.setAlpha(0);
-    group.add(atkBreakdown);
-
-    // Riga difensore (se presente)
-    const yDef = yAtk + DICE_SIZE + 16;
+    // Dadi DEF centrati sotto colDefX (solo se ha tirato)
     const defDies: Phaser.GameObjects.Container[] = [];
     const defN = opts.defender.dice.length;
-    let defBreakdown: Phaser.GameObjects.Text | null = null;
     if (defN > 0) {
+      const defRowW = defN * DICE_SIZE + (defN - 1) * DICE_GAP;
+      const defRowStartX = colDefX - defRowW / 2 + DICE_SIZE / 2;
       for (let i = 0; i < defN; i++) {
         const die = makeDie(scene, 1 + Math.floor(Math.random() * 6), 0x88ccff);
-        die.x = dieRowX + DICE_SIZE / 2 + i * (DICE_SIZE + DICE_GAP);
-        die.y = yDef + DICE_SIZE / 2;
+        die.x = defRowStartX + i * (DICE_SIZE + DICE_GAP);
+        die.y = yDice + DICE_SIZE / 2;
         die.setScale(0.2);
         group.add(die);
         defDies.push(die);
       }
-      defBreakdown = scene.add.text(
-        dieRowX + Math.max(defN, 1) * (DICE_SIZE + DICE_GAP) + 12,
-        yDef + DICE_SIZE / 2,
-        '',
-        {
-          fontFamily: 'monospace', fontSize: '14px', color: '#88ccff',
-          fontStyle: 'bold',
-        },
-      );
-      defBreakdown.setOrigin(0, 0.5);
-      defBreakdown.setAlpha(0);
-      group.add(defBreakdown);
     }
 
-    // Box esito (in basso, popolato dopo l'atterraggio)
-    const yOutcome = by + H - 46;
-    const outcomeBg = scene.add.rectangle(opts.centerX, yOutcome, W - 32, 36,
+    // Breakdown ATK: somma dadi (es. "3+5+2 = 10" o "10 → 6" se imp)
+    const atkBreakdown = scene.add.text(colAtkX, yBreakdown, '', {
+      fontFamily: 'monospace', fontSize: '13px', color: '#ffee66',
+    });
+    atkBreakdown.setOrigin(0.5, 0.5);
+    atkBreakdown.setAlpha(0);
+    group.add(atkBreakdown);
+
+    // Fissa ATK
+    const atkFissa = scene.add.text(colAtkX, yFissa, '', {
+      fontFamily: 'monospace', fontSize: '13px', color: '#ddd',
+    });
+    atkFissa.setOrigin(0.5, 0.5);
+    atkFissa.setAlpha(0);
+    group.add(atkFissa);
+
+    // Linea separatrice ATK
+    const atkSep = scene.add.rectangle(colAtkX, ySepLine, 100, 1, 0x666, 0.6);
+    atkSep.setAlpha(0);
+    group.add(atkSep);
+
+    // Totale ATK (grosso, evidenziato)
+    const atkTotale = scene.add.text(colAtkX, yTotale, '', {
+      fontFamily: 'monospace', fontSize: '20px', color: '#ffee66',
+      fontStyle: 'bold',
+    });
+    atkTotale.setOrigin(0.5, 0.5);
+    atkTotale.setAlpha(0);
+    group.add(atkTotale);
+
+    // Breakdown DEF (se presente)
+    const defBreakdown = scene.add.text(colDefX, yBreakdown, '', {
+      fontFamily: 'monospace', fontSize: '13px', color: '#88ccff',
+    });
+    defBreakdown.setOrigin(0.5, 0.5);
+    defBreakdown.setAlpha(0);
+    group.add(defBreakdown);
+
+    const defFissa = scene.add.text(colDefX, yFissa, '', {
+      fontFamily: 'monospace', fontSize: '13px', color: '#ddd',
+    });
+    defFissa.setOrigin(0.5, 0.5);
+    defFissa.setAlpha(0);
+    group.add(defFissa);
+
+    const defSep = scene.add.rectangle(colDefX, ySepLine, 100, 1, 0x666, 0.6);
+    defSep.setAlpha(0);
+    group.add(defSep);
+
+    const defTotale = scene.add.text(colDefX, yTotale, '', {
+      fontFamily: 'monospace', fontSize: '20px', color: '#88ccff',
+      fontStyle: 'bold',
+    });
+    defTotale.setOrigin(0.5, 0.5);
+    defTotale.setAlpha(0);
+    group.add(defTotale);
+
+    // Box esito (in basso)
+    const yOutcome = by + H - 36;
+    const outcomeBg = scene.add.rectangle(opts.centerX, yOutcome, W - 32, 44,
       opts.outcome.hit ? 0x4a2222 : 0x224a4a, 0.95);
     outcomeBg.setStrokeStyle(2, opts.outcome.hit ? 0xff6666 : 0x66ccff);
     outcomeBg.setAlpha(0);
@@ -370,6 +442,7 @@ export function playCombatRoll(
       fontFamily: 'monospace', fontSize: '15px',
       color: opts.outcome.hit ? '#ffdddd' : '#ddffff',
       fontStyle: 'bold', stroke: '#000', strokeThickness: 2,
+      align: 'center', wordWrap: { width: W - 60 },
     });
     outcomeText.setOrigin(0.5, 0.5);
     outcomeText.setAlpha(0);
@@ -417,25 +490,39 @@ export function playCombatRoll(
       scene.tweens.add({
         targets: allDies, scale: { from: 1.0, to: 1.15 }, duration: 100, yoyo: true,
       });
-      // Mostra breakdown numerico
+      // Mostra breakdown numerico ATK colonna sinistra
       const atkSum = opts.attacker.dice.reduce((a, b) => a + b, 0);
-      const atkSumStr = opts.attacker.dice.length > 0
-        ? opts.attacker.dice.join('+')
-        : '0';
-      const fixedStr = opts.attacker.fixed >= 0 ? `+${opts.attacker.fixed}` : `${opts.attacker.fixed}`;
-      // Mostra il var EFFETTIVO (post-imp/floor) se diverso dalla raw sum
+      const atkSumStr = opts.attacker.dice.length > 0 ? opts.attacker.dice.join('+') : '0';
+      // Mostra var post-imp se diverso dalla raw sum (es. "10 → 6" se imp ha morso)
       const varStr = opts.attacker.variable !== atkSum
-        ? `${atkSumStr}=${atkSum}→${opts.attacker.variable}`
-        : `${atkSumStr}=${atkSum}`;
-      atkBreakdown.setText(`var [${varStr}] ${fixedStr} fix = ${opts.attacker.total}`);
-      scene.tweens.add({ targets: atkBreakdown, alpha: 1, duration: 200 });
+        ? `${atkSumStr} = ${atkSum} → ${opts.attacker.variable}`
+        : `${atkSumStr} = ${atkSum}`;
+      atkBreakdown.setText(`dadi: ${varStr}`);
+      const atkFissaStr = opts.attacker.fixed >= 0 ? `+ ${opts.attacker.fixed} fissi` : `${opts.attacker.fixed} fissi`;
+      atkFissa.setText(atkFissaStr);
+      atkTotale.setText(`= ${opts.attacker.total}`);
+      scene.tweens.add({
+        targets: [atkBreakdown, atkFissa, atkSep, atkTotale],
+        alpha: 1, duration: 250,
+      });
 
-      if (defBreakdown && defN > 0) {
+      // DEF colonna destra (se ha tirato)
+      if (defN > 0) {
         const defSum = opts.defender.dice.reduce((a, b) => a + b, 0);
         const defSumStr = opts.defender.dice.length > 0 ? opts.defender.dice.join('+') : '0';
-        const dFix = opts.defender.fixed >= 0 ? `+${opts.defender.fixed}` : `${opts.defender.fixed}`;
-        defBreakdown.setText(`var [${defSumStr}=${defSum}] ${dFix} fix = ${opts.defender.total}`);
-        scene.tweens.add({ targets: defBreakdown, alpha: 1, duration: 200 });
+        defBreakdown.setText(`dadi: ${defSumStr} = ${defSum}`);
+        const defFissaStr = opts.defender.fixed >= 0 ? `+ ${opts.defender.fixed} fissi` : `${opts.defender.fixed} fissi`;
+        defFissa.setText(defFissaStr);
+        defTotale.setText(`= ${opts.defender.total}`);
+        scene.tweens.add({
+          targets: [defBreakdown, defFissa, defSep, defTotale],
+          alpha: 1, duration: 250,
+        });
+      } else {
+        // Niente difesa attiva (no defense / ranged): mostra "(nessuna difesa)"
+        defBreakdown.setText('(nessuna difesa)');
+        defBreakdown.setAlpha(0);
+        scene.tweens.add({ targets: defBreakdown, alpha: 0.7, duration: 250 });
       }
     });
 

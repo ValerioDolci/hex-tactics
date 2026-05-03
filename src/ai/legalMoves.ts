@@ -106,11 +106,18 @@ function legalActionMoves(state: GameState, unit: Unit): GameEvent[] {
   const enemy = findClosestEnemy(state, unit);
   const weapon = unit.weapon ? getWeapon(unit.weapon) : undefined;
 
-  // ATTACCO: se nemico in range mischia o ranged
+  // ATTACCO: se nemico in range mischia o ranged (V2 D-049)
   if (enemy && weapon && !unit.actionTakenThisTurn && unit.dadiAzione >= 1) {
     const dist = baseDistance(unit.position, enemy.position);
-    const meleeRange = weapon.range?.reach ?? 1;
-    if (dist <= meleeRange) {
+    // V2 D-049: solo armi con reach esplicito sono melee-capable
+    const meleeCapable = weapon.range?.reach != null;
+    const meleeRange = weapon.range?.reach ?? 0;
+    // Threat in mischia: nemico (anche altro) melee con slancio>0 → ranged vietato
+    const inMeleeThreat = Object.values(state.units).some(
+      (u) => u.faction !== unit.faction && u.alive
+        && baseDistance(unit.position, u.position) <= 1 && u.slancio > 0,
+    );
+    if (meleeCapable && dist <= meleeRange) {
       // Per ogni modo dell'arma (es. spada forza/agilità)
       for (let mi = 0; mi < weapon.attackModes.length; mi++) {
         const mode = weapon.attackModes[mi];
@@ -125,20 +132,22 @@ function legalActionMoves(state: GameState, unit: Unit): GameEvent[] {
         });
       }
     }
-    // Ranged
-    const can = canFireRanged(unit, enemy, weapon.id, state.units);
-    if (can.ok) {
-      for (let mi = 0; mi < weapon.attackModes.length; mi++) {
-        const mode = weapon.attackModes[mi];
-        moves.push({
-          type: 'DECLARE_ATTACK',
-          attackerId: unit.id,
-          targetId: enemy.id,
-          weaponId: weapon.id,
-          attackModeIdx: mi,
-          chosenStat: mode.stat === 'either' ? 'agilità' : mode.stat,
-          isRanged: true,
-        });
+    // Ranged: bloccato se in melee threat
+    if (!inMeleeThreat) {
+      const can = canFireRanged(unit, enemy, weapon.id, state.units);
+      if (can.ok) {
+        for (let mi = 0; mi < weapon.attackModes.length; mi++) {
+          const mode = weapon.attackModes[mi];
+          moves.push({
+            type: 'DECLARE_ATTACK',
+            attackerId: unit.id,
+            targetId: enemy.id,
+            weaponId: weapon.id,
+            attackModeIdx: mi,
+            chosenStat: mode.stat === 'either' ? 'agilità' : mode.stat,
+            isRanged: true,
+          });
+        }
       }
     }
   }
