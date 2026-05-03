@@ -94,7 +94,9 @@ def make_dt_policy(dt):
             if attacks:
                 return attacks[0]
         # Override D-050: counter-ranged
-        if chosen.type == "START_TURN" and getattr(chosen, "slancio_dice", 0) == 0:
+        # Strategia ottimale: slancio_dice=2 + impeto_to_slancio max → slancio
+        # sempre al massimo anche dopo movimento di chiusura distanza.
+        if chosen.type == "START_TURN":
             my_w = get_weapon(unit.weapon) if unit.weapon else None
             i_am_ranged_only = (
                 my_w is not None and my_w.range is not None
@@ -108,6 +110,18 @@ def make_dt_policy(dt):
                     w = get_weapon(e.weapon)
                     return w is not None and w.range is not None and w.range.distance is not None
                 if any(has_ranged(e) for e in enemies):
+                    transfer_variants = [
+                        m for m in moves
+                        if m.type == "START_TURN"
+                        and getattr(m, "slancio_dice", 0) == 2
+                        and getattr(m, "impeto_to_slancio", 0) > 0
+                    ]
+                    if transfer_variants:
+                        transfer_variants.sort(
+                            key=lambda m: getattr(m, "impeto_to_slancio", 0),
+                            reverse=True,
+                        )
+                        return transfer_variants[0]
                     alt = next(
                         (m for m in moves
                          if m.type == "START_TURN" and getattr(m, "slancio_dice", 0) == 2),

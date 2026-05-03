@@ -66,13 +66,14 @@ export function aiDecideHard(state: GameState, unitId: UnitId): GameEvent {
     if (attack) return attack;
   }
 
-  // V2 D-050: counter-ranged override. Diagnostica empirica (diag_archer.py)
-  // mostra che il DT v16 sceglie quasi sempre slancioDice=0 a START_TURN,
-  // anche contro un nemico arciere. Questo è subottimale: lo slancio_target
-  // riduce direttamente il tiro ranged (formula `... − slancio_target`).
-  // Override: se DT propone START_TURN con slancioDice=0 e c'è un nemico
-  // ranged-capable + non sono io stesso ranged → forza slancioDice = 2 (max).
-  if (chosen.type === 'START_TURN' && (chosen as { slancioDice?: number }).slancioDice === 0) {
+  // V2 D-050: counter-ranged override.
+  // Diagnostica empirica (diag_archer.py) mostra che il DT v16 sceglie quasi
+  // sempre slancioDice=0 a START_TURN anche contro arciere. Inoltre, anche
+  // forzando slancio max il melee spende tutto in movimento → slancio_target
+  // è 0 quando viene colpito.
+  // Strategia corretta (confermata Valerio): tira slancio max + transfer
+  // impeto→slancio per avere slancio "sempre al massimo" anche dopo movimento.
+  if (chosen.type === 'START_TURN') {
     const myWeapon = unit.weapon ? getWeapon(unit.weapon) : null;
     const iAmRangedOnly = myWeapon?.range?.distance != null && myWeapon?.range?.reach == null;
     if (!iAmRangedOnly) {
@@ -85,11 +86,29 @@ export function aiDecideHard(state: GameState, unitId: UnitId): GameEvent {
         return !!w && !!w.range && w.range.distance != null;
       });
       if (enemyHasRanged) {
-        // Cerca alternativa con slancioDice=2 nei moves
-        const altMax = moves.find(
-          (m) => m.type === 'START_TURN' && (m as { slancioDice?: number }).slancioDice === 2,
+        // Preferenza: la variante con slancioDice=2 + impetoToSlancio max disponibile
+        // (in legalMoves è discretizzata su 3,6,9 — prendi il più alto che il DT ha
+        // in lista). Fallback a solo slancioDice=2 se varianti transfer assenti.
+        const transferVariants = moves.filter(
+          (m) => m.type === 'START_TURN'
+            && (m as { slancioDice?: number }).slancioDice === 2
+            && (m as { impetoToSlancio?: number }).impetoToSlancio != null,
         );
-        if (altMax) chosen = altMax;
+        if (transferVariants.length > 0) {
+          // Sort by impetoToSlancio desc, prendi il più alto
+          transferVariants.sort(
+            (a, b) =>
+              ((b as { impetoToSlancio?: number }).impetoToSlancio ?? 0)
+              - ((a as { impetoToSlancio?: number }).impetoToSlancio ?? 0),
+          );
+          chosen = transferVariants[0];
+        } else {
+          // Niente transfer disponibile → solo slancioDice=2
+          const altMax = moves.find(
+            (m) => m.type === 'START_TURN' && (m as { slancioDice?: number }).slancioDice === 2,
+          );
+          if (altMax) chosen = altMax;
+        }
       }
     }
   }
