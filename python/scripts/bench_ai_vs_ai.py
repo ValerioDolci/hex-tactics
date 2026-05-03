@@ -51,7 +51,7 @@ from hex_tactics.core.reducer import reduce
 from hex_tactics.core.state import Board, create_initial_state, GameState
 from hex_tactics.data.presets import get_preset, unit_from_preset
 
-DT_PKL = "/tmp/dt_distilled.pkl"  # output di distill_v15.py
+DT_PKL = "/tmp/dt_distilled_v16.pkl"  # output di distill_v15.py
 N_GAMES = 200
 MAX_STEPS = 400
 SEED_BASE = 12345
