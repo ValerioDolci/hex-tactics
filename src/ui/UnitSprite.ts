@@ -28,6 +28,10 @@ export class UnitSprite {
   private currentUnit: Unit;
   /** Posizione attualmente disegnata (può differire da unit.position durante un tween) */
   private displayedPosition: Axial;
+  /** Cerchio dorato pulsante per highlight unit attiva (turno corrente) */
+  private activeHighlight?: Phaser.GameObjects.Graphics;
+  private activeTween?: Phaser.Tweens.Tween;
+  private isActive = false;
 
   constructor(scene: Phaser.Scene, unit: Unit, hexSize: number, origin: Pixel) {
     this.hexSize = hexSize;
@@ -96,6 +100,13 @@ export class UnitSprite {
     if (unit.defensiveStance) {
       this.graphics.lineStyle(4, 0xffcc33, 0.9);
       this.graphics.strokeCircle(center.x, center.y, this.hexSize * 1.85);
+    }
+
+    // Highlight attivo (turno corrente): aggiornato in setActive()
+    if (this.activeHighlight && this.isActive) {
+      this.activeHighlight.clear();
+      this.activeHighlight.lineStyle(5, 0xffee99, 0.85);
+      this.activeHighlight.strokeCircle(center.x, center.y, this.hexSize * 2.0);
     }
 
     // Label e HP
@@ -455,7 +466,38 @@ export class UnitSprite {
     return axialToPixel(this.displayedPosition, this.hexSize, this.origin);
   }
 
+  /**
+   * Highlight unità attiva (turno corrente): cerchio dorato pulsante attorno
+   * alla basetta. Usato in BattleScene.refreshUI per evidenziare chi gioca.
+   */
+  setActive(scene: Phaser.Scene, active: boolean): void {
+    if (active === this.isActive) return;
+    this.isActive = active;
+    if (active) {
+      if (!this.activeHighlight) {
+        this.activeHighlight = scene.add.graphics();
+      }
+      this.redraw();
+      // Tween pulse alpha 0.4 ↔ 0.95 in loop
+      this.activeTween = scene.tweens.add({
+        targets: this.activeHighlight,
+        alpha: { from: 0.4, to: 0.95 },
+        duration: 700,
+        yoyo: true,
+        repeat: -1,
+      });
+    } else {
+      this.activeTween?.stop();
+      this.activeTween = undefined;
+      this.activeHighlight?.destroy();
+      this.activeHighlight = undefined;
+      this.redraw();
+    }
+  }
+
   destroy(): void {
+    this.activeTween?.stop();
+    this.activeHighlight?.destroy();
     this.graphics.destroy();
     this.label.destroy();
     this.hpText.destroy();

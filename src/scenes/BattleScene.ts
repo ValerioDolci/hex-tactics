@@ -381,9 +381,12 @@ export class BattleScene extends Phaser.Scene {
   private refreshUI(): void {
     this.hud.update(this.state);
     this.log.update(this.state.log);
+    // Highlight unit attiva (turno corrente)
+    const activeId = this.state.turnOrder[this.state.currentTurnIdx];
     for (const [id, sprite] of this.unitSprites) {
       const u = this.state.units[id];
       if (u) sprite.update(u);
+      sprite.setActive(this, id === activeId && u?.alive === true);
     }
   }
 
@@ -467,6 +470,8 @@ export class BattleScene extends Phaser.Scene {
   private maybeShowDamageAnimations(prev: GameState, curr: GameState): void {
     let anyHit = false;
     let anyMiss = false;
+    let anyHitHard = false;
+    let anyDeath = false;
     for (const id of Object.keys(curr.units)) {
       const beforeU = prev.units[id];
       const afterU = curr.units[id];
@@ -475,6 +480,7 @@ export class BattleScene extends Phaser.Scene {
       const sprite = this.unitSprites.get(id);
       if (lost > 0) {
         anyHit = true;
+        if (lost >= 6) anyHitHard = true;
         if (sprite) {
           sprite.flashHit(this);
           sprite.showDamage(this, lost);
@@ -486,6 +492,7 @@ export class BattleScene extends Phaser.Scene {
       // Death animation: era vivo, ora morto
       if (beforeU.alive && !afterU.alive && sprite) {
         sprite.playDeathAnimation(this);
+        anyDeath = true;
       }
     }
     // Se c'era un pendingAction risolto e nessuno ha perso HP: schivata/parata riuscita
@@ -502,7 +509,9 @@ export class BattleScene extends Phaser.Scene {
       anyMiss = true;
     }
     // Audio
-    if (anyHit) audio.hit();
+    if (anyDeath) audio.death();
+    else if (anyHitHard) audio.hitHard();
+    else if (anyHit) audio.hit();
     else if (anyMiss) audio.miss();
   }
 
@@ -579,6 +588,8 @@ export class BattleScene extends Phaser.Scene {
     }
     const ev: GameEvent = { type: 'RESOLVE_COMBAT' };
     this.dispatch(ev);
+    // Suono dadi che cadono (subito dopo il resolve)
+    audio.diceFall();
     // V2: animazione dadi reale (legge dal lastResolution popolato dal reducer)
     this.playRollAnimation();
   }
@@ -1477,6 +1488,7 @@ export class BattleScene extends Phaser.Scene {
 
   /** Asta — l'attaccante punta privatamente. Dopo dispatch, passa a defender bid. */
   private askAttackerBid(): void {
+    audio.biddingStart(); // suono apertura asta
     const mip = this.state.moveInProgress;
     if (!mip) return;
     const atk = this.state.units[mip.unitId];

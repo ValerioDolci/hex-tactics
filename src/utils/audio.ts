@@ -155,6 +155,31 @@ class AudioManager {
       });
     });
   }
+
+  /** Dado che cade sul tavolo: thump basso percussivo */
+  diceFall(): void {
+    this.tone({ freq: 90, duration: 0.08, type: 'sine', volume: 0.3, decay: 0.02 });
+    this.tone({ freq: 150, duration: 0.05, type: 'square', volume: 0.18, delay: 0.04 });
+  }
+
+  /** Asta movimento avviata: tensione (due note che salgono) */
+  biddingStart(): void {
+    this.tone({ freq: 330, duration: 0.10, type: 'sine', volume: 0.2 });
+    this.tone({ freq: 440, duration: 0.12, type: 'sine', volume: 0.2, delay: 0.06 });
+  }
+
+  /** Hit forte (danno >5): impatto profondo + sustain */
+  hitHard(): void {
+    this.tone({ freq: 80, duration: 0.18, type: 'square', volume: 0.45, decay: 0.03 });
+    this.tone({ freq: 50, duration: 0.25, type: 'sawtooth', volume: 0.3, delay: 0.03, decay: 0.05 });
+    this.tone({ freq: 40, duration: 0.35, type: 'sine', volume: 0.18, delay: 0.08 });
+  }
+
+  /** Death: rumble grave finale */
+  death(): void {
+    this.tone({ freq: 60, duration: 0.5, type: 'sawtooth', volume: 0.3, decay: 0.1 });
+    this.tone({ freq: 90, duration: 0.4, type: 'square', volume: 0.2, delay: 0.05, decay: 0.1 });
+  }
 }
 
 // Singleton
