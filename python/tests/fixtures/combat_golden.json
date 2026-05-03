@@ -1320,24 +1320,24 @@
       "armor": "armatura_pesante",
       "startHp": 20,
       "raw": 10,
-      "effectiveDamage": 1,
-      "newHp": 19
+      "effectiveDamage": 0,
+      "newHp": 20
     },
     {
       "target": "pes-armor",
       "armor": "armatura_pesante",
       "startHp": 20,
       "raw": 15,
-      "effectiveDamage": 6,
-      "newHp": 14
+      "effectiveDamage": 3,
+      "newHp": 17
     },
     {
       "target": "pes-armor",
       "armor": "armatura_pesante",
       "startHp": 20,
       "raw": 25,
-      "effectiveDamage": 16,
-      "newHp": 4
+      "effectiveDamage": 13,
+      "newHp": 7
     }
   ],
   "sequence": {

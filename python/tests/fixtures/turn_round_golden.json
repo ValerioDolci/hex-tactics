@@ -131,7 +131,7 @@
         "hp": 20,
         "impeto": 16,
         "slancio": 0,
-        "dadiAzione": 6,
+        "dadiAzione": 3,
         "alive": true,
         "hexMovedThisTurn": 0,
         "actionTakenThisTurn": false
@@ -154,7 +154,7 @@
         "hp": 20,
         "impeto": 11,
         "slancio": 5,
-        "dadiAzione": 6,
+        "dadiAzione": 3,
         "alive": true,
         "hexMovedThisTurn": 0,
         "actionTakenThisTurn": false
@@ -177,7 +177,7 @@
         "hp": 20,
         "impeto": 16,
         "slancio": 4,
-        "dadiAzione": 6,
+        "dadiAzione": 2,
         "alive": true,
         "hexMovedThisTurn": 0,
         "actionTakenThisTurn": false
@@ -200,7 +200,7 @@
         "hp": 20,
         "impeto": 11,
         "slancio": 11,
-        "dadiAzione": 6,
+        "dadiAzione": 2,
         "alive": true,
         "hexMovedThisTurn": 0,
         "actionTakenThisTurn": false
@@ -223,7 +223,7 @@
         "hp": 20,
         "impeto": 16,
         "slancio": 10,
-        "dadiAzione": 6,
+        "dadiAzione": 1,
         "alive": true,
         "hexMovedThisTurn": 0,
         "actionTakenThisTurn": false
@@ -246,7 +246,7 @@
         "hp": 20,
         "impeto": 11,
         "slancio": 15,
-        "dadiAzione": 6,
+        "dadiAzione": 1,
         "alive": true,
         "hexMovedThisTurn": 0,
         "actionTakenThisTurn": false
@@ -269,7 +269,7 @@
         "hp": 20,
         "impeto": 16,
         "slancio": 13,
-        "dadiAzione": 6,
+        "dadiAzione": 1,
         "alive": true,
         "hexMovedThisTurn": 0,
         "actionTakenThisTurn": false
@@ -292,7 +292,7 @@
         "hp": 20,
         "impeto": 13,
         "slancio": 15,
-        "dadiAzione": 6,
+        "dadiAzione": 1,
         "alive": true,
         "hexMovedThisTurn": 0,
         "actionTakenThisTurn": false
@@ -315,7 +315,7 @@
         "hp": 20,
         "impeto": 16,
         "slancio": 0,
-        "dadiAzione": 6,
+        "dadiAzione": 3,
         "alive": true,
         "hexMovedThisTurn": 0,
         "actionTakenThisTurn": false
@@ -338,7 +338,7 @@
         "hp": 20,
         "impeto": 11,
         "slancio": 5,
-        "dadiAzione": 6,
+        "dadiAzione": 3,
         "alive": true,
         "hexMovedThisTurn": 0,
         "actionTakenThisTurn": false
@@ -361,7 +361,7 @@
         "hp": 20,
         "impeto": 16,
         "slancio": 5,
-        "dadiAzione": 6,
+        "dadiAzione": 2,
         "alive": true,
         "hexMovedThisTurn": 0,
         "actionTakenThisTurn": false
@@ -384,7 +384,7 @@
         "hp": 20,
         "impeto": 11,
         "slancio": 13,
-        "dadiAzione": 6,
+        "dadiAzione": 2,
         "alive": true,
         "hexMovedThisTurn": 0,
         "actionTakenThisTurn": false
@@ -407,7 +407,7 @@
         "hp": 20,
         "impeto": 16,
         "slancio": 8,
-        "dadiAzione": 6,
+        "dadiAzione": 1,
         "alive": true,
         "hexMovedThisTurn": 0,
         "actionTakenThisTurn": false
@@ -430,7 +430,7 @@
         "hp": 20,
         "impeto": 11,
         "slancio": 19,
-        "dadiAzione": 6,
+        "dadiAzione": 1,
         "alive": true,
         "hexMovedThisTurn": 0,
         "actionTakenThisTurn": false
@@ -453,7 +453,7 @@
         "hp": 20,
         "impeto": 16,
         "slancio": 10,
-        "dadiAzione": 6,
+        "dadiAzione": 0,
         "alive": true,
         "hexMovedThisTurn": 0,
         "actionTakenThisTurn": false
@@ -476,7 +476,7 @@
         "hp": 20,
         "impeto": 11,
         "slancio": 16,
-        "dadiAzione": 6,
+        "dadiAzione": 0,
         "alive": true,
         "hexMovedThisTurn": 0,
         "actionTakenThisTurn": false
@@ -499,7 +499,7 @@
         "hp": 20,
         "impeto": 16,
         "slancio": 0,
-        "dadiAzione": 6,
+        "dadiAzione": 3,
         "alive": true,
         "hexMovedThisTurn": 0,
         "actionTakenThisTurn": false
@@ -522,7 +522,7 @@
         "hp": 20,
         "impeto": 11,
         "slancio": 5,
-        "dadiAzione": 6,
+        "dadiAzione": 3,
         "alive": true,
         "hexMovedThisTurn": 0,
         "actionTakenThisTurn": false
@@ -545,7 +545,7 @@
         "hp": 20,
         "impeto": 16,
         "slancio": 4,
-        "dadiAzione": 6,
+        "dadiAzione": 2,
         "alive": true,
         "hexMovedThisTurn": 0,
         "actionTakenThisTurn": false
@@ -568,7 +568,7 @@
         "hp": 20,
         "impeto": 11,
         "slancio": 11,
-        "dadiAzione": 6,
+        "dadiAzione": 2,
         "alive": true,
         "hexMovedThisTurn": 0,
         "actionTakenThisTurn": false
@@ -591,7 +591,7 @@
         "hp": 20,
         "impeto": 16,
         "slancio": 7,
-        "dadiAzione": 6,
+        "dadiAzione": 1,
         "alive": true,
         "hexMovedThisTurn": 0,
         "actionTakenThisTurn": false
@@ -614,7 +614,7 @@
         "hp": 20,
         "impeto": 11,
         "slancio": 14,
-        "dadiAzione": 6,
+        "dadiAzione": 1,
         "alive": true,
         "hexMovedThisTurn": 0,
         "actionTakenThisTurn": false
@@ -637,7 +637,7 @@
         "hp": 20,
         "impeto": 16,
         "slancio": 20,
-        "dadiAzione": 6,
+        "dadiAzione": 0,
         "alive": true,
         "hexMovedThisTurn": 0,
         "actionTakenThisTurn": false
@@ -660,7 +660,7 @@
         "hp": 20,
         "impeto": 11,
         "slancio": 18,
-        "dadiAzione": 6,
+        "dadiAzione": 0,
         "alive": true,
         "hexMovedThisTurn": 0,
         "actionTakenThisTurn": false

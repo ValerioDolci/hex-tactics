@@ -20,7 +20,7 @@ from hex_tactics.core.events import (
     EventReload,
     GameEvent,
 )
-from hex_tactics.core.hex import Axial, hexes_in_range
+from hex_tactics.core.hex import Axial, hexes_in_range, hex_line
 from hex_tactics.core.hex import base_distance, get_base_hexes
 from hex_tactics.core.ranged import can_fire_ranged
 from hex_tactics.core.state import GameState
@@ -149,7 +149,12 @@ def ai_decide_slancio(state: GameState, unit_id: str) -> int:
 def find_best_move_toward(
     state: GameState, me: Unit, enemy: Unit, move_range: Optional[int] = None
 ) -> Optional[Axial]:
-    """Mossa migliore per avvicinarsi al nemico, rispettando slancio + ostacoli."""
+    """Mossa migliore per avvicinarsi al nemico, rispettando slancio + ostacoli.
+
+    Allineato a TS `findBestMoveToward` (src/ai/basicAi.ts):
+    - skippa la posizione corrente (no stay-still)
+    - verifica path interamente libero (no blocco mid-step)
+    """
     range_ = move_range if move_range is not None else (me.slancio + 1)
     reachable = hexes_in_range(me.position, range_)
 
@@ -160,18 +165,32 @@ def find_best_move_toward(
         for h in get_base_hexes(u.position):
             blocked.add((h.q, h.r))
 
+    def base_overlap(h: Axial) -> bool:
+        for bh in get_base_hexes(h):
+            if (bh.q, bh.r) in blocked:
+                return True
+        return False
+
+    def path_is_clear(from_: Axial, to: Axial) -> bool:
+        full_line = hex_line(from_, to)
+        # Skip primo (start) e ultimo (target già controllato). Verifica intermedi.
+        for i in range(1, len(full_line)):
+            if base_overlap(full_line[i]):
+                return False
+        return True
+
     best: Optional[Axial] = None
     best_score = float("inf")
     for h in reachable:
+        # Skip posizione corrente (no stay-still)
+        if h.q == me.position.q and h.r == me.position.r:
+            continue
         if (h.q, h.r) in blocked:
             continue
-        # Basetta destinazione non sovrapposta
-        overlap = False
-        for bh in get_base_hexes(h):
-            if (bh.q, bh.r) in blocked:
-                overlap = True
-                break
-        if overlap:
+        if base_overlap(h):
+            continue
+        # CRITICO: il path INTERO deve essere libero (no blocco mid-step)
+        if not path_is_clear(me.position, h):
             continue
         score = base_distance(h, enemy.position)
         if score < best_score:
@@ -307,12 +326,38 @@ def ai_decide_defense(state: GameState, defender_id: str) -> dict:
             total_attacker_dice = attacker_dice_pg + arm_dice
             arm_fix = mode.fixed_bonus
 
+            # V2: stima impedimento attaccante per pesare l'efficacia della schivata.
+            # Più imp → variabile_atk_effettiva minore → schivata vince più spesso.
+            attacker_imp = 0
+            if attacker is not None:
+                if attacker.weapon is not None:
+                    w_atk = get_weapon(attacker.weapon)
+                    if w_atk is not None:
+                        attacker_imp += max(0, w_atk.impediment - _count_imp_reductions_for_equip_ts_compat(attacker, "weapon"))
+                if attacker.offhand is not None:
+                    sh_atk = get_shield(attacker.offhand)
+                    w_off = get_weapon(attacker.offhand)
+                    piece_imp = sh_atk.impediment if sh_atk is not None else (w_off.impediment if w_off is not None else 0)
+                    attacker_imp += max(0, piece_imp - _count_imp_reductions_for_equip_ts_compat(attacker, "offhand"))
+                if attacker.armor is not None:
+                    a_atk = get_armor(attacker.armor)
+                    if a_atk is not None:
+                        attacker_imp += max(0, a_atk.impediment - _count_imp_reductions_for_equip_ts_compat(attacker, "armor"))
+            expected_attacker_var = max(0.0, total_attacker_dice * 3.5 - attacker_imp)
+
+            # HP basso → parata (più garantita)
             if d.hp <= d.hp_max * 0.35:
                 return {"defenseType": "parry", "parryWith": parry_src, "diceN": dice_n}
+            # Variabile attaccante stimata molto bassa (≤ 4) → schivata quasi sicura
+            if expected_attacker_var <= 4:
+                return {"defenseType": "dodge", "diceN": dice_n, "parryWith": None}
+            # Armi a fisso puro (mazza, balestra) → schivata cancella il fisso se vince
             if total_attacker_dice <= 2 or arm_fix <= 2:
                 return {"defenseType": "dodge", "diceN": dice_n, "parryWith": None}
+            # Parry forte (scudo medio+) e attaccante "puro dadi" → parata morde tutto
             if parry_fixed >= 6:
                 return {"defenseType": "parry", "parryWith": parry_src, "diceN": dice_n}
+            # Default V2: schivata
             return {"defenseType": "dodge", "diceN": dice_n, "parryWith": None}
 
     # Fallback: HP basso o no info

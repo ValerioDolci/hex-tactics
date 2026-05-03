@@ -29,7 +29,7 @@ ARMORS: dict[str, Armor] = {
         id="armatura_pesante",
         name="Armatura pesante",
         category="armature",
-        damage_reduction=9,
+        damage_reduction=12,  # M-2: D3 buff (era 9)
         impediment=9,
     ),
 }

@@ -22,6 +22,7 @@
       },
       "impediment": 0,
       "range": {
+        "reach": 1,
         "throw": 1,
         "rangedDivisor": 1
       }
@@ -48,7 +49,10 @@
         "dice": 1,
         "fixed": 2
       },
-      "impediment": 3
+      "impediment": 3,
+      "range": {
+        "reach": 1
+      }
     },
     "spada_lunga": {
       "id": "spada_lunga",
@@ -93,7 +97,10 @@
         "dice": 0,
         "fixed": 3
       },
-      "impediment": 3
+      "impediment": 3,
+      "range": {
+        "reach": 1
+      }
     },
     "ascia_1h": {
       "id": "ascia_1h",
@@ -113,6 +120,7 @@
       },
       "impediment": 3,
       "range": {
+        "reach": 1,
         "throw": 1,
         "rangedDivisor": 1
       }
@@ -133,7 +141,10 @@
         "dice": 0,
         "fixed": 3
       },
-      "impediment": 6
+      "impediment": 6,
+      "range": {
+        "reach": 1
+      }
     },
     "lancia_2m": {
       "id": "lancia_2m",
@@ -167,7 +178,7 @@
           "label": "default",
           "stat": "either",
           "diceVariable": 2,
-          "fixedBonus": 0
+          "fixedBonus": 4
         }
       ],
       "parry": {
@@ -315,7 +326,7 @@
       "id": "armatura_pesante",
       "name": "Armatura pesante",
       "category": "armature",
-      "damageReduction": 9,
+      "damageReduction": 12,
       "impediment": 9
     }
   },

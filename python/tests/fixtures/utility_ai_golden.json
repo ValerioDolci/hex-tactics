@@ -191,6 +191,10 @@
               "isRanged": false
             },
             {
+              "type": "TOGGLE_DEFENSIVE",
+              "unitId": "B-tank"
+            },
+            {
               "type": "END_TURN"
             }
           ],
@@ -304,6 +308,10 @@
               }
             },
             {
+              "type": "TOGGLE_DEFENSIVE",
+              "unitId": "A-tank"
+            },
+            {
               "type": "END_TURN"
             }
           ],
@@ -327,13 +335,13 @@
         "b": "tank"
       },
       "seed": 300000,
-      "winner": "B",
-      "rounds": 10,
-      "hpA": 0,
-      "hpB": 10,
-      "events": 116,
-      "finalRngSeed": 304898385,
-      "logSize": 108
+      "winner": null,
+      "rounds": 1,
+      "hpA": 20,
+      "hpB": 20,
+      "events": 5001,
+      "finalRngSeed": -695476867,
+      "logSize": 5000
     },
     {
       "matchup": {
@@ -341,13 +349,13 @@
         "b": "tank"
       },
       "seed": 300023,
-      "winner": "B",
-      "rounds": 7,
-      "hpA": 0,
-      "hpB": 15,
-      "events": 77,
-      "finalRngSeed": -703032144,
-      "logSize": 75
+      "winner": "A",
+      "rounds": 6,
+      "hpA": 20,
+      "hpB": 0,
+      "events": 65,
+      "finalRngSeed": -1774885893,
+      "logSize": 60
     },
     {
       "matchup": {
@@ -355,13 +363,13 @@
         "b": "tank"
       },
       "seed": 300046,
-      "winner": "B",
-      "rounds": 5,
-      "hpA": 0,
-      "hpB": 20,
-      "events": 56,
-      "finalRngSeed": 688510613,
-      "logSize": 56
+      "winner": "A",
+      "rounds": 8,
+      "hpA": 4,
+      "hpB": 0,
+      "events": 92,
+      "finalRngSeed": 1192481889,
+      "logSize": 86
     },
     {
       "matchup": {
@@ -369,13 +377,13 @@
         "b": "tank"
       },
       "seed": 300069,
-      "winner": "B",
-      "rounds": 6,
-      "hpA": 0,
+      "winner": null,
+      "rounds": 1,
+      "hpA": 20,
       "hpB": 20,
-      "events": 65,
-      "finalRngSeed": 1192468912,
-      "logSize": 64
+      "events": 5001,
+      "finalRngSeed": -1327312468,
+      "logSize": 4998
     },
     {
       "matchup": {
@@ -383,13 +391,13 @@
         "b": "tank"
       },
       "seed": 300092,
-      "winner": "B",
-      "rounds": 7,
-      "hpA": 0,
-      "hpB": 20,
-      "events": 77,
-      "finalRngSeed": -703032075,
-      "logSize": 74
+      "winner": "A",
+      "rounds": 5,
+      "hpA": 20,
+      "hpB": 0,
+      "events": 53,
+      "finalRngSeed": 752451856,
+      "logSize": 48
     },
     {
       "matchup": {
@@ -397,13 +405,13 @@
         "b": "tank"
       },
       "seed": 300115,
-      "winner": "A",
-      "rounds": 8,
-      "hpA": 20,
-      "hpB": 0,
-      "events": 92,
-      "finalRngSeed": 1632494037,
-      "logSize": 89
+      "winner": "B",
+      "rounds": 4,
+      "hpA": 0,
+      "hpB": 20,
+      "events": 44,
+      "finalRngSeed": -383341067,
+      "logSize": 41
     },
     {
       "matchup": {
@@ -411,13 +419,13 @@
         "b": "spadaccino"
       },
       "seed": 300000,
-      "winner": "B",
-      "rounds": 5,
-      "hpA": 0,
-      "hpB": 14,
-      "events": 58,
-      "finalRngSeed": 1128522646,
-      "logSize": 61
+      "winner": "A",
+      "rounds": 3,
+      "hpA": 16,
+      "hpB": 0,
+      "events": 29,
+      "finalRngSeed": -319402985,
+      "logSize": 27
     },
     {
       "matchup": {
@@ -425,13 +433,13 @@
         "b": "spadaccino"
       },
       "seed": 300023,
-      "winner": "B",
-      "rounds": 4,
-      "hpA": 0,
-      "hpB": 7,
-      "events": 45,
-      "finalRngSeed": 56670920,
-      "logSize": 48
+      "winner": "A",
+      "rounds": 3,
+      "hpA": 15,
+      "hpB": 0,
+      "events": 33,
+      "finalRngSeed": -951238632,
+      "logSize": 32
     },
     {
       "matchup": {
@@ -444,8 +452,8 @@
       "hpA": 12,
       "hpB": 0,
       "events": 21,
-      "finalRngSeed": -887299412,
-      "logSize": 23
+      "finalRngSeed": 376371928,
+      "logSize": 20
     },
     {
       "matchup": {
@@ -453,13 +461,13 @@
         "b": "spadaccino"
       },
       "seed": 300069,
-      "winner": "A",
-      "rounds": 5,
-      "hpA": 5,
-      "hpB": 0,
-      "events": 60,
-      "finalRngSeed": 1760358385,
-      "logSize": 62
+      "winner": null,
+      "rounds": 1,
+      "hpA": 20,
+      "hpB": 7,
+      "events": 5001,
+      "finalRngSeed": 1703983488,
+      "logSize": 5000
     },
     {
       "matchup": {
@@ -467,13 +475,13 @@
         "b": "spadaccino"
       },
       "seed": 300092,
-      "winner": "B",
-      "rounds": 3,
-      "hpA": 0,
-      "hpB": 6,
-      "events": 34,
-      "finalRngSeed": 2016116196,
-      "logSize": 37
+      "winner": "A",
+      "rounds": 2,
+      "hpA": 13,
+      "hpB": 0,
+      "events": 20,
+      "finalRngSeed": 376371974,
+      "logSize": 20
     },
     {
       "matchup": {
@@ -481,13 +489,13 @@
         "b": "spadaccino"
       },
       "seed": 300115,
-      "winner": "B",
-      "rounds": 7,
-      "hpA": 0,
-      "hpB": 20,
-      "events": 74,
-      "finalRngSeed": 936710170,
-      "logSize": 76
+      "winner": "A",
+      "rounds": 1,
+      "hpA": 17,
+      "hpB": 0,
+      "events": 13,
+      "finalRngSeed": 440312194,
+      "logSize": 13
     },
     {
       "matchup": {
@@ -495,13 +503,13 @@
         "b": "arciere"
       },
       "seed": 300000,
-      "winner": "B",
-      "rounds": 8,
-      "hpA": 0,
-      "hpB": 8,
-      "events": 94,
-      "finalRngSeed": -1022731152,
-      "logSize": 95
+      "winner": null,
+      "rounds": 1,
+      "hpA": 20,
+      "hpB": 20,
+      "events": 5001,
+      "finalRngSeed": 1136088946,
+      "logSize": 5000
     },
     {
       "matchup": {
@@ -509,13 +517,13 @@
         "b": "arciere"
       },
       "seed": 300023,
-      "winner": "B",
-      "rounds": 6,
-      "hpA": 0,
-      "hpB": 1,
-      "events": 67,
-      "finalRngSeed": -766979341,
-      "logSize": 67
+      "winner": null,
+      "rounds": 1,
+      "hpA": 20,
+      "hpB": 20,
+      "events": 5001,
+      "finalRngSeed": -759418041,
+      "logSize": 4998
     },
     {
       "matchup": {
@@ -528,8 +536,8 @@
       "hpA": 0,
       "hpB": 20,
       "events": 14,
-      "finalRngSeed": 1008207598,
-      "logSize": 15
+      "finalRngSeed": -823358215,
+      "logSize": 14
     },
     {
       "matchup": {
@@ -542,8 +550,8 @@
       "hpA": 0,
       "hpB": 20,
       "events": 14,
-      "finalRngSeed": 1008207621,
-      "logSize": 15
+      "finalRngSeed": -823358192,
+      "logSize": 14
     },
     {
       "matchup": {
@@ -551,13 +559,13 @@
         "b": "arciere"
       },
       "seed": 300092,
-      "winner": "B",
-      "rounds": 6,
-      "hpA": 0,
+      "winner": null,
+      "rounds": 1,
+      "hpA": 13,
       "hpB": 20,
-      "events": 74,
-      "finalRngSeed": 432750871,
-      "logSize": 73
+      "events": 5001,
+      "finalRngSeed": -759417972,
+      "logSize": 4999
     },
     {
       "matchup": {
@@ -565,13 +573,13 @@
         "b": "arciere"
       },
       "seed": 300115,
-      "winner": "A",
-      "rounds": 4,
+      "winner": null,
+      "rounds": 2,
       "hpA": 3,
-      "hpB": 0,
-      "events": 46,
-      "finalRngSeed": -511223461,
-      "logSize": 46
+      "hpB": 20,
+      "events": 5001,
+      "finalRngSeed": 1640043337,
+      "logSize": 4998
     }
   ]
 }

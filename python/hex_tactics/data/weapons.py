@@ -103,7 +103,7 @@ WEAPONS: dict[str, Weapon] = {
         name="Lancia 3m (2h)",
         category="lance",
         attack_modes=(
-            AttackMode(label="default", stat="either", dice_variable=2, fixed_bonus=0),
+            AttackMode(label="default", stat="either", dice_variable=2, fixed_bonus=4),  # M-3 fix (era 0)
         ),
         parry=RollSpec(dice=0, fixed=1),
         impediment=6,
