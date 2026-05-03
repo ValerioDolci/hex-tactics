@@ -148,6 +148,32 @@ def compose_attack_roll(
     return combined
 
 
+def compose_shield_attack_roll(
+    attacker: Unit,
+    shield_id: str,
+    dice_n: int,
+    rng: Rng,
+) -> Optional[Roll]:
+    """D-051: Bludgeon attack con scudo offhand.
+
+    No dadi arma, solo parry.fixed dello scudo. NO se attacker in defensive_stance.
+    Restituisce None se scudo invalido o stance attiva.
+    """
+    if attacker.defensive_stance:
+        return None
+    from hex_tactics.data.shields import get_shield
+    shield = get_shield(shield_id)
+    if shield is None:
+        return None
+    ctx = make_attack_context(shield_id, shield.category)
+    pg_dice_n = get_actual_dice_count(attacker, ctx, dice_n)
+    pg_roll = make_roll(rng, pg_dice_n, BASE_PG_FIXED)
+    pg_roll.fixed += shield.parry.fixed
+    pg_roll.fixed += count_flat_bonuses(attacker.skills, ctx)
+    pg_roll.variable_mod -= get_impediment_total(attacker)
+    return pg_roll
+
+
 def compose_dodge_roll(defender: Unit, dice_n: int, rng: Rng) -> Roll:
     """Roll di schivata del difensore."""
     ctx = make_dodge_context()

@@ -801,16 +801,28 @@ def _do_resolve_combat(state: GameState) -> GameState:
         )
         result = resolve_no_defense(att_roll)
     else:
-        att_roll = compose_attack_roll(
-            attacker,
-            pa.weapon_id,
-            pa.attack_mode_idx,
-            pa.chosen_stat,  # type: ignore[arg-type]
-            pa.attacker_dice,
-            rng,
-            target=target,
-            carica_amount=pa.carica_amount,
-        )
+        # D-051: se weapon_id è uno SCUDO (offhand), usa compose_shield_attack_roll
+        from hex_tactics.data.shields import get_shield
+        from .combat import compose_shield_attack_roll
+        shield_atk = get_shield(pa.weapon_id)
+        if shield_atk is not None:
+            sh_roll = compose_shield_attack_roll(attacker, pa.weapon_id, pa.attacker_dice, rng)
+            att_roll = sh_roll if sh_roll is not None else compose_attack_roll(
+                attacker, pa.weapon_id, pa.attack_mode_idx,
+                pa.chosen_stat, pa.attacker_dice, rng,  # type: ignore[arg-type]
+                target=target, carica_amount=pa.carica_amount,
+            )
+        else:
+            att_roll = compose_attack_roll(
+                attacker,
+                pa.weapon_id,
+                pa.attack_mode_idx,
+                pa.chosen_stat,  # type: ignore[arg-type]
+                pa.attacker_dice,
+                rng,
+                target=target,
+                carica_amount=pa.carica_amount,
+            )
         if pa.defense_type == "dodge":
             dodge_roll = compose_dodge_roll(target, pa.defense_dice_n or 0, rng)
             result = resolve_dodge(att_roll, dodge_roll)

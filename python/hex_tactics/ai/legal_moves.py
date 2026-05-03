@@ -122,6 +122,45 @@ def _legal_action_moves(state: GameState, unit: Unit) -> List[GameEvent]:
                         )
                     )
 
+    # D-051: ATTACCO OFFHAND (arma o scudo) per ogni nemico melee
+    if (
+        unit.offhand
+        and not unit.action_taken_this_turn
+        and unit.dadi_azione >= 1
+        and enemy is not None
+    ):
+        from hex_tactics.data.shields import get_shield
+        off_w = get_weapon(unit.offhand)
+        off_s = get_shield(unit.offhand)
+        dist = base_distance(unit.position, enemy.position)
+        if off_w is not None and off_w.range is not None and off_w.range.reach is not None:
+            melee_range_off = off_w.range.reach
+            if dist <= melee_range_off:
+                for mi, mode in enumerate(off_w.attack_modes):
+                    stat = "forza" if mode.stat == "either" else mode.stat
+                    moves.append(
+                        EventDeclareAttack(
+                            attacker_id=unit.id,
+                            target_id=enemy.id,
+                            weapon_id=off_w.id,  # weapon_id = offhand id
+                            attack_mode_idx=mi,
+                            chosen_stat=stat,  # type: ignore[arg-type]
+                            is_ranged=False,
+                        )
+                    )
+        elif off_s is not None and dist <= 1 and not unit.defensive_stance:
+            # Bludgeon con scudo: 1 modo, no dadi arma. NO se in stance.
+            moves.append(
+                EventDeclareAttack(
+                    attacker_id=unit.id,
+                    target_id=enemy.id,
+                    weapon_id=off_s.id,  # shield id (reducer detect e usa composeShieldAttackRoll)
+                    attack_mode_idx=0,
+                    chosen_stat=None,
+                    is_ranged=False,
+                )
+            )
+
     # RELOAD
     if (
         weapon is not None
