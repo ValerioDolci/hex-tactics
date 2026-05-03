@@ -47,6 +47,36 @@ N_EP = 100
 MAX_STEPS = 400
 SEED_BASE = 99000
 
+# Worker-local cache: ogni worker carica DT una volta sola.
+_WORKER_DT = None
+_WORKER_POLICY = None
+
+
+def _ensure_worker_policy(dt_pkl_path):
+    """Carica DT + crea policy in worker locale (cached)."""
+    global _WORKER_DT, _WORKER_POLICY
+    if _WORKER_DT is None:
+        with open(dt_pkl_path, "rb") as f:
+            _WORKER_DT = pickle.load(f)
+        _WORKER_POLICY = make_dt_policy(_WORKER_DT)
+    return _WORKER_POLICY
+
+
+def _run_cell(dt_pkl_path, wA, wB, n_ep):
+    """Esegue n_ep partite per la cella (wA, wB). Restituisce (wins_a, wins_b, ties)."""
+    pol = _ensure_worker_policy(dt_pkl_path)
+    wins_a = wins_b = ties = 0
+    for ep in range(n_ep):
+        seed = SEED_BASE + hash((wA, wB, ep)) % (10**8)
+        winner = play_with_forced_weapons(pol, pol, wA, wB, seed)
+        if winner == "A":
+            wins_a += 1
+        elif winner == "B":
+            wins_b += 1
+        else:
+            ties += 1
+    return wins_a, wins_b, ties
+
 ALL_WEAPONS = [
     "pugnale", "spada", "spada_lunga", "mazza", "ascia_1h", "ascia_2h",
     "lancia_2m", "lancia_3m", "giavellotto",
@@ -201,29 +231,46 @@ def main():
     weapon_global = defaultdict(lambda: [0, 0])  # weapon -> [wins, total] (faction A only)
     t0 = time.time()
     total_cells = len(ALL_WEAPONS) ** 2
-    cell_count = 0
 
-    for wA in ALL_WEAPONS:
-        for wB in ALL_WEAPONS:
-            cell_count += 1
-            wins_a = wins_b = ties = 0
-            for ep in range(N_EP):
-                seed = SEED_BASE + hash((wA, wB, ep)) % (10**8)
-                winner = play_with_forced_weapons(policy, policy, wA, wB, seed)
-                if winner == "A":
-                    wins_a += 1
-                elif winner == "B":
-                    wins_b += 1
-                else:
-                    ties += 1
-            matrix[(wA, wB)] = {"wins_a": wins_a, "wins_b": wins_b, "ties": ties, "n": N_EP}
-            weapon_global[wA][0] += wins_a
-            weapon_global[wA][1] += N_EP
-            elapsed = time.time() - t0
-            if cell_count % 10 == 0 or cell_count == total_cells:
-                eta_sec = elapsed * (total_cells - cell_count) / max(1, cell_count)
-                print(f"  cell {cell_count}/{total_cells} ({wA} vs {wB}) "
-                      f"wr_A={wins_a/N_EP:.2f} elapsed={elapsed:.0f}s eta={eta_sec:.0f}s", flush=True)
+    # Multicore: parallelizza per cella usando ProcessPoolExecutor.
+    # Ogni worker ricarica DT da pkl (fork/spawn safe). N_WORKERS configurabile
+    # via env HEX_WORKERS (default cpu_count()-2).
+    n_workers = int(os.environ.get("HEX_WORKERS", str(max(1, os.cpu_count() - 2))))
+    print(f"[setup] Multicore: {n_workers} worker (set HEX_WORKERS=1 per single-core)")
+
+    if n_workers <= 1:
+        # Single-core fallback (debug / determinismo)
+        cell_count = 0
+        for wA in ALL_WEAPONS:
+            for wB in ALL_WEAPONS:
+                cell_count += 1
+                wins_a, wins_b, ties = _run_cell(DT_PKL, wA, wB, N_EP)
+                matrix[(wA, wB)] = {"wins_a": wins_a, "wins_b": wins_b, "ties": ties, "n": N_EP}
+                weapon_global[wA][0] += wins_a
+                weapon_global[wA][1] += N_EP
+                elapsed = time.time() - t0
+                if cell_count % 10 == 0 or cell_count == total_cells:
+                    eta_sec = elapsed * (total_cells - cell_count) / max(1, cell_count)
+                    print(f"  cell {cell_count}/{total_cells} ({wA} vs {wB}) "
+                          f"wr_A={wins_a/N_EP:.2f} elapsed={elapsed:.0f}s eta={eta_sec:.0f}s", flush=True)
+    else:
+        from concurrent.futures import ProcessPoolExecutor, as_completed
+        tasks = [(wA, wB) for wA in ALL_WEAPONS for wB in ALL_WEAPONS]
+        cell_count = 0
+        with ProcessPoolExecutor(max_workers=n_workers) as ex:
+            futures = {ex.submit(_run_cell, DT_PKL, wA, wB, N_EP): (wA, wB) for wA, wB in tasks}
+            for fut in as_completed(futures):
+                wA, wB = futures[fut]
+                wins_a, wins_b, ties = fut.result()
+                matrix[(wA, wB)] = {"wins_a": wins_a, "wins_b": wins_b, "ties": ties, "n": N_EP}
+                weapon_global[wA][0] += wins_a
+                weapon_global[wA][1] += N_EP
+                cell_count += 1
+                if cell_count % 20 == 0 or cell_count == total_cells:
+                    elapsed = time.time() - t0
+                    eta_sec = elapsed * (total_cells - cell_count) / max(1, cell_count)
+                    print(f"  cell {cell_count}/{total_cells} done ({wA} vs {wB}) "
+                          f"wr_A={wins_a/N_EP:.2f} elapsed={elapsed:.0f}s eta={eta_sec:.0f}s", flush=True)
 
     elapsed = time.time() - t0
     print(f"\n[done] {total_cells * N_EP} partite in {elapsed:.0f}s ({total_cells * N_EP / elapsed:.1f} ep/s)")

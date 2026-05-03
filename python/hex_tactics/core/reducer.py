@@ -958,9 +958,7 @@ def _do_resolve_combat(state: GameState) -> GameState:
 
     # V2: popola last_resolution per coerenza con TS (UI animation in TS,
     # potenzialmente utile per training Python in futuro).
-    def_type = (
-        pa.defense.type if pa.defense is not None else "none"  # type: ignore[union-attr]
-    )
+    def_type = pa.defense_type or "none"
     if def_type == "dodge":
         residual = variable_sum(att_roll) - roll_total(result.defender_roll)
     elif def_type == "parry":
