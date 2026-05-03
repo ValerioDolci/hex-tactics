@@ -248,12 +248,12 @@ export function aiDecideAttackerDice(state: GameState, unitId: UnitId): number {
 
 /** Decisione difesa: tipo + dadi.
  *
- * Strategia (informata sull'attaccante via state.pendingAction):
- * - Schivata morde solo la VARIABILE attaccante. Efficace contro armi a basso "dado":
- *   mazza (0 dadi propri), ascia 2h (1 dado), balestra (0 dadi). NB: la schivata se
- *   riesce blocca anche il fisso → strategicamente la migliore contro armi fisso-puro.
- * - Parata morde TUTTO il tiro. Efficace contro armi a tanti dadi (spada, lancia, arco).
- * - HP basso (<40%): preferisci parata (più garantita, riduce variance).
+ * Strategia V2 (regole imp su variabile):
+ * - Schivata morde solo la VARIABILE attaccante (post-impedimento).
+ *   Ora che l'imp morde la variabile, la schivata è ancora più efficace contro PG
+ *   ingombri: variabile_atk_effettiva = dadi − imp. Floor 0.
+ * - Parata morde TUTTO il tiro. Efficace contro armi a tanti dadi.
+ * - HP basso (<40%): preferisci parata (più garantita).
  * - Senza arma idonea per parare: forzato schivata.
  */
 export function aiDecideDefense(state: GameState, defenderId: UnitId): {
@@ -302,25 +302,50 @@ export function aiDecideDefense(state: GameState, defenderId: UnitId): {
       const armDice = mode.diceVariable;
       const totalAttackerDice = attackerDicePG + armDice;
       const armFix = mode.fixedBonus;
-      // Parry netto stimato: parryFixed + 2 (PG fix) + ~3.5/dado, vs attaccante variabile
-      // Se attaccante ha pochi dadi (fisso puro), schivata blocca tutto il fisso → meglio
-      // Se attaccante ha tanti dadi (es. arco lungo 4 dadi), parata morde anche fisso
 
-      // Heuristic: se totalAttackerDice <= 2 (fisso puro o 1 dado) → SCHIVATA
-      //            se totalAttackerDice >= 3 e parryFixed >= 6 → PARATA (scudo strong)
-      //            se HP basso → PARATA (meno variance)
+      // V2: stima impedimento attaccante per pesare l'efficacia della schivata.
+      // Più imp → variabile_atk_effettiva minore → schivata vince più spesso.
+      const attacker = state.units[pa.attackerId];
+      let attackerImp = 0;
+      if (attacker) {
+        // riuso countImpReductionsForEquip: total piece imp - reduction
+        if (attacker.weapon) {
+          const w = getWeapon(attacker.weapon);
+          if (w) attackerImp += Math.max(0, w.impediment - countImpReductionsForEquip(attacker, 'weapon'));
+        }
+        if (attacker.offhand) {
+          const w = getWeapon(attacker.offhand);
+          const sh = getShield(attacker.offhand);
+          const piece = sh?.impediment ?? w?.impediment ?? 0;
+          attackerImp += Math.max(0, piece - countImpReductionsForEquip(attacker, 'offhand'));
+        }
+        if (attacker.armor) {
+          const a = getArmor(attacker.armor);
+          if (a) attackerImp += Math.max(0, a.impediment - countImpReductionsForEquip(attacker, 'armor'));
+        }
+      }
+      // Variabile attaccante attesa = totalAttackerDice * 3.5 - imp (post-floor 0).
+      // Se imp ≥ 3.5 * totalDice (in attesa), la variabile è praticamente azzerata
+      // → schivata blocca tutto a colpo sicuro.
+      const expectedAttackerVar = Math.max(0, totalAttackerDice * 3.5 - attackerImp);
+
+      // HP basso → parata (più garantita)
       if (def.hp <= def.hpMax * 0.35) {
         return { defenseType: 'parry', parryWith: parrySrc, diceN };
       }
-      if (totalAttackerDice <= 2 || armFix <= 2) {
-        // Attaccante con poco fisso ma forse molti dadi: schiva
+      // Variabile attaccante stimata molto bassa (≤ 4) → schivata quasi sicura
+      if (expectedAttackerVar <= 4) {
         return { defenseType: 'dodge', diceN };
       }
+      // Armi a fisso puro (mazza, balestra) → schivata cancella il fisso se vince
+      if (totalAttackerDice <= 2 || armFix <= 2) {
+        return { defenseType: 'dodge', diceN };
+      }
+      // Parry forte (scudo medio+) e attaccante "puro dadi" → parata morde tutto
       if (parryFixed >= 6) {
-        // Parry forte (scudo medio+): blocca anche fisso alto
         return { defenseType: 'parry', parryWith: parrySrc, diceN };
       }
-      // Default: schivata (statisticamente più economica)
+      // Default V2: schivata (è ora più efficace nella maggioranza dei casi)
       return { defenseType: 'dodge', diceN };
     }
   }
@@ -358,13 +383,25 @@ export function aiDecideCarica(state: GameState, unitId: UnitId): number {
 }
 
 /**
- * Fase 1 — Asta: AI sceglie ~slancio/4 (min 1 se slancio>0).
- * Stesso algoritmo per attaccante e difensore (mirror del Python `ai_decide_bid_movement`).
+ * V2 — Asta: ora si attiva su TUTTE le armi melee (era solo lance reach >= 4).
+ * L'AI deve gestire molte più aste per turno → bid medio basso (preserva slancio).
+ *
+ * Strategia:
+ * - Se mover (passare): bid basso (~slancio/6, min 1) — basta superare bid difensore zero/basso.
+ * - Se difensore (bloccare): bid medio (~slancio/3, min 1) — costa di più ma stoppa.
+ * - Distinguiamo via state.moveInProgress: se unitId == mover → ruolo mover; else difensore.
  */
 export function aiDecideBidMovement(state: GameState, unitId: UnitId): number {
   const u = state.units[unitId];
   if (!u || u.slancio <= 0) return 0;
-  return Math.max(1, Math.floor(u.slancio / 4));
+  const mip = state.moveInProgress;
+  const isMover = mip ? mip.unitId === unitId : false;
+  if (isMover) {
+    // Mover: bid leggero, vuole risparmiare slancio per aste future / azioni
+    return Math.max(1, Math.floor(u.slancio / 6));
+  }
+  // Difensore: bid più alto per fermare il movimento
+  return Math.max(1, Math.floor(u.slancio / 3));
 }
 
 // helpers re-export
