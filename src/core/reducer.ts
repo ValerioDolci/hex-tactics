@@ -321,6 +321,22 @@ function doDeclareAttack(state: GameState, e: EventDeclareAttack): GameState {
   if (attacker.dadiAzione < 1) {
     return rejectEvent(state, 'DECLARE_ATTACK', `${e.attackerId} ha 0 dadi azione (minimo 1 per attaccare)`);
   }
+  // V2 D-049: ranged BLOCCATO se l'attaccante è in mischia con un nemico
+  // melee con slancio>0 (invariante reducer, oltre al filter UI/AI).
+  if (e.isRanged === true) {
+    let inMeleeThreat = false;
+    for (const u of Object.values(state.units)) {
+      if (u.id === attacker.id || !u.alive) continue;
+      if (u.faction === attacker.faction) continue;
+      if (u.slancio <= 0) continue;
+      const d = baseDistance(attacker.position, u.position);
+      if (d <= 1) { inMeleeThreat = true; break; }
+    }
+    if (inMeleeThreat) {
+      return rejectEvent(state, 'DECLARE_ATTACK',
+        `${attacker.name}: ranged bloccato (in mischia con nemico slancio>0)`);
+    }
+  }
 
   const pending: PendingAction = {
     attackerId: e.attackerId,

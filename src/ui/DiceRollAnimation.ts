@@ -553,8 +553,8 @@ export function playCombatRoll(
       scene.tweens.add({ targets: [outcomeBg, outcomeText], alpha: 1, duration: 250 });
     });
 
-    // Hold + fade out (totale ~3.5s)
-    const TOTAL_HOLD = 2500;
+    // Hold + fade out (totale ~4s)
+    const TOTAL_HOLD = 3000;
     scene.time.delayedCall(durRoll + 400 + TOTAL_HOLD, () => {
       scene.tweens.add({
         targets: group,
