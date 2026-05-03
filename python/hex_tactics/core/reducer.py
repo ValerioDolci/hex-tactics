@@ -38,6 +38,7 @@ from .round import compute_turn_order
 from .state import (
     GamePhase,
     GameState,
+    LastResolution,
     LogEntry,
     MoveInProgress,
     PendingAction,
@@ -955,8 +956,36 @@ def _do_resolve_combat(state: GameState) -> GameState:
                 f"(sl {updated.slancio}, imp {updated.impeto})",
             )
 
+    # V2: popola last_resolution per coerenza con TS (UI animation in TS,
+    # potenzialmente utile per training Python in futuro).
+    def_type = (
+        pa.defense.type if pa.defense is not None else "none"  # type: ignore[union-attr]
+    )
+    if def_type == "dodge":
+        residual = variable_sum(att_roll) - roll_total(result.defender_roll)
+    elif def_type == "parry":
+        residual = roll_total(att_roll) - roll_total(result.defender_roll)
+    else:
+        residual = roll_total(att_roll)
+    last_resolution = LastResolution(
+        attacker_name=attacker.name,
+        attacker_dice=list(att_roll.variable),
+        attacker_fixed=att_roll.fixed,
+        defender_name=target.name,
+        defender_dice=list(result.defender_roll.variable),
+        defender_fixed=result.defender_roll.fixed,
+        is_ranged=pa.is_ranged,
+    )
+    # V2 esteso (mismatch col TS che ha più campi: attacker_variable, attacker_total,
+    # defender_total, defense_type, residual, hit, raw_damage, effective_damage):
+    # il dataclass Python ha solo 7 campi. Per ora popoliamo solo questi.
+    # NB: variabili residual/def_type calcolate ma non salvate nel dataclass attuale.
+    _ = residual
+    _ = def_type
+
     return _state_with(
-        new_state, phase="choosing-action", pending_action=None, rng_seed=rng.get_state()
+        new_state, phase="choosing-action", pending_action=None,
+        rng_seed=rng.get_state(), last_resolution=last_resolution,
     )
 
 

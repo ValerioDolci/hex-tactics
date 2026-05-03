@@ -329,6 +329,19 @@ export const MANUAL: ManualChapter[] = [
         ],
       },
       { type: 'p', text: 'Trade-off del bersaglio: tenere slancio alto ti protegge dal ranged ma costa dadi azione.' },
+      { type: 'subheading', text: 'D-049: Niente ranged sotto minaccia melee' },
+      {
+        type: 'p',
+        text: 'Se hai un nemico in mischia (basetta adiacente) con slancio > 0, NON puoi sparare con armi ranged in quel turno. La regola riflette il fatto che il nemico ti molesta e non ti permette di prendere la mira.',
+      },
+      {
+        type: 'list',
+        items: [
+          'Eccezione: se il nemico melee ha slancio = 0 (esaurito), puoi sparare normalmente.',
+          'Soluzione: muoviti per uscire dalla zona melee (anche solo 2 hex bastano), poi spara — tutto nello stesso turno.',
+          'Le armi tipo giavellotto/lancia 2m (che hanno sia melee che ranged) sono libere per lo stile melee.',
+        ],
+      },
     ],
   },
 
@@ -618,6 +631,24 @@ export const MANUAL: ManualChapter[] = [
           'Schivata vs parata: avversario fisso-puro (mazza, balestra) → schivata. Avversario con dadi propri (spada, arco) → parata. HP basso → parata.',
           'Spendere slancio o tenerlo: mobilità ora se devi chiudere/fuggire. Tenerlo se l\'avversario è arciere.',
         ],
+      },
+      { type: 'subheading', text: 'Counter-ranged: come battere l\'arciere' },
+      {
+        type: 'p',
+        text: 'L\'arco è devastante a distanza, ma c\'è una contro-strategia precisa che lo neutralizza.',
+      },
+      {
+        type: 'list',
+        items: [
+          '1) A inizio turno tira SLANCIO MAX (2 dadi). Lo slancio_target sottrae direttamente al tiro ranged: arciere.tiro − tuo_slancio.',
+          '2) USA IL TRANSFER IMPETO→SLANCIO: dopo aver tirato slancio, sposta punti dall\'impeto allo slancio. Così hai slancio sempre al massimo (es. 14) anche dopo aver mosso.',
+          '3) Chiudi distanza con CARICA: ogni esagono di avvicinamento ti dà +1 fissa al prossimo attacco (consuma slancio ma ne hai accumulato).',
+          '4) Quando arrivi in mischia, l\'arco è bloccato da D-049 (vedi cap 8). L\'arciere è obbligato a fuggire o passare turno.',
+        ],
+      },
+      {
+        type: 'p',
+        text: 'Equipaggiamento ottimale anti-ranged: armatura pesante (RD 12 assorbe il colpo) + scudo medio in stance difensiva (raddoppia parry passive contro ranged).',
       },
     ],
   },
