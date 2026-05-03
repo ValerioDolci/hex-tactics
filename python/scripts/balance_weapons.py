@@ -55,6 +55,14 @@ ALL_WEAPONS = [
 
 
 def make_dt_policy(dt):
+    """Wrapper DT con override euristici (coerente con TS dtAI.ts).
+
+    Override:
+      1. END_TURN proposto ma c'è ATTACK legale → ATTACK
+      2. D-050: START_TURN slancio_dice=0 e nemico ranged-capable → forza =2
+    """
+    from hex_tactics.data.weapons import get_weapon
+
     def policy(state, unit_id):
         unit = state.units.get(unit_id)
         if not unit:
@@ -85,6 +93,28 @@ def make_dt_policy(dt):
             attacks = [m for m in moves if m.type == "DECLARE_ATTACK"]
             if attacks:
                 return attacks[0]
+        # Override D-050: counter-ranged
+        if chosen.type == "START_TURN" and getattr(chosen, "slancio_dice", 0) == 0:
+            my_w = get_weapon(unit.weapon) if unit.weapon else None
+            i_am_ranged_only = (
+                my_w is not None and my_w.range is not None
+                and my_w.range.distance is not None and my_w.range.reach is None
+            )
+            if not i_am_ranged_only:
+                enemies = [u for u in state.units.values() if u.faction != unit.faction and u.alive]
+                def has_ranged(e):
+                    if not e.weapon:
+                        return False
+                    w = get_weapon(e.weapon)
+                    return w is not None and w.range is not None and w.range.distance is not None
+                if any(has_ranged(e) for e in enemies):
+                    alt = next(
+                        (m for m in moves
+                         if m.type == "START_TURN" and getattr(m, "slancio_dice", 0) == 2),
+                        None,
+                    )
+                    if alt is not None:
+                        return alt
         return chosen
     return policy
 

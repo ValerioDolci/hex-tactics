@@ -21,6 +21,7 @@ import { GameEvent } from '@core/events';
 import { buildObsV2 } from '@ai/obsFeaturesV2';
 import { predictDtAction } from '@ai/dtAI_generated';
 import { legalMoves } from '@ai/legalMoves';
+import { getWeapon } from '@data/weapons';
 
 /**
  * Decisione AI Hard: usa il DT per predire l'azione, decode via legalMoves.
@@ -54,7 +55,7 @@ export function aiDecideHard(state: GameState, unitId: UnitId): GameEvent {
     return moves[moves.length - 1];
   }
 
-  const chosen = moves[actionId];
+  let chosen = moves[actionId];
   // Override anti-degenerazione: se DT propone END_TURN ma esiste un attacco
   // legale (cioè AI è in range mischia o ranged), forziamo l'attacco. Il DT su
   // stati non visti durante distillazione (D-044 transfer, slancio cost change)
@@ -63,6 +64,34 @@ export function aiDecideHard(state: GameState, unitId: UnitId): GameEvent {
   if (chosen.type === 'END_TURN') {
     const attack = moves.find((m) => m.type === 'DECLARE_ATTACK');
     if (attack) return attack;
+  }
+
+  // V2 D-050: counter-ranged override. Diagnostica empirica (diag_archer.py)
+  // mostra che il DT v16 sceglie quasi sempre slancioDice=0 a START_TURN,
+  // anche contro un nemico arciere. Questo è subottimale: lo slancio_target
+  // riduce direttamente il tiro ranged (formula `... − slancio_target`).
+  // Override: se DT propone START_TURN con slancioDice=0 e c'è un nemico
+  // ranged-capable + non sono io stesso ranged → forza slancioDice = 2 (max).
+  if (chosen.type === 'START_TURN' && (chosen as { slancioDice?: number }).slancioDice === 0) {
+    const myWeapon = unit.weapon ? getWeapon(unit.weapon) : null;
+    const iAmRangedOnly = myWeapon?.range?.distance != null && myWeapon?.range?.reach == null;
+    if (!iAmRangedOnly) {
+      const enemies = Object.values(state.units).filter(
+        (u) => u.faction !== unit.faction && u.alive,
+      );
+      const enemyHasRanged = enemies.some((e) => {
+        if (!e.weapon) return false;
+        const w = getWeapon(e.weapon);
+        return !!w && !!w.range && w.range.distance != null;
+      });
+      if (enemyHasRanged) {
+        // Cerca alternativa con slancioDice=2 nei moves
+        const altMax = moves.find(
+          (m) => m.type === 'START_TURN' && (m as { slancioDice?: number }).slancioDice === 2,
+        );
+        if (altMax) chosen = altMax;
+      }
+    }
   }
 
   return chosen;
