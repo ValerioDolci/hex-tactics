@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { s, sFont } from './uiScale';
 
 export type ActionMenuItem = {
   label: string;
@@ -27,26 +28,27 @@ export class ActionMenu {
     this.buttons = [];
 
     let yOffset = 0;
+    const rowH = s(60);
     for (const item of items) {
       const btn = this.makeButton(0, yOffset, item);
       this.buttons.push(btn);
       this.container.add(btn);
-      yOffset += 60; // touch-friendly spacing
+      yOffset += rowH; // touch-friendly spacing (scalato su mobile)
     }
   }
 
   private makeButton(x: number, y: number, item: ActionMenuItem): Phaser.GameObjects.Container {
     const c = this.scene.add.container(x, y);
-    const w = 280;
-    const h = 52; // touch-friendly + leggibilità
+    const w = s(280);
+    const h = s(52); // touch-friendly + leggibilità (scalato su mobile)
     const bg = this.scene.add.rectangle(0, 0, w, h, item.disabled ? 0x222222 : 0x335577, 0.92);
     bg.setOrigin(0, 0);
     bg.setStrokeStyle(2, item.disabled ? 0x444444 : 0x6699bb);
-    const txt = this.scene.add.text(14, h / 2, item.label, {
+    const txt = this.scene.add.text(s(14), h / 2, item.label, {
       fontFamily: 'monospace',
-      fontSize: '15px',
+      fontSize: sFont(15),
       color: item.disabled ? '#888' : '#fff',
-      wordWrap: { width: w - 28 },
+      wordWrap: { width: w - s(28) },
     });
     txt.setOrigin(0, 0.5);
     c.add([bg, txt]);

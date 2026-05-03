@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { s, sFont } from './uiScale';
 
 export interface SliderChoiceOptions {
   /** Titolo principale del box */
@@ -72,7 +73,7 @@ export class SliderChoiceUI {
 
     this.title = scene.add.text(w / 2, by + 20, '', {
       fontFamily: 'monospace',
-      fontSize: '20px',
+      fontSize: sFont(20),
       color: '#fff',
       fontStyle: 'bold',
       align: 'center',
@@ -82,7 +83,7 @@ export class SliderChoiceUI {
 
     this.subtitle = scene.add.text(w / 2, by + 56, '', {
       fontFamily: 'monospace',
-      fontSize: '14px',
+      fontSize: sFont(14),
       color: '#9bcfff',
       align: 'center',
       wordWrap: { width: boxW - 40 },
@@ -91,7 +92,7 @@ export class SliderChoiceUI {
 
     this.info = scene.add.text(bx + 24, by + 96, '', {
       fontFamily: 'monospace',
-      fontSize: '13px',
+      fontSize: sFont(13),
       color: '#cdd9e3',
       align: 'left',
       wordWrap: { width: boxW - 48 },
@@ -132,7 +133,7 @@ export class SliderChoiceUI {
     const valueY = by + 220;
     const sliderY = by + 290;
     const sliderH = 14;
-    const sideBtnSize = 44;
+    const sideBtnSize = s(44);
     const sideMargin = 24;
     // Track va da subito dopo bottone − a subito prima bottone +
     this.trackX0 = bx + sideMargin + sideBtnSize + 18;
@@ -143,7 +144,7 @@ export class SliderChoiceUI {
     // Label valore corrente, in mezzo sopra slider, separato da info da margine
     this.valueText = this.scene.add.text(w / 2, valueY, '0', {
       fontFamily: 'monospace',
-      fontSize: '50px',
+      fontSize: sFont(50),
       color: '#ffd966',
       fontStyle: 'bold',
       stroke: '#000',
@@ -175,7 +176,7 @@ export class SliderChoiceUI {
     this.fill.setOrigin(0, 0.5);
 
     // Knob (cerchietto draggabile, più grande per hit-test agevole)
-    this.knob = this.scene.add.circle(this.trackX0, sliderY, 18, 0xffd966, 1);
+    this.knob = this.scene.add.circle(this.trackX0, sliderY, s(18), 0xffd966, 1);
     this.knob.setStrokeStyle(3, 0x886622);
     this.knob.setInteractive({ draggable: true, useHandCursor: true });
 

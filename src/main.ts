@@ -97,6 +97,11 @@ function isMobile(): boolean {
   return /Android|iPhone|iPad|iPod|webOS|BlackBerry|Opera Mini/i.test(navigator.userAgent)
     || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
 }
+// Espongo flag per i componenti UI: leggono `window.HEX_IS_MOBILE` per upscalare
+// font/button sizes (rendere più tap-friendly su touchscreen).
+(window as unknown as { HEX_IS_MOBILE?: boolean }).HEX_IS_MOBILE = isMobile();
+/** Fattore di scala per UI controls (1.0 desktop, 1.4 mobile per tap-friendly). */
+(window as unknown as { HEX_UI_SCALE?: number }).HEX_UI_SCALE = isMobile() ? 1.4 : 1.0;
 function isPortrait(): boolean {
   return window.innerHeight > window.innerWidth;
 }

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { s, sFont } from './uiScale';
 
 export interface DiceChoiceOptions {
   /** Titolo principale del box (es. "Alpha — Tiro slancio") */
@@ -53,7 +54,7 @@ export class DiceChoiceUI {
 
     this.title = scene.add.text(w / 2, by + 20, '', {
       fontFamily: 'monospace',
-      fontSize: '20px',
+      fontSize: sFont(20),
       color: '#fff',
       fontStyle: 'bold',
       align: 'center',
@@ -63,7 +64,7 @@ export class DiceChoiceUI {
 
     this.subtitle = scene.add.text(w / 2, by + 56, '', {
       fontFamily: 'monospace',
-      fontSize: '14px',
+      fontSize: sFont(14),
       color: '#9bcfff',
       align: 'center',
       wordWrap: { width: boxW - 40 },
@@ -72,7 +73,7 @@ export class DiceChoiceUI {
 
     this.info = scene.add.text(bx + 24, by + 96, '', {
       fontFamily: 'monospace',
-      fontSize: '13px',
+      fontSize: sFont(13),
       color: '#cdd9e3',
       align: 'left',
       wordWrap: { width: boxW - 48 },
@@ -111,13 +112,14 @@ export class DiceChoiceUI {
     const bx = w / 2 - boxW / 2;
     const by = h / 2 - boxH / 2;
 
-    // Bottoni in basso al box
-    const btnH = 78;
-    const btnGap = 14;
-    const totalW = boxW - 48;
-    const btnW = Math.min(110, (totalW - btnGap * (opts.choices.length - 1)) / opts.choices.length);
+    // Bottoni in basso al box (scalati su mobile)
+    const btnH = s(78);
+    const btnGap = s(14);
+    const totalW = boxW - s(48);
+    const maxBtnW = s(110);
+    const btnW = Math.min(maxBtnW, (totalW - btnGap * (opts.choices.length - 1)) / opts.choices.length);
     const startX = bx + (boxW - (opts.choices.length * btnW + (opts.choices.length - 1) * btnGap)) / 2;
-    const btnY = by + boxH - btnH - 24;
+    const btnY = by + boxH - btnH - s(24);
 
     let x = startX;
     for (const n of opts.choices) {
@@ -127,7 +129,7 @@ export class DiceChoiceUI {
       r.setStrokeStyle(3, 0x6699bb);
       const t = this.scene.add.text(btnW / 2, btnH / 2, `${n}`, {
         fontFamily: 'monospace',
-        fontSize: '34px',
+        fontSize: sFont(34),
         color: '#fff',
         fontStyle: 'bold',
       });
