@@ -7,6 +7,7 @@ import { ActionMenu, ActionMenuItem } from '@ui/ActionMenu';
 import { DiceChoiceUI } from '@ui/DiceChoiceUI';
 import { SliderChoiceUI } from '@ui/SliderChoiceUI';
 import { playCombatRoll } from '@ui/DiceRollAnimation';
+import { uiScale } from '@ui/uiScale';
 import { HandoffOverlay } from '@ui/HandoffOverlay';
 import { GameOverOverlay } from '@ui/GameOverOverlay';
 import { GAME_CONFIG } from '@/config';
@@ -329,8 +330,10 @@ export class BattleScene extends Phaser.Scene {
     const logW = Math.min(420, this.scale.width * 0.45);
     const logH = Math.min(220, this.scale.height * 0.28);
     this.log = new CombatLog(this, 20, this.scale.height - logH - 20, logW, logH, 12);
-    // Menu: ancorato in alto a destra
-    this.menu = new ActionMenu(this, this.scale.width - 300, 140);
+    // Menu: ancorato in alto a destra. UI scale x1.4 su mobile → button width
+    // s(280)=392, quindi ancoraggio dinamico per restare dentro canvas.
+    const menuW = uiScale() * 280;
+    this.menu = new ActionMenu(this, this.scale.width - menuW - 20, 140);
     this.diceUI = new DiceChoiceUI(this);
     this.sliderUI = new SliderChoiceUI(this);
     this.handoff = new HandoffOverlay(this);
@@ -360,7 +363,8 @@ export class BattleScene extends Phaser.Scene {
     const logW = Math.min(420, this.scale.width * 0.45);
     const logH = Math.min(220, this.scale.height * 0.28);
     this.log.relayout?.(20, this.scale.height - logH - 20, logW, logH);
-    this.menu.setPosition(this.scale.width - 300, 140);
+    const menuW = uiScale() * 280;
+    this.menu.setPosition(this.scale.width - menuW - 20, 140);
 
     // Camera: niente setBounds (vedi setupCamera per motivazione anti-offset)
     void this.cameras.main;

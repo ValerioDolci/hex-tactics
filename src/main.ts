@@ -141,6 +141,62 @@ function updatePortraitOverlay(): void {
 window.addEventListener('load', updatePortraitOverlay);
 updatePortraitOverlay();
 
+/**
+ * Bottone fullscreen toggle in alto a destra. Su iOS Safari (NON iPad) il
+ * Fullscreen API non è supportato — in quel caso suggeriamo "Aggiungi a Home"
+ * via tooltip (apple-mobile-web-app-capable già nel <meta>).
+ */
+const fsBtn = document.createElement('button');
+fsBtn.id = 'fullscreen-btn';
+fsBtn.title = 'Fullscreen (su iPhone: Aggiungi a Home per esperienza standalone)';
+fsBtn.textContent = '⛶';
+fsBtn.style.cssText = [
+  'position: fixed', 'top: 8px', 'right: 8px',
+  'width: 40px', 'height: 40px',
+  'background: rgba(40, 50, 65, 0.85)',
+  'color: #fff', 'border: 1px solid #6699bb', 'border-radius: 6px',
+  'font-size: 20px', 'cursor: pointer', 'z-index: 9998',
+  'padding: 0', 'line-height: 38px', 'text-align: center',
+  '-webkit-tap-highlight-color: transparent',
+].join(';');
+fsBtn.addEventListener('click', () => {
+  const doc = document as Document & {
+    webkitFullscreenElement?: Element;
+    webkitExitFullscreen?: () => void;
+  };
+  const docEl = document.documentElement as HTMLElement & {
+    webkitRequestFullscreen?: () => void;
+  };
+  const isFs = !!(document.fullscreenElement || doc.webkitFullscreenElement);
+  if (isFs) {
+    if (document.exitFullscreen) document.exitFullscreen();
+    else if (doc.webkitExitFullscreen) doc.webkitExitFullscreen();
+    fsBtn.textContent = '⛶';
+  } else {
+    if (docEl.requestFullscreen) {
+      docEl.requestFullscreen().then(() => {
+        fsBtn.textContent = '⛶';
+        // Forza refresh Phaser dopo entrata in FS
+        setTimeout(() => { try { game.scale.refresh(); } catch { /* ignora */ } }, 200);
+      }).catch(() => {
+        // Fallback: API non supportata (es. iPhone Safari)
+        alert('Fullscreen non supportato dal browser.\n\nSu iPhone: tocca "Condividi" → "Aggiungi a schermata Home" per giocare a schermo intero.');
+      });
+    } else if (docEl.webkitRequestFullscreen) {
+      docEl.webkitRequestFullscreen();
+    } else {
+      alert('Fullscreen non supportato dal browser.\n\nSu iPhone: tocca "Condividi" → "Aggiungi a schermata Home" per giocare a schermo intero.');
+    }
+  }
+});
+document.body.appendChild(fsBtn);
+// Aggiorna icona quando si esce da FS via tasto Esc
+document.addEventListener('fullscreenchange', () => {
+  fsBtn.textContent = document.fullscreenElement ? '⛶' : '⛶';
+  // Refresh Phaser
+  setTimeout(() => { try { game.scale.refresh(); } catch { /* ignora */ } }, 200);
+});
+
 // Debug overlay puntatore: attivabile con ?debug=1 nell'URL.
 // Mostra un puntino rosso alla posizione che PHASER pensa sia il cursore.
 // Se il puntino non segue il cursore reale → c'è offset coord, e si vede dove.
