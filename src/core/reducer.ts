@@ -820,7 +820,10 @@ function doToggleDefensive(state: GameState, unitId: string): GameState {
 /**
  * BID_MOVEMENT — meccanica A. Asta nascosta atk/def per attraversare zona reach.
  * Phase awaiting-attacker-bid: salva atk_bid → awaiting-defender-bid.
- * Phase awaiting-defender-bid: risolvi (atk_bid >= def_bid → atk vince), entrambi pagano.
+ * Phase awaiting-defender-bid: risolvi (atk_bid > def_bid → atk vince, parità → def), entrambi pagano.
+ *
+ * Regola D-052: atk paga sempre `1 + atk_bid` (1 fisso movimento + bid), def paga `def_bid`.
+ * Atk bid clampato in [0, slancio-1] per riservare 1 slancio al movimento.
  */
 function doBidMovement(state: GameState, amount: number): GameState {
   if (!state.moveInProgress) {
@@ -831,7 +834,9 @@ function doBidMovement(state: GameState, amount: number): GameState {
   if (state.phase === 'awaiting-attacker-bid') {
     const unit = state.units[mip.unitId];
     if (!unit) return rejectEvent(state, 'BID_MOVEMENT', 'attaccante non trovato');
-    const clamped = Math.max(0, Math.min(amount, unit.slancio));
+    // Atk deve riservare 1 slancio per il costo fisso movimento → bid max = slancio - 1
+    const maxBid = Math.max(0, unit.slancio - 1);
+    const clamped = Math.max(0, Math.min(amount, maxBid));
     const newMip: MoveInProgress = { ...mip, attackerBid: clamped, defenderBid: undefined };
     return { ...state, phase: 'awaiting-defender-bid', moveInProgress: newMip };
   }
@@ -845,25 +850,23 @@ function doBidMovement(state: GameState, amount: number): GameState {
     const clamped = Math.max(0, Math.min(amount, defender.slancio));
     const atkBid = mip.attackerBid;
     const defBid = clamped;
-    const atkWins = atkBid >= defBid;
+    const atkWins = atkBid > defBid;  // D-052: parità → def vince
     const atkUnit = state.units[mip.unitId];
     if (!atkUnit) return rejectEvent(state, 'BID_MOVEMENT', 'atk non trovato');
 
-    let newState = updateUnit(state, mip.unitId, { slancio: atkUnit.slancio - atkBid });
+    // D-052: atk paga 1 fisso (movimento) + bid; def paga solo bid
+    const atkTotal = atkBid + 1;
+    let newState = updateUnit(state, mip.unitId, { slancio: atkUnit.slancio - atkTotal });
     newState = updateUnit(newState, mip.defenderId, { slancio: defender.slancio - defBid });
     const resultStr = atkWins ? 'passa' : 'BLOCCATO';
     newState = appendLog(newState,
-      `  asta: atk=${atkBid} vs def=${defBid} → ${resultStr} (atk -${atkBid} sla, def -${defBid} sla)`);
+      `  asta: atk=${atkBid} vs def=${defBid} → ${resultStr} (atk -${atkTotal} sla [${atkBid} bid + 1 move], def -${defBid} sla)`);
 
     if (atkWins) {
-      // Continua MOVE: applica step
+      // Continua MOVE: applica step. D-052: il costo movimento dell'esagono è già
+      // stato pagato come parte del "+1 fisso" dell'asta — qui non si paga di nuovo.
       const nextHex = mip.path[mip.currentIdx];
       const atkAfter = newState.units[mip.unitId];
-      const cost = !mip.freeHexUsed && atkAfter.hexMovedThisTurn === 0 ? 0 : 1;
-      if (atkAfter.slancio < cost) {
-        return appendLog({ ...newState, phase: 'choosing-action', moveInProgress: undefined },
-          `${atkUnit.name}: post-asta, slancio insufficiente`);
-      }
       const newPosBase = new Set(getBaseHexes(nextHex).map((h) => `${h.q},${h.r}`));
       let blocked = false;
       for (const other of Object.values(newState.units)) {
@@ -879,7 +882,7 @@ function doBidMovement(state: GameState, amount: number): GameState {
       }
       newState = updateUnit(newState, mip.unitId, {
         position: { q: nextHex.q, r: nextHex.r },
-        slancio: atkAfter.slancio - cost,
+        // costo movimento già pagato come +1 fisso dell'asta
         hexMovedThisTurn: atkAfter.hexMovedThisTurn + 1,
       });
       newState = {

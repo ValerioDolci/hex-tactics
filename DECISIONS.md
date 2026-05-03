@@ -654,6 +654,28 @@
 
 ---
 
+## D-052 — Asta zona di controllo: tie a difensore + costo fisso 1 slancio per atk
+
+- **Data**: 2026-05-03
+- **Stato**: ACTIVE — supersede della procedura asta precedente in M-1
+- **Contesto**: la procedura M-1 originale ("atk vince le parità" + "atk paga solo il bid") è stata stress-testata con CFR tabular (script `python/cfr/auction_cfr_iterated_fix.py`, T=2000 iter). Risultato: equilibrio degenere — atk può sempre puntare 0, def non ha incentivo a bidare, atk passa gratis. L'asta non protegge nulla.
+- **Decisione**: nuova procedura asta:
+  1. Atk bid in `[0, slancio - 1]` (deve riservare 1 slancio per il movimento), def bid in `[0, slancio]`
+  2. **Atk vince solo se `bid_a > bid_b`** (parità → def)
+  3. Atk paga sempre `1 + bid_a` (1 fisso movimento + bid), def paga `bid_b`
+  4. Atk con `slancio < 1` non può attivare l'asta (movimento si ferma)
+- **Razionale**: stesso CFR sweep mostra ora un equilibrio sano:
+  - 5v5: V_a=+0.557, mind game vero (entrambi mixano)
+  - 8v8 / 10v5: V_a=+0.800, atk bida 1 minimo, def rinuncia
+  - 5v10 / 3v3: atk QUIT razionale, def deter naturale senza spese
+- **Conseguenze**:
+  - Modifiche in `src/core/reducer.ts` (motore TS) e `python/hex_tactics/core/reducer.py` (motore Python)
+  - Test `tests/core/phase1.test.ts` aggiornati (asserzioni slancio)
+  - Sezione "M-1. Meccanica A — Asta nascosta di slancio" in CLAUDE.md aggiornata
+  - File CFR `python/cfr/auction_cfr_iterated_fix.py` resta il "source of truth" del modello matematico
+
+---
+
 ## Decisioni pending (da prendere ad un certo punto)
 
 > Non bloccano lo scaffolding M1, ma vanno chiuse durante le milestone successive.

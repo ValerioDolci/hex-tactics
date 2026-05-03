@@ -389,9 +389,9 @@ def _do_bid_movement(state: GameState, amount: int) -> GameState:
 
     Phase awaiting-attacker-bid → registra atk_bid, passa a awaiting-defender-bid.
     Phase awaiting-defender-bid → registra def_bid, risolvi:
-      - applica spese slancio a entrambi
-      - se atk_bid >= def_bid: continua MOVE (chiamando _advance_movement)
-      - se atk_bid < def_bid: termina MOVE (movement_in_progress=None, phase=choosing-action)
+      - applica spese slancio: atk paga 1 fisso (movimento) + atk_bid; def paga def_bid
+      - se atk_bid > def_bid: atk vince, continua MOVE (chiamando _advance_movement)
+      - parità o atk_bid < def_bid: atk perde, termina MOVE (D-052)
     """
     if state.move_in_progress is None:
         return _reject(state, "BID_MOVEMENT", "nessun movimento in corso")
@@ -401,7 +401,9 @@ def _do_bid_movement(state: GameState, amount: int) -> GameState:
         unit = state.units.get(mip.unit_id)
         if unit is None:
             return _reject(state, "BID_MOVEMENT", "attaccante non trovato")
-        clamped = max(0, min(amount, unit.slancio))
+        # D-052: atk deve riservare 1 slancio per il costo fisso movimento → bid max = slancio - 1
+        max_bid = max(0, unit.slancio - 1)
+        clamped = max(0, min(amount, max_bid))
         new_mip = MoveInProgress(
             unit_id=mip.unit_id,
             path=mip.path,
@@ -426,14 +428,15 @@ def _do_bid_movement(state: GameState, amount: int) -> GameState:
 
         atk_bid = mip.attacker_bid
         def_bid = clamped
-        atk_wins = atk_bid >= def_bid  # parità → atk vince
+        atk_wins = atk_bid > def_bid  # D-052: parità → def vince
 
-        # Applica spese slancio: entrambi pagano
+        # D-052: atk paga 1 fisso (movimento) + bid; def paga solo bid
         atk_unit = state.units.get(mip.unit_id)
         if atk_unit is None:
             return _reject(state, "BID_MOVEMENT", "atk non trovato")
+        atk_total = atk_bid + 1
         new_state = update_unit(
-            state, mip.unit_id, slancio=atk_unit.slancio - atk_bid
+            state, mip.unit_id, slancio=atk_unit.slancio - atk_total
         )
         new_state = update_unit(
             new_state, mip.defender_id, slancio=defender.slancio - def_bid
@@ -443,25 +446,15 @@ def _do_bid_movement(state: GameState, amount: int) -> GameState:
         new_state = append_log(
             new_state,
             f"  asta: atk={atk_bid} vs def={def_bid} → {result_str} "
-            f"(atk -{atk_bid} sla, def -{def_bid} sla)",
+            f"(atk -{atk_total} sla [{atk_bid} bid + 1 move], def -{def_bid} sla)",
         )
 
         if atk_wins:
-            # Continua MOVE: applica step (movimento avanti di 1) e prosegui
+            # Continua MOVE: applica step. D-052: il costo movimento dell'esagono è già
+            # stato pagato come parte del "+1 fisso" dell'asta — qui non si paga di nuovo.
             next_hex = mip.path[mip.current_idx]
             atk_after = new_state.units[mip.unit_id]
-            cost = 0 if (not mip.free_hex_used and atk_after.hex_moved_this_turn == 0) else 1
             new_free = mip.free_hex_used or True
-            if atk_after.slancio < cost:
-                # Niente slancio per il movimento residuo dopo aver pagato il bid
-                new_state = append_log(
-                    new_state,
-                    f"{atk_unit.name}: post-asta, slancio insufficiente per muoversi",
-                )
-                new_state = _state_with(
-                    new_state, phase="choosing-action", move_in_progress=None
-                )
-                return new_state
             # Verifica overlap basette
             new_pos_base = {(h.q, h.r) for h in get_base_hexes(next_hex)}
             blocked = False
@@ -483,11 +476,10 @@ def _do_bid_movement(state: GameState, amount: int) -> GameState:
                     new_state, phase="choosing-action", move_in_progress=None
                 )
                 return new_state
-            # Applica step
+            # Applica step (costo movimento già pagato come +1 fisso dell'asta)
             new_state = update_unit(
                 new_state, mip.unit_id,
                 position=Axial(q=next_hex.q, r=next_hex.r),
-                slancio=atk_after.slancio - cost,
                 hex_moved_this_turn=atk_after.hex_moved_this_turn + 1,
             )
             new_mip = MoveInProgress(

@@ -375,14 +375,26 @@ Eredita le 10 regole del CLAUDE.md di workspace (`/Users/flaviacasini/claude-bot
 - Spada lunga (reach 2), giavellotto (reach 2), tutte le armi a 1 hex (mazza, ascia, spada, pugnale)
 - Tutte le armi a distanza (archi, balestra)
 
-**Procedura asta**:
-1. Attaccante e difensore scelgono **simultaneamente in privato** una puntata intera in `[0, slancio_attuale]`
-2. **Risoluzione**: se `puntata_atk >= puntata_def` → l'attaccante passa l'esagono (parità vince atk). Altrimenti il movimento si ferma all'esagono precedente.
-3. **Spesa**: entrambi spendono sempre la propria puntata in slancio, indipendentemente da chi vince.
+**Procedura asta** (aggiornata post-analisi CFR — vedi `python/cfr/auction_cfr_iterated_fix.py`):
+1. Attaccante e difensore scelgono **simultaneamente in privato** una puntata intera:
+   - Atk: `puntata_atk ∈ [0, slancio_attuale - 1]` (deve riservare 1 slancio per il movimento)
+   - Def: `puntata_def ∈ [0, slancio_attuale]`
+2. **Risoluzione**: l'attaccante passa l'esagono **solo** se `puntata_atk > puntata_def` (parità → **DEFENDER vince**, atk si ferma).
+3. **Spesa**:
+   - Atk paga sempre **`1 + puntata_atk`** in slancio (1 fisso = costo movimento sull'esagono + bid), indipendentemente dall'esito
+   - Def paga sempre `puntata_def` in slancio
+4. **QUIT implicito**: se atk ha `slancio < 1` non può attivare l'asta — il movimento si ferma senza spese.
+
+**Razionale del fix** (analisi CFR tabular, T=2000 iter):
+- Regola precedente (`atk_bid >= def_bid` + atk paga solo bid) → strategia degenere: atk bida 0, def non ha incentivo a bidare, atk passa gratis. Asta inutile.
+- Regola attuale (`atk_bid > def_bid` + atk paga 1 fisso + bid) → equilibrio sano:
+  - 5v5 slancio: vero mind game, V_a=+0.557, entrambi mixano
+  - 8v8, 10v5: atk vince economico (bida 1, def rinuncia)
+  - 5v10, 3v3: atk QUIT razionale, def deter senza spese
 
 **No dadi**: pura asta di valore (mind game).
 
-**Frequenza**: ogni esagono in zona di controllo = 1 asta separata. Movimento attraverso 4 hex contesi = 4 aste possibili.
+**Frequenza**: ogni esagono in zona di controllo = 1 asta separata. Movimento attraverso 4 hex contesi = 4 aste possibili (atk paga 1 fisso ogni volta che attiva l'asta).
 
 ### M-2. Tweak D3 — Armatura pesante
 

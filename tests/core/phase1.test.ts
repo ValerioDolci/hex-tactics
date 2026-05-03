@@ -277,13 +277,14 @@ describe('Fase 1 — Asta movimento (BID_MOVEMENT)', () => {
     s = reduce(s, { type: 'BID_MOVEMENT', amount: 2 });
     expect(s.phase).toBe('choosing-action');
     expect(s.moveInProgress).toBeUndefined();
-    expect(s.units['A'].slancio).toBe(3); // 4 - 1
+    // D-052: atk paga sempre 1 fisso + bid (anche se perde). 4 - (1+1) = 2
+    expect(s.units['A'].slancio).toBe(2);
     expect(s.units['B'].slancio).toBe(2); // 4 - 2
     // A è rimasto fermo (movimento abortito)
     expect(s.units['A'].position).toEqual(aPos);
   });
 
-  it('parità nel bid: attaccante vince', () => {
+  it('parità nel bid: difensore vince (D-052)', () => {
     // B distante (col 15) per evitare overlap basette quando A avanza di 1 hex.
     const a = makeUnit({
       id: 'A',
@@ -313,12 +314,12 @@ describe('Fase 1 — Asta movimento (BID_MOVEMENT)', () => {
     });
 
     s = reduce(s, { type: 'BID_MOVEMENT', amount: 2 });
-    s = reduce(s, { type: 'BID_MOVEMENT', amount: 2 }); // parity → atk vince
-    // A si è mosso (l'engine applica step + chiama advanceMovement). Slancio: 4 - 2 (bid) - 0 (free hex) = 2.
-    expect(s.units['A'].slancio).toBe(2);
+    s = reduce(s, { type: 'BID_MOVEMENT', amount: 2 }); // D-052: parità → DEF vince, atk si ferma
+    // D-052: A paga sempre 1 fisso + bid (4 - (1+2) = 1), non muove (perde la parità)
+    expect(s.units['A'].slancio).toBe(1);
     expect(s.units['B'].slancio).toBe(2); // 4 - 2 bid
-    expect(s.units['A'].position).toEqual(targetHex);
-    // moveInProgress dopo advanceMovement (path completato): undefined
+    // A è rimasto fermo
+    expect(s.units['A'].position).toEqual(aPos);
     expect(s.phase).toBe('choosing-action');
   });
 
@@ -354,9 +355,48 @@ describe('Fase 1 — Asta movimento (BID_MOVEMENT)', () => {
 
     expect(s.units['A'].position).toEqual(hex1);
     expect(s.phase).toBe('choosing-action');
-    // A: 5 - 3 (bid) - 0 (free hex) = 2
-    expect(s.units['A'].slancio).toBe(2);
+    // D-052: A paga 1 fisso + bid 3 = 4. Slancio: 5 - 4 = 1.
+    expect(s.units['A'].slancio).toBe(1);
     // B: 4 - 1 (bid) = 3
     expect(s.units['B'].slancio).toBe(3);
+  });
+
+  it('D-052: atk con slancio 1 non può biddare (clampato a 0)', () => {
+    const a = makeUnit({
+      id: 'A',
+      faction: 'A',
+      position: { col: 5, row: 9 },
+      weapon: 'spada',
+      slancio: 1,
+    });
+    const b = makeUnit({
+      id: 'B',
+      faction: 'B',
+      position: { col: 15, row: 9 },
+      weapon: 'lancia_3m_2h',
+      slancio: 4,
+    });
+    const aPos = a.position;
+    const targetHex = { q: aPos.q + 1, r: aPos.r };
+    let s = makeState([a, b], 'awaiting-attacker-bid', {
+      moveInProgress: {
+        unitId: 'A',
+        path: [targetHex],
+        currentIdx: 0,
+        freeHexUsed: false,
+        contestedHexIdx: 0,
+        defenderId: 'B',
+      },
+    });
+    // A prova a bidare 5 → clampato a max(0, slancio-1) = 0
+    s = reduce(s, { type: 'BID_MOVEMENT', amount: 5 });
+    expect(s.moveInProgress?.attackerBid).toBe(0);
+    // B bida 0 → parità → def vince (D-052)
+    s = reduce(s, { type: 'BID_MOVEMENT', amount: 0 });
+    // A: 1 - (1 fisso + 0 bid) = 0; B: 4 - 0 = 4. A non muove.
+    expect(s.units['A'].slancio).toBe(0);
+    expect(s.units['B'].slancio).toBe(4);
+    expect(s.units['A'].position).toEqual(aPos);
+    expect(s.phase).toBe('choosing-action');
   });
 });
