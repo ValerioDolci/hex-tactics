@@ -13,7 +13,9 @@
 set -euo pipefail
 
 MSG="${1:-Update playable build}"
-SOURCE_HTML="$(dirname "$0")/../dist/index.html"
+# Risolvi path assoluto dello script per essere robusti a cwd
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SOURCE_HTML="$SCRIPT_DIR/../dist/index.html"
 PAGES_REPO="/tmp/hex-tactics-play"
 
 if [ ! -f "$SOURCE_HTML" ]; then
