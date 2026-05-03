@@ -145,6 +145,36 @@ export function composeAttackRoll(
   return combined;
 }
 
+/**
+ * Compone il Roll d'attacco "improvvisato" con uno SCUDO impugnato come arma.
+ * Lo scudo non ha dadi propri (`diceVariable=0`): si usa solo `parry.fixed`.
+ * D-051: attacco con offhand-scudo. NON consentito in posizione difensiva
+ *   (regola: se sei in stance, lo scudo è "alzato" e non bludgeon-able).
+ *
+ * Rispetto a composeAttackRoll standard:
+ * - Variabile: dadi PG soltanto (1-2 d6) + dadi PG forced via skill
+ * - Fissa: 2 (PG) + parry.fixed dello scudo + skill match
+ * - VariableMod: −impedimento PG (V2)
+ */
+export function composeShieldAttackRoll(
+  attacker: Unit,
+  shieldId: string,
+  diceN: number,
+  rng: Rng,
+): Roll | null {
+  if (attacker.defensiveStance) return null; // D-051: no attack se stance attiva
+  const shield = getShield(shieldId);
+  if (!shield) return null;
+  const ctx = makeAttackContext(shieldId, shield.category);
+  const pgDiceN = getActualDiceCount(attacker, ctx, diceN);
+  const pgRoll = makeRoll(rng, pgDiceN, BASE_PG_FIXED);
+  // Solo fissa scudo (parry.fixed, niente dadi)
+  pgRoll.fixed += shield.parry.fixed;
+  pgRoll.fixed += countFlatBonuses(attacker.skills, ctx);
+  pgRoll.variableMod = (pgRoll.variableMod ?? 0) - getImpedimentTotal(attacker);
+  return pgRoll;
+}
+
 /** Compone il Roll di schivata del difensore */
 export function composeDodgeRoll(defender: Unit, diceN: number, rng: Rng): Roll {
   const ctx = makeDodgeContext();

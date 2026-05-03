@@ -17,6 +17,7 @@ import { getBaseHexes, baseDistance } from './hex/base';
 import { getShield } from '@data/shields';
 import {
   composeAttackRoll,
+  composeShieldAttackRoll,
   composeDodgeRoll,
   composeParryRoll,
   resolveDodge,
@@ -475,8 +476,16 @@ function doResolveCombat(state: GameState): GameState {
     result = resolveNoDefense(attRoll);
   } else {
     // CaC: scelta del difensore
-    attRoll = composeAttackRoll(attacker, pa.weaponId, pa.attackModeIdx, pa.chosenStat, pa.attackerDice, rng,
-      { target, caricaAmount: pa.caricaAmount ?? 0 });
+    // D-051: se weaponId è uno SCUDO (offhand), usa composeShieldAttackRoll
+    const shieldAttack = getShield(pa.weaponId);
+    if (shieldAttack) {
+      const shRoll = composeShieldAttackRoll(attacker, pa.weaponId, pa.attackerDice, rng);
+      attRoll = shRoll ?? composeAttackRoll(attacker, pa.weaponId, pa.attackModeIdx, pa.chosenStat, pa.attackerDice, rng,
+        { target, caricaAmount: pa.caricaAmount ?? 0 });
+    } else {
+      attRoll = composeAttackRoll(attacker, pa.weaponId, pa.attackModeIdx, pa.chosenStat, pa.attackerDice, rng,
+        { target, caricaAmount: pa.caricaAmount ?? 0 });
+    }
     if (pa.defense!.type === 'dodge') {
       const dodgeRoll = composeDodgeRoll(target, pa.defense!.diceN, rng);
       result = resolveDodge(attRoll, dodgeRoll);

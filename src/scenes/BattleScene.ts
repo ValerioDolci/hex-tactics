@@ -1076,6 +1076,48 @@ export class BattleScene extends Phaser.Scene {
       }
     }
 
+    // D-051: attacco con OFFHAND (arma o scudo) per ogni nemico in melee.
+    // - Arma in offhand: usa composeAttackRoll standard (es. arciere col pugnale)
+    // - Scudo in offhand: usa composeShieldAttackRoll (no dadi, solo parry.fixed)
+    //   NON consentito se in stance difensiva.
+    if (unit.offhand && !unit.actionTakenThisTurn) {
+      const offW = getWeapon(unit.offhand);
+      const offS = getShield(unit.offhand);
+      for (const enemy of enemies) {
+        const dist = baseDistance(unit.position, enemy.position);
+        if (offW) {
+          // Arma in offhand: range = reach se ce l'ha, else 0 (no melee)
+          const meleeRangeOff = offW.range?.reach ?? 0;
+          if (offW.range?.reach != null) {
+            for (let mi = 0; mi < offW.attackModes.length; mi++) {
+              const mode = offW.attackModes[mi];
+              const label = `Attacca ${enemy.name} (offhand: ${offW.name} · ${mode.label})`;
+              let reason: string | null = null;
+              if (unit.dadiAzione < 1) reason = 'no dadi';
+              else if (dist > meleeRangeOff) reason = `fuori portata (${dist} > ${meleeRangeOff})`;
+              addItem(
+                label,
+                () => this.startAttackFlow(unit.id, enemy.id, offW.id, mi, mode.stat === 'either' ? undefined : mode.stat, false),
+                reason,
+              );
+            }
+          }
+        } else if (offS) {
+          // Scudo in offhand: bludgeon attack, no dadi arma, solo parry.fixed
+          const label = `Bludgeon ${enemy.name} (offhand: ${offS.name}, +${offS.parry.fixed} fissi)`;
+          let reason: string | null = null;
+          if (unit.dadiAzione < 1) reason = 'no dadi';
+          else if (dist > 1) reason = `fuori portata (${dist} > 1)`;
+          else if (unit.defensiveStance) reason = 'in stance difensiva';
+          addItem(
+            label,
+            () => this.startAttackFlow(unit.id, enemy.id, offS.id, 0, undefined, false),
+            reason,
+          );
+        }
+      }
+    }
+
     // Ricarica arma (es. balestra)
     if (unit.weapon) {
       const w = getWeapon(unit.weapon);
