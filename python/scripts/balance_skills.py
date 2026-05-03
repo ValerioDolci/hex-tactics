@@ -49,7 +49,7 @@ def make_skill(modifier: str, level: int, abilita=None, azione=None, classe=None
     return AcquiredSkill(
         id=f"{modifier}_{level}_{abilita or '_'}_{azione or '_'}_{classe or '_'}_{oggetto or '_'}",
         modifier=modifier, level=level,
-        abilita=abilita, azione=azione, classeOggetto=classe, oggettoSpecifico=oggetto,
+        abilita=abilita, azione=azione, classe_oggetto=classe, oggetto_specifico=oggetto,
         cost=cost,
     )
 
