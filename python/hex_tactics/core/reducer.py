@@ -30,7 +30,7 @@ from .events import (
     EventToggleDefensive,
     GameEvent,
 )
-from .hex import Axial, get_base_hexes, hex_distance, hex_line
+from .hex import Axial, base_distance, get_base_hexes, hex_distance, hex_line
 from .ranged import compose_ranged_attack_roll, compute_los
 from .rng import create_rng
 from .round import check_game_over
@@ -567,6 +567,25 @@ def _do_declare_attack(state: GameState, e: EventDeclareAttack) -> GameState:
         return _reject(
             state, "DECLARE_ATTACK", f"{e.attacker_id} ha 0 dadi azione (minimo 1 per attaccare)"
         )
+    # V2 D-049: ranged BLOCCATO se l'attaccante è in mischia con un nemico
+    # melee con slancio>0 (invariante reducer, oltre al filter UI/AI).
+    if e.is_ranged:
+        in_melee_threat = False
+        for u in state.units.values():
+            if u.id == attacker.id or not u.alive:
+                continue
+            if u.faction == attacker.faction:
+                continue
+            if u.slancio <= 0:
+                continue
+            if base_distance(attacker.position, u.position) <= 1:
+                in_melee_threat = True
+                break
+        if in_melee_threat:
+            return _reject(
+                state, "DECLARE_ATTACK",
+                f"{attacker.name}: ranged bloccato (in mischia con nemico slancio>0)",
+            )
 
     pending = PendingAction(
         attacker_id=e.attacker_id,
