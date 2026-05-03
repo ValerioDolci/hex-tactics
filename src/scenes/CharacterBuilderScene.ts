@@ -71,6 +71,12 @@ export class CharacterBuilderScene extends Phaser.Scene {
 
   create(): void {
     if (!this.tooltip) this.tooltip = new Tooltip(this);
+    // Restart on resize (orientation change su mobile): re-render tutto
+    const onResize = () => this.scene.restart();
+    this.scale.on('resize', onResize, this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.scale.off('resize', onResize, this);
+    });
     this.renderAll();
   }
 

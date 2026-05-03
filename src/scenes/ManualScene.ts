@@ -27,6 +27,13 @@ export class ManualScene extends Phaser.Scene {
   }
 
   create(): void {
+    // Restart on resize (es. orientation change su mobile): brute-force ma robusto
+    // per scene statiche senza state vivo. BattleScene gestisce resize fine-grained.
+    const onResize = () => this.scene.restart();
+    this.scale.on('resize', onResize, this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.scale.off('resize', onResize, this);
+    });
     const w = this.scale.width;
     const h = this.scale.height;
 

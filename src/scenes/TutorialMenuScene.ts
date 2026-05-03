@@ -40,6 +40,12 @@ export class TutorialMenuScene extends Phaser.Scene {
   }
 
   create(): void {
+    // Restart on resize (orientation change su mobile)
+    const onResize = () => this.scene.restart();
+    this.scale.on('resize', onResize, this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.scale.off('resize', onResize, this);
+    });
     const w = this.scale.width;
     const h = this.scale.height;
 

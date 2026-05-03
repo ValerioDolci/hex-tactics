@@ -53,8 +53,7 @@ const game = new Phaser.Game(config);
 // `window.__hexGame` è un appiglio per script di test, non viene usato dal runtime.
 (window as unknown as { __hexGame?: Phaser.Game }).__hexGame = game;
 
-// Phaser Scale.RESIZE gestisce tutto in autonomia. Manteniamo solo un refresh dopo `load`
-// (utile su mobile dove l'address bar fa layout shift).
+// Refresh dopo `load` (utile su mobile dove l'address bar fa layout shift).
 window.addEventListener('load', () => {
   setTimeout(() => {
     try {
@@ -64,6 +63,78 @@ window.addEventListener('load', () => {
     }
   }, 250);
 });
+
+/**
+ * Orientation change su mobile: forziamo Phaser a re-fittare il canvas
+ * con un piccolo delay (l'address bar/notch ridisegnano dopo).
+ * Senza questo handler, su iOS il canvas può restare bloccato sulle
+ * dimensioni vecchie dopo il rotate.
+ */
+const handleOrientationChange = () => {
+  // Doppio refresh: primo immediato, secondo dopo 300ms per address-bar settle
+  try { game.scale.refresh(); } catch { /* ignora */ }
+  setTimeout(() => {
+    try { game.scale.refresh(); } catch { /* ignora */ }
+  }, 300);
+  // Su mobile, mostra/nascondi overlay portrait
+  updatePortraitOverlay();
+};
+window.addEventListener('orientationchange', handleOrientationChange);
+window.addEventListener('resize', handleOrientationChange);
+// Modern API screen.orientation (più affidabile su iOS recenti)
+if (window.screen && (window.screen as Screen).orientation) {
+  try {
+    (window.screen as Screen).orientation.addEventListener('change', handleOrientationChange);
+  } catch { /* ignora */ }
+}
+
+/**
+ * Overlay HTML "ruota in landscape": appare se l'utente è su mobile portrait.
+ * Il design del gioco (1280×800 = 16:10) è ottimizzato per landscape; in portrait
+ * lo Scale.FIT genera bande nere enormi rendendo l'UI quasi inutilizzabile.
+ */
+function isMobile(): boolean {
+  return /Android|iPhone|iPad|iPod|webOS|BlackBerry|Opera Mini/i.test(navigator.userAgent)
+    || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+}
+function isPortrait(): boolean {
+  return window.innerHeight > window.innerWidth;
+}
+const portraitOverlay = document.createElement('div');
+portraitOverlay.id = 'portrait-overlay';
+portraitOverlay.style.cssText = [
+  'position: fixed', 'top: 0', 'left: 0', 'right: 0', 'bottom: 0',
+  'background: rgba(10, 14, 20, 0.98)',
+  'color: #fff', 'font-family: -apple-system, system-ui, sans-serif',
+  'display: none', 'align-items: center', 'justify-content: center',
+  'flex-direction: column', 'gap: 24px', 'text-align: center', 'padding: 32px',
+  'z-index: 9999',
+].join(';');
+portraitOverlay.innerHTML = `
+  <div style="font-size: 64px; animation: rotate 1.5s ease-in-out infinite;">📱</div>
+  <div style="font-size: 22px; font-weight: bold;">Ruota il telefono</div>
+  <div style="font-size: 16px; color: #aab; max-width: 320px; line-height: 1.4;">
+    Il gioco è ottimizzato per uso orizzontale (landscape). Ruota il dispositivo per giocare comodamente.
+  </div>
+  <style>
+    @keyframes rotate {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(-90deg); }
+    }
+  </style>
+`;
+document.body.appendChild(portraitOverlay);
+
+function updatePortraitOverlay(): void {
+  if (isMobile() && isPortrait()) {
+    portraitOverlay.style.display = 'flex';
+  } else {
+    portraitOverlay.style.display = 'none';
+  }
+}
+// Check al caricamento
+window.addEventListener('load', updatePortraitOverlay);
+updatePortraitOverlay();
 
 // Debug overlay puntatore: attivabile con ?debug=1 nell'URL.
 // Mostra un puntino rosso alla posizione che PHASER pensa sia il cursore.
