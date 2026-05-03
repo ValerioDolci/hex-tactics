@@ -97,6 +97,21 @@ export interface GameState {
 
   /** Vincitore (impostato in 'game-over') */
   winner?: 'A' | 'B' | 'draw';
+
+  /**
+   * Risultato dell'ULTIMA risoluzione di combat (RESOLVE_COMBAT).
+   * Esposto per UI animazione dadi: contiene i d6 attaccante/difensore reali.
+   * Resettato a undefined a START_TURN/START_ROUND.
+   */
+  lastResolution?: {
+    attackerName: string;
+    attackerDice: number[];
+    attackerFixed: number;
+    defenderName: string;
+    defenderDice: number[]; // [] se nessuna difesa attiva
+    defenderFixed: number;
+    isRanged: boolean;
+  };
 }
 
 /** Factory per creare uno stato iniziale dato il roster e i bounds. */

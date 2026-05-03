@@ -83,6 +83,18 @@ class Board:
 
 
 @dataclass
+class LastResolution:
+    """Risultato dell'ultimo RESOLVE_COMBAT, per UI animazione dadi."""
+    attacker_name: str
+    attacker_dice: List[int]
+    attacker_fixed: int
+    defender_name: str
+    defender_dice: List[int]
+    defender_fixed: int
+    is_ranged: bool
+
+
+@dataclass
 class GameState:
     round: int
     turn_order: List[str]
@@ -95,6 +107,7 @@ class GameState:
     pending_action: Optional[PendingAction] = None
     move_in_progress: Optional[MoveInProgress] = None
     winner: Optional[Literal["A", "B", "draw"]] = None
+    last_resolution: Optional[LastResolution] = None
 
 
 def create_initial_state(

@@ -147,6 +147,7 @@ function doStartTurn(state: GameState, slancioDice: number, impetoToSlancio: num
     ...newState,
     phase: 'choosing-action',
     rngSeed: rng.getState(),
+    lastResolution: undefined,
   };
 }
 
@@ -589,11 +590,23 @@ function doResolveCombat(state: GameState): GameState {
     }
   }
 
+  // V2: esposto lastResolution per UI animazione dadi
+  const lastResolution = {
+    attackerName: attacker.name,
+    attackerDice: [...attRoll.variable],
+    attackerFixed: attRoll.fixed,
+    defenderName: target.name,
+    defenderDice: [...result.defenderRoll.variable],
+    defenderFixed: result.defenderRoll.fixed,
+    isRanged: pa.isRanged,
+  };
+
   return {
     ...newState,
     phase: 'choosing-action',
     pendingAction: undefined,
     rngSeed: rng.getState(),
+    lastResolution,
   };
 }
 

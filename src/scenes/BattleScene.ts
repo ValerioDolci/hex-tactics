@@ -6,6 +6,7 @@ import { CombatLog } from '@ui/CombatLog';
 import { ActionMenu, ActionMenuItem } from '@ui/ActionMenu';
 import { DiceChoiceUI } from '@ui/DiceChoiceUI';
 import { SliderChoiceUI } from '@ui/SliderChoiceUI';
+import { playDiceRoll } from '@ui/DiceRollAnimation';
 import { HandoffOverlay } from '@ui/HandoffOverlay';
 import { GameOverOverlay } from '@ui/GameOverOverlay';
 import { GAME_CONFIG } from '@/config';
@@ -574,6 +575,41 @@ export class BattleScene extends Phaser.Scene {
     }
     const ev: GameEvent = { type: 'RESOLVE_COMBAT' };
     this.dispatch(ev);
+    // V2: animazione dadi reale (legge dal lastResolution popolato dal reducer)
+    this.playRollAnimation();
+  }
+
+  /**
+   * Legge `state.lastResolution` (popolato dal reducer dopo RESOLVE_COMBAT)
+   * e mostra l'animazione dadi attaccante (e difensore se presente).
+   * Posiziona il gruppo dadi nella metà alta dello schermo.
+   */
+  private playRollAnimation(): void {
+    const lr = this.state.lastResolution;
+    if (!lr) return;
+    const w = this.scale.width;
+    const yAtk = this.scale.height * 0.30;
+    const yDef = this.scale.height * 0.45;
+    // Attaccante: dadi gialli
+    if (lr.attackerDice.length > 0) {
+      void playDiceRoll(this, {
+        dice: lr.attackerDice,
+        centerX: w / 2,
+        centerY: yAtk,
+        label: `${lr.attackerName} tira ${lr.attackerDice.length}d6 + ${lr.attackerFixed} fissi`,
+        color: 0xffee66,
+      });
+    }
+    // Difensore: dadi azzurri (solo se ha tirato, no per ranged o no-defense)
+    if (lr.defenderDice.length > 0) {
+      void playDiceRoll(this, {
+        dice: lr.defenderDice,
+        centerX: w / 2,
+        centerY: yDef,
+        label: `${lr.defenderName} difende ${lr.defenderDice.length}d6 + ${lr.defenderFixed} fissi`,
+        color: 0x88ccff,
+      });
+    }
   }
 
   /**
