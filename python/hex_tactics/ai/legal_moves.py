@@ -27,6 +27,16 @@ from hex_tactics.core.events import (
 )
 from hex_tactics.core.hex import Axial, hexes_in_range
 from hex_tactics.core.hex import base_distance, get_base_hexes
+
+# Cython accelerator per MOVE filtering (~10× su inner loop)
+try:
+    from hex_tactics.core._hex_fast import (
+        filter_move_candidates as _fmc_c,
+        hexes_in_range_qr as _hir_qr,
+    )
+    _HAS_CYTHON_FILTER = True
+except ImportError:
+    _HAS_CYTHON_FILTER = False
 from hex_tactics.core.ranged import can_fire_ranged
 from hex_tactics.core.state import GameState
 from hex_tactics.data.shields import get_shield
@@ -205,33 +215,44 @@ def _legal_action_moves(state: GameState, unit: Unit) -> List[GameEvent]:
     free_hex = 1 if unit.hex_moved_this_turn == 0 else 0
     move_range = unit.slancio + free_hex
     if move_range >= 1 and enemy is not None:
-        candidates = hexes_in_range(unit.position, move_range)
-        # Lift attribute lookups fuori dal loop (Python attribute access è lento)
-        legal_centers = state.board._legal_base_centers
         unit_pos_q = unit.position.q
         unit_pos_r = unit.position.r
         enemy_pos = enemy.position
-        # blocked come set di (q,r) tuple — più veloce di Axial (hash tuple < hash dataclass)
+        # blocked come set di (q,r) tuple
         blocked: set[tuple[int, int]] = set()
         for u in state.units.values():
             if u.id == unit.id or not u.alive:
                 continue
             for h in get_base_hexes(u.position):
                 blocked.add((h.q, h.r))
+        # legal_centers come set di (q, r) tuple per Cython
+        legal_centers_qr = {(h.q, h.r) for h in state.board._legal_base_centers}
 
-        valid: list[tuple[Axial, int]] = []
-        valid_append = valid.append
-        for h in candidates:
-            if h.q == unit_pos_q and h.r == unit_pos_r:
-                continue
-            # Set lookup direttamente (no method dispatch via state.board)
-            if h not in legal_centers:
-                continue
-            base_target = get_base_hexes(h)
-            # any() short-circuit + tuple-set lookup
-            if any((bh.q, bh.r) in blocked for bh in base_target):
-                continue
-            valid_append((h, base_distance(h, enemy_pos)))
+        if _HAS_CYTHON_FILTER:
+            # Cython hot path: candidates as (q,r) tuple list, filter+distance in C
+            candidates_qr = _hir_qr(unit_pos_q, unit_pos_r, move_range)
+            filtered = _fmc_c(
+                candidates_qr,
+                unit_pos_q, unit_pos_r,
+                enemy_pos.q, enemy_pos.r,
+                blocked,
+                legal_centers_qr,
+            )
+            # filtered = list of (q, r, base_dist) tuples
+            valid = [(Axial(q=q, r=r), d) for (q, r, d) in filtered]
+        else:
+            candidates = hexes_in_range(unit.position, move_range)
+            valid: list[tuple[Axial, int]] = []
+            valid_append = valid.append
+            for h in candidates:
+                if h.q == unit_pos_q and h.r == unit_pos_r:
+                    continue
+                if (h.q, h.r) not in legal_centers_qr:
+                    continue
+                base_target = get_base_hexes(h)
+                if any((bh.q, bh.r) in blocked for bh in base_target):
+                    continue
+                valid_append((h, base_distance(h, enemy_pos)))
         valid.sort(key=lambda x: x[1])
         # Top 3 vicini + top 2 più lontani (ritirata) — esclusi duplicati con top 3
         closer = valid[:3]

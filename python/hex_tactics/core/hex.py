@@ -26,6 +26,19 @@ from typing import Callable, Iterable, List, Optional, Tuple
 
 SQRT3 = math.sqrt(3)
 
+# Cython accelerator (10× speedup su hex_distance / base_distance / axial_to_offset).
+# Fallback graceful a Python pure se modulo non disponibile (es. setup non runnato).
+try:
+    from hex_tactics.core._hex_fast import (
+        hex_distance_c as _hd_c,
+        base_distance_c as _bd_c,
+        axial_to_offset_c as _ato_c,
+        offset_to_axial_c as _ota_c,
+    )
+    _HAS_CYTHON = True
+except ImportError:
+    _HAS_CYTHON = False
+
 
 # ---------------------------------------------------------------------------
 # Coords
@@ -83,7 +96,10 @@ def offset_to_axial(o: Offset) -> Axial:
 
 @lru_cache(maxsize=4096)
 def axial_to_offset(a: Axial) -> Offset:
-    """axial → odd-r offset. Cached: chiamato 18.5M volte in 50 iter pre-cache."""
+    """axial → odd-r offset. Cython-accelerated quando disponibile."""
+    if _HAS_CYTHON:
+        col, row = _ato_c(a.q, a.r)
+        return Offset(col=col, row=row)
     col = a.q + (a.r - (a.r & 1)) // 2
     return Offset(col=col, row=a.r)
 
@@ -163,7 +179,11 @@ NEIGHBOR_DIRS: Tuple[Tuple[int, int], ...] = (
 
 @lru_cache(maxsize=8192)
 def hex_distance(a: Axial, b: Axial) -> int:
-    """Distanza esagonale tra due celle axial (Manhattan-like su cube)."""
+    """Distanza esagonale tra due celle axial.
+    Cython-accelerated quando disponibile (10× più veloce).
+    """
+    if _HAS_CYTHON:
+        return _hd_c(a.q, a.r, b.q, b.r)
     dq = a.q - b.q
     dr = a.r - b.r
     ds = -dq - dr
@@ -263,14 +283,13 @@ def bases_overlap(center_a: Axial, center_b: Axial) -> bool:
 
 @lru_cache(maxsize=8192)
 def base_distance(center_a: Axial, center_b: Axial) -> int:
-    """Distanza minima fra i 7 esagoni della basetta A e i 7 della basetta B.
-
-    Formula chiusa: per due basette 7-hex centrate a distanza D, la min
-    distanza tra basetta è max(0, D - 2). Equivalente al naive 7x7 ma O(1).
-
-    Verificato in test_hex.py.
+    """Distanza minima fra basetta A e basetta B.
+    Formula chiusa max(0, hex_distance - 2). Cython-accelerated quando disponibile.
     """
-    return max(0, hex_distance(center_a, center_b) - 2)
+    if _HAS_CYTHON:
+        return _bd_c(center_a.q, center_a.r, center_b.q, center_b.r)
+    d = hex_distance(center_a, center_b)
+    return d - 2 if d > 2 else 0
 
 
 __all__ = [
