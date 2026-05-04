@@ -75,9 +75,36 @@ def _legal_slancio_moves(state: GameState, unit_id: str) -> List[GameEvent]:
     return base
 
 
+# Memoize cache for _legal_action_moves output (90% del tempo CFR)
+# Key: tuple di unit + enemy state. Naive eviction al cap.
+_LAM_CACHE: dict = {}
+_LAM_CACHE_MAX = 100000
+
+
 def _legal_action_moves(state: GameState, unit: Unit) -> List[GameEvent]:
-    moves: List[GameEvent] = []
     enemy = find_closest_enemy(state, unit)
+    # Build cache key
+    others_blocked = tuple(
+        (u.id, u.position) for u in state.units.values()
+        if u.id != unit.id and u.alive
+    )
+    cache_key = (
+        unit.id,
+        unit.position, unit.slancio, unit.hex_moved_this_turn,
+        unit.action_taken_this_turn, unit.dadi_azione,
+        unit.weapon_loaded, unit.defensive_stance, unit.defensive_toggled_this_turn,
+        unit.weapon, unit.offhand,
+        enemy.id if enemy is not None else None,
+        enemy.position if enemy is not None else None,
+        enemy.slancio if enemy is not None else None,
+        enemy.alive if enemy is not None else None,
+        others_blocked,
+    )
+    cached = _LAM_CACHE.get(cache_key)
+    if cached is not None:
+        return cached
+
+    moves: List[GameEvent] = []
     weapon = get_weapon(unit.weapon) if unit.weapon is not None else None
 
     # ATTACCO (V2 D-049)
@@ -179,6 +206,12 @@ def _legal_action_moves(state: GameState, unit: Unit) -> List[GameEvent]:
     move_range = unit.slancio + free_hex
     if move_range >= 1 and enemy is not None:
         candidates = hexes_in_range(unit.position, move_range)
+        # Lift attribute lookups fuori dal loop (Python attribute access è lento)
+        legal_centers = state.board._legal_base_centers
+        unit_pos_q = unit.position.q
+        unit_pos_r = unit.position.r
+        enemy_pos = enemy.position
+        # blocked come set di (q,r) tuple — più veloce di Axial (hash tuple < hash dataclass)
         blocked: set[tuple[int, int]] = set()
         for u in state.units.values():
             if u.id == unit.id or not u.alive:
@@ -187,17 +220,18 @@ def _legal_action_moves(state: GameState, unit: Unit) -> List[GameEvent]:
                 blocked.add((h.q, h.r))
 
         valid: list[tuple[Axial, int]] = []
+        valid_append = valid.append
         for h in candidates:
-            if h.q == unit.position.q and h.r == unit.position.r:
+            if h.q == unit_pos_q and h.r == unit_pos_r:
                 continue
-            overlap = False
-            for bh in get_base_hexes(h):
-                if (bh.q, bh.r) in blocked:
-                    overlap = True
-                    break
-            if overlap:
+            # Set lookup direttamente (no method dispatch via state.board)
+            if h not in legal_centers:
                 continue
-            valid.append((h, base_distance(h, enemy.position)))
+            base_target = get_base_hexes(h)
+            # any() short-circuit + tuple-set lookup
+            if any((bh.q, bh.r) in blocked for bh in base_target):
+                continue
+            valid_append((h, base_distance(h, enemy_pos)))
         valid.sort(key=lambda x: x[1])
         # Top 3 vicini + top 2 più lontani (ritirata) — esclusi duplicati con top 3
         closer = valid[:3]
@@ -214,6 +248,11 @@ def _legal_action_moves(state: GameState, unit: Unit) -> List[GameEvent]:
 
     # END_TURN sempre
     moves.append(EventEndTurn())
+
+    # Cache result (naive eviction al cap)
+    if len(_LAM_CACHE) >= _LAM_CACHE_MAX:
+        _LAM_CACHE.clear()
+    _LAM_CACHE[cache_key] = moves
     return moves
 
 

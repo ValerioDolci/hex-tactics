@@ -81,6 +81,35 @@ class Board:
     cols: int
     rows: int
 
+    def __post_init__(self):
+        # Pre-compute set di tutti gli axial validi nel board (one-shot al boot).
+        from hex_tactics.core.hex import (
+            Axial, offset_to_axial, Offset, get_base_hexes,
+        )
+        self._valid_hexes = frozenset(
+            offset_to_axial(Offset(col=c, row=r))
+            for r in range(self.rows)
+            for c in range(self.cols)
+        )
+        # Pre-compute set di axial CENTRI tali che TUTTI i 7 hex della loro
+        # basetta sono in board. Permette il check "unit may stand here as
+        # base-center" in O(1) invece di 7 lookup is_within_bounds.
+        self._legal_base_centers = frozenset(
+            h for h in self._valid_hexes
+            if all(bh in self._valid_hexes for bh in get_base_hexes(h))
+        )
+
+    def is_within_bounds(self, hex_pos) -> bool:
+        """True se l'esagono (Axial) è dentro la board. O(1) set lookup."""
+        return hex_pos in self._valid_hexes
+
+    def is_legal_base_center(self, hex_pos) -> bool:
+        """True se i 7 hex della basetta centrata in `hex_pos` sono tutti in board.
+
+        O(1) set lookup. Pre-computed.
+        """
+        return hex_pos in self._legal_base_centers
+
 
 @dataclass
 class LastResolution:

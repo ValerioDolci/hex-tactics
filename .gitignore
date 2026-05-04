@@ -18,3 +18,10 @@ venv
 # Modelli RL training output (potenzialmente grandi)
 hex_tactics_*.zip
 *.bak
+# CFR results: pickle policy (96MB+), json matchup, log. Output runtime, not source.
+python/cfr/nightly_results/
+*.pkl
+# Cython compiled artifacts
+*.c
+*.so
+build/

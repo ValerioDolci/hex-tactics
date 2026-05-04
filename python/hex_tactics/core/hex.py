@@ -11,12 +11,17 @@ NB: `axial_round` usa `floor(x + 0.5)` (round-half-up come JS `Math.round`),
 NON `round()` di Python che fa banker's rounding e divergerebbe sui .5 esatti.
 
 Pathfinding (A*, reachable_hexes) è fuori scope P1: rimandato a milestone successiva.
+
+Performance (2026-05-04): aggiunti LRU cache + formula chiusa per base_distance.
+Profile mostrava `legal_moves` al 98% del tempo CFR; le funzioni hex sono
+PURE → cacheable, e base_distance era O(49) per call (formula chiusa è O(1)).
 """
 
 from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Callable, Iterable, List, Optional, Tuple
 
 SQRT3 = math.sqrt(3)
@@ -76,8 +81,9 @@ def offset_to_axial(o: Offset) -> Axial:
     return Axial(q=q, r=o.row)
 
 
+@lru_cache(maxsize=4096)
 def axial_to_offset(a: Axial) -> Offset:
-    """axial → odd-r offset."""
+    """axial → odd-r offset. Cached: chiamato 18.5M volte in 50 iter pre-cache."""
     col = a.q + (a.r - (a.r & 1)) // 2
     return Offset(col=col, row=a.r)
 
@@ -155,6 +161,7 @@ NEIGHBOR_DIRS: Tuple[Tuple[int, int], ...] = (
 )
 
 
+@lru_cache(maxsize=8192)
 def hex_distance(a: Axial, b: Axial) -> int:
     """Distanza esagonale tra due celle axial (Manhattan-like su cube)."""
     dq = a.q - b.q
@@ -168,17 +175,23 @@ def neighbors(hex_: Axial) -> List[Axial]:
     return [Axial(q=hex_.q + dq, r=hex_.r + dr) for (dq, dr) in NEIGHBOR_DIRS]
 
 
-def hexes_in_range(center: Axial, range_: int) -> List[Axial]:
-    """Tutti gli esagoni entro `range_` passi (incluso center). Range<0 → []."""
+@lru_cache(maxsize=8192)
+def hexes_in_range(center: Axial, range_: int) -> Tuple[Axial, ...]:
+    """Tutti gli esagoni entro `range_` passi (incluso center). Range<0 → ().
+
+    Cached LRU: chiamato 9M volte/50 iter pre-cache. Il return è ora tuple
+    (immutabile, hashable) per performance — i caller che facevano list mutation
+    devono convertire (ma l'engine non lo fa).
+    """
     if range_ < 0:
-        return []
-    out: List[Axial] = []
+        return ()
+    out = []
     for dq in range(-range_, range_ + 1):
         r_min = max(-range_, -dq - range_)
         r_max = min(range_, -dq + range_)
         for dr in range(r_min, r_max + 1):
             out.append(Axial(q=center.q + dq, r=center.r + dr))
-    return out
+    return tuple(out)
 
 
 def are_adjacent(a: Axial, b: Axial) -> bool:
@@ -228,8 +241,12 @@ def has_line_of_sight(
 # ---------------------------------------------------------------------------
 
 
-def get_base_hexes(center: Axial) -> List[Axial]:
-    """7 esagoni della basetta (1 centrale + 6 corona = `hexes_in_range(center, 1)`)."""
+@lru_cache(maxsize=4096)
+def get_base_hexes(center: Axial) -> Tuple[Axial, ...]:
+    """7 esagoni della basetta (1 centrale + 6 corona = `hexes_in_range(center, 1)`).
+
+    Cached: chiamato 9M volte pre-cache. Return tuple per immutabilità.
+    """
     return hexes_in_range(center, 1)
 
 
@@ -244,24 +261,16 @@ def bases_overlap(center_a: Axial, center_b: Axial) -> bool:
     return False
 
 
+@lru_cache(maxsize=8192)
 def base_distance(center_a: Axial, center_b: Axial) -> int:
     """Distanza minima fra i 7 esagoni della basetta A e i 7 della basetta B.
 
-    Per centri a distanza D: base_distance = max(0, D - 2). Calcoliamo
-    esplicitamente per coerenza con TS (e per chiarezza).
+    Formula chiusa: per due basette 7-hex centrate a distanza D, la min
+    distanza tra basetta è max(0, D - 2). Equivalente al naive 7x7 ma O(1).
+
+    Verificato in test_hex.py.
     """
-    a = get_base_hexes(center_a)
-    b = get_base_hexes(center_b)
-    best = math.inf
-    for ha in a:
-        for hb in b:
-            dq = ha.q - hb.q
-            dr = ha.r - hb.r
-            ds = -dq - dr
-            d = (abs(dq) + abs(dr) + abs(ds)) // 2
-            if d < best:
-                best = d
-    return int(best)
+    return max(0, hex_distance(center_a, center_b) - 2)
 
 
 __all__ = [

@@ -12,7 +12,7 @@
 import { GameState } from '@core/state';
 import { GameEvent } from '@core/events';
 import { UnitId, Unit } from '@entities/Unit';
-import { Axial } from '@core/hex/coords';
+import { Axial, axialToOffset } from '@core/hex/coords';
 import { hexesInRange } from '@core/hex/distance';
 import { baseDistance, getBaseHexes } from '@core/hex/base';
 import { getWeapon } from '@data/weapons';
@@ -179,6 +179,17 @@ function legalActionMoves(state: GameState, unit: Unit): GameEvent[] {
     const valid: { hex: Axial; distToEnemy: number }[] = [];
     for (const h of candidates) {
       if (h.q === unit.position.q && h.r === unit.position.r) continue;
+      // Fix 2026-05-04: tutti i 7 hex della basetta devono essere nella board.
+      // Senza, CFR Nash kita off-map (bug confermato 44.6% out-of-bounds CFR Python).
+      let outOfBounds = false;
+      for (const bh of getBaseHexes(h)) {
+        const off = axialToOffset(bh);
+        if (off.col < 0 || off.col >= state.board.cols || off.row < 0 || off.row >= state.board.rows) {
+          outOfBounds = true;
+          break;
+        }
+      }
+      if (outOfBounds) continue;
       let overlap = false;
       for (const bh of getBaseHexes(h)) {
         if (blocked.has(`${bh.q},${bh.r}`)) {

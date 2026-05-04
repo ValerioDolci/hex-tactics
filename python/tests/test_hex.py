@@ -112,7 +112,7 @@ class TestDistance:
 
     def test_hexes_in_range_zero_returns_just_center(self) -> None:
         out = hexes_in_range(Axial(2, 3), 0)
-        assert out == [Axial(2, 3)]
+        assert tuple(out) == (Axial(2, 3),)
 
     def test_hexes_in_range_1_returns_7(self) -> None:
         assert len(hexes_in_range(Axial(0, 0), 1)) == 7
@@ -122,7 +122,7 @@ class TestDistance:
         assert len(hexes_in_range(Axial(0, 0), 2)) == 19
 
     def test_hexes_in_range_negative_returns_empty(self) -> None:
-        assert hexes_in_range(Axial(0, 0), -1) == []
+        assert tuple(hexes_in_range(Axial(0, 0), -1)) == ()
 
     def test_are_adjacent(self) -> None:
         assert are_adjacent(Axial(0, 0), Axial(1, 0)) is True
