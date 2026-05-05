@@ -39,6 +39,13 @@ except ImportError:
     _HAS_CYTHON_FILTER = False
 from hex_tactics.core.ranged import can_fire_ranged
 from hex_tactics.core.state import GameState
+from hex_tactics.core.stats import (
+    count_max_dice_extra,
+    make_attack_context,
+    make_dodge_context,
+    make_parry_context,
+    make_slancio_context,
+)
 from hex_tactics.data.shields import get_shield
 from hex_tactics.data.weapons import get_weapon
 from hex_tactics.entities.unit import Unit
@@ -71,17 +78,31 @@ def legal_moves(state: GameState, unit_id: str) -> List[GameEvent]:
 
 
 def _legal_slancio_moves(state: GameState, unit_id: str) -> List[GameEvent]:
-    base: List[GameEvent] = [
-        EventStartTurn(slancio_dice=0),
-        EventStartTurn(slancio_dice=1),
-        EventStartTurn(slancio_dice=2),
-    ]
+    """Bug fix 2026-05-05:
+    - dadi cap fino a 2 + count_max_dice_extra (prima hardcoded 2)
+      → skill `+1dadomax [slancio/...]` ora attiva
+    - transfer continui da 0 a min(impeto, headroom_max_slancio_roll)
+      → granularità 1, prima discreto {3, 6, 9}
+    """
     me = state.units.get(unit_id)
-    if me is None or me.impeto < 3:
+    if me is None:
+        return [EventStartTurn(slancio_dice=0)]
+    ctx = make_slancio_context()
+    extra_max = count_max_dice_extra(me.skills, ctx)
+    max_dice = 2 + extra_max  # es. 3 con +1dadomax
+    base: List[GameEvent] = [EventStartTurn(slancio_dice=d) for d in range(0, max_dice + 1)]
+    if me.impeto <= 0:
         return base
-    transfers = [t for t in (3, 6, 9) if t <= me.impeto]
-    for t in transfers:
-        base.append(EventStartTurn(slancio_dice=2, impeto_to_slancio=t))
+    # Transfer impeto→slancio: continuo. Cap a max teorico tiro slancio.
+    # Per evitare branching esplosivo, generiamo solo transfer con max_dice (più sensato).
+    # max teorico tiro slancio (per headroom calc) usa la stessa formula di apply_initial_slancio
+    from hex_tactics.core.turn import compute_initial_impeto
+    max_slancio = compute_initial_impeto(me)
+    # Headroom: massimo slancio raggiungibile − slancio post-tiro (worst case = 0 dadi tirati = solo fissi).
+    # Per semplicità usiamo headroom = max_slancio (il cap effettivo dipende dal tiro stocastico).
+    upper_transfer = min(me.impeto, max_slancio)
+    for t in range(1, upper_transfer + 1):
+        base.append(EventStartTurn(slancio_dice=max_dice, impeto_to_slancio=t))
     return base
 
 
@@ -199,17 +220,24 @@ def _legal_action_moves(state: GameState, unit: Unit) -> List[GameEvent]:
             )
 
     # RELOAD
+    # Bug fix 2026-05-04: include reload_cost_slancio (nuovo path), non solo legacy `reload`.
     if (
         weapon is not None
         and weapon.range is not None
-        and weapon.range.reload is not None
+        and (weapon.range.reload is not None or weapon.range.reload_cost_slancio is not None)
         and not unit.weapon_loaded
         and not unit.action_taken_this_turn
         and unit.dadi_azione >= 1
     ):
-        moves.append(EventReload(unit_id=unit.id, dice_n=1))
-        if unit.dadi_azione >= 2:
-            moves.append(EventReload(unit_id=unit.id, dice_n=2))
+        if weapon.range.reload_cost_slancio is not None:
+            # Path slancio-cost: serve solo che lo slancio sia ≥ costo. dice_n irrilevante (sentinel 1).
+            if unit.slancio >= weapon.range.reload_cost_slancio:
+                moves.append(EventReload(unit_id=unit.id, dice_n=1))
+        else:
+            # Path legacy prova abilità: 1 o 2 dadi
+            moves.append(EventReload(unit_id=unit.id, dice_n=1))
+            if unit.dadi_azione >= 2:
+                moves.append(EventReload(unit_id=unit.id, dice_n=2))
 
     # MOVE — discretizzazione
     free_hex = 1 if unit.hex_moved_this_turn == 0 else 0
@@ -278,22 +306,45 @@ def _legal_action_moves(state: GameState, unit: Unit) -> List[GameEvent]:
 
 
 def _legal_attacker_dice_moves(state: GameState, unit: Unit) -> List[GameEvent]:
+    """Bug fix 2026-05-05:
+    - dadi cap base = 2 + count_max_dice_extra (skill +1dadomax [attaccare/...])
+    - +1 al cap se l'AttackMode dichiarato è is_two_handed (regola 2h: PG attinge
+      fino a 1 dado in più dalla riserva).
+    Usa pending_action per il weapon_id + attack_mode_idx in declaring-attack.
+    """
     moves: List[GameEvent] = []
-    if unit.dadi_azione >= 1:
-        moves.append(EventChooseAttackerDice(dice_n=1))
-    if unit.dadi_azione >= 2:
-        moves.append(EventChooseAttackerDice(dice_n=2))
+    extra_max = 0
+    two_handed_bonus = 0
+    # weapon dichiarata nella pending_action (declaring-attack); fallback a unit.weapon
+    pa = state.pending_action if state.pending_action is not None else None
+    weapon_id = pa.weapon_id if pa is not None and hasattr(pa, "weapon_id") else unit.weapon
+    mode_idx = pa.attack_mode_idx if pa is not None and hasattr(pa, "attack_mode_idx") else 0
+    if weapon_id is not None:
+        w = get_weapon(weapon_id)
+        if w is not None:
+            ctx = make_attack_context(w.id, w.category, None)
+            extra_max = count_max_dice_extra(unit.skills, ctx)
+            if 0 <= mode_idx < len(w.attack_modes) and w.attack_modes[mode_idx].is_two_handed:
+                two_handed_bonus = 1
+    max_dice = 2 + extra_max + two_handed_bonus
+    upper = min(max_dice, unit.dadi_azione)
+    for d in range(1, upper + 1):
+        moves.append(EventChooseAttackerDice(dice_n=d))
     return moves
 
 
 def _legal_defense_moves(state: GameState, unit: Unit) -> List[GameEvent]:
+    """Bug fix 2026-05-05: dadi cap +1dadomax su dodge e parry."""
     moves: List[GameEvent] = [EventChooseDefense(defense_type="none", dice_n=0)]
 
-    # Dodge
-    for n in range(1, min(2, unit.dadi_azione) + 1):
+    # Dodge — skill `+1dadomax [schivare/...]`
+    dodge_extra = count_max_dice_extra(unit.skills, make_dodge_context())
+    dodge_max = 2 + dodge_extra
+    for n in range(1, min(dodge_max, unit.dadi_azione) + 1):
         moves.append(EventChooseDefense(defense_type="dodge", dice_n=n))
 
-    # Parry per slot
+    # Parry per slot — skill `+1dadomax [parare/...]`, con item-specific match via category.
+    # Bonus 2h: se l'arma ha qualsiasi modo 2h, +1 dado al cap parry.
     def _try_parry(slot: str) -> None:
         eid = unit.weapon if slot == "weapon" else unit.offhand
         if eid is None:
@@ -303,7 +354,16 @@ def _legal_defense_moves(state: GameState, unit: Unit) -> List[GameEvent]:
         can_parry = (w is not None and w.parry is not None) or sh is not None
         if not can_parry:
             return
-        for n in range(1, min(2, unit.dadi_azione) + 1):
+        if w is not None:
+            cat = w.category
+        elif sh is not None:
+            cat = sh.category
+        else:
+            return
+        parry_extra = count_max_dice_extra(unit.skills, make_parry_context(eid, cat))
+        two_handed_bonus = 1 if (w is not None and any(m.is_two_handed for m in w.attack_modes)) else 0
+        parry_max = 2 + parry_extra + two_handed_bonus
+        for n in range(1, min(parry_max, unit.dadi_azione) + 1):
             moves.append(EventChooseDefense(defense_type="parry", parry_with=slot, dice_n=n))  # type: ignore[arg-type]
 
     _try_parry("weapon")

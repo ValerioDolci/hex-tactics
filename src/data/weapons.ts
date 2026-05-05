@@ -41,7 +41,7 @@ export const WEAPONS: Record<string, Weapon> = {
     category: 'spade',
     attackModes: [
       { label: '1 mano', stat: 'either', diceVariable: 1, fixedBonus: 2 },
-      { label: '2 mani', stat: 'either', diceVariable: 1, fixedBonus: 6 },
+      { label: '2 mani', stat: 'either', diceVariable: 1, fixedBonus: 6, isTwoHanded: true },
     ],
     parry: { dice: 1, fixed: 6 }, // 1d6+6, stesso valore per entrambe le impugnature
     impediment: 6,
@@ -69,7 +69,7 @@ export const WEAPONS: Record<string, Weapon> = {
     id: 'ascia_2h',
     name: 'Ascia 2h',
     category: 'asce',
-    attackModes: [{ label: 'default', stat: 'either', diceVariable: 1, fixedBonus: 15 }],
+    attackModes: [{ label: 'default', stat: 'either', diceVariable: 1, fixedBonus: 15, isTwoHanded: true }],
     parry: { dice: 0, fixed: 3 },
     impediment: 6,
     range: { reach: 1 }, // V2
@@ -89,7 +89,7 @@ export const WEAPONS: Record<string, Weapon> = {
     category: 'lance',
     // Fix lancia 3m: ATK +0 → +4 (era bug numerico, fissa totale -4 dopo imp).
     // Math: 1d PG + 2d arma + 2 PG + 4 arma - 6 imp = 3d6 +0 medio 10.5
-    attackModes: [{ label: 'default', stat: 'either', diceVariable: 2, fixedBonus: 4 }],
+    attackModes: [{ label: 'default', stat: 'either', diceVariable: 2, fixedBonus: 4, isTwoHanded: true }],
     parry: { dice: 0, fixed: 1 },
     impediment: 6,
     range: { reach: 6 }, // Portata 3m=6hex
@@ -110,16 +110,18 @@ export const WEAPONS: Record<string, Weapon> = {
     attackModes: [{ label: 'default', stat: 'either', diceVariable: 1, fixedBonus: 6 }],
     parry: null, // archi non parano
     impediment: 3,
-    range: { distance: 3, rangedDivisor: 3 }, // Distanza 1.5m=3hex
+    // 2026-05-04: rangedDivisor 3→2 (malus -1 ogni 2 hex), reload via slancio
+    range: { distance: 3, rangedDivisor: 2, reloadCostSlancio: 6 },
   },
   arco_lungo: {
     id: 'arco_lungo',
     name: 'Arco lungo',
     category: 'archi',
-    attackModes: [{ label: 'default', stat: 'either', diceVariable: 2, fixedBonus: 6 }],
+    attackModes: [{ label: 'default', stat: 'either', diceVariable: 2, fixedBonus: 6, isTwoHanded: true }],
     parry: null,
     impediment: 6,
-    range: { distance: 4, rangedDivisor: 5 }, // Distanza 2.0m=4hex
+    // 2026-05-04: rangedDivisor 5→2, reload via slancio costo 9 (alto = arco lungo richiede setup)
+    range: { distance: 4, rangedDivisor: 2, reloadCostSlancio: 9 },
   },
   balestra: {
     id: 'balestra',
@@ -128,7 +130,8 @@ export const WEAPONS: Record<string, Weapon> = {
     attackModes: [{ label: 'default', stat: 'either', diceVariable: 0, fixedBonus: 15 }],
     parry: null,
     impediment: 3,
-    range: { distance: 2, rangedDivisor: 3, reload: 7 }, // Distanza 1.0m=2hex, ricarica 7
+    // 2026-05-04: rangedDivisor 3→2, reload via slancio costo 12 (massimo = bilanciamento +15 fisso)
+    range: { distance: 2, rangedDivisor: 2, reload: 7, reloadCostSlancio: 12 },
   },
 };
 

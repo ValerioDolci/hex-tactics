@@ -252,12 +252,13 @@ def ai_decide_action(state: GameState, unit_id: str) -> GameEvent:
                 is_ranged=True,
             )
 
-    # Reload (balestra scarica) — anche in mischia (azione difensiva)
+    # Reload (balestra/archi scarichi) — anche in mischia (azione difensiva)
+    # Bug fix 2026-05-04: include reload_cost_slancio (nuovo path) accanto a reload legacy.
     if (
         can_act
         and w is not None
         and w.range is not None
-        and w.range.reload is not None
+        and (w.range.reload is not None or w.range.reload_cost_slancio is not None)
         and not me.weapon_loaded
         and me.dadi_azione > 0
     ):

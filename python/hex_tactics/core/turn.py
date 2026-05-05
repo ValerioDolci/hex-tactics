@@ -109,6 +109,12 @@ def apply_turn_start(
         new_impeto -= transferable
         new_slancio += transferable
 
+    # 2026-05-05 NEW: cap dinamico impeto = HP_attuali + impeto_iniziale.
+    # Evita stallo "fuga reciproca per accumulare impeto all'infinito" (Nash degenere).
+    # Più HP perdi → meno cap → snowball pressure narrativa.
+    cap_impeto = unit.hp + compute_initial_impeto(unit)
+    new_impeto = min(new_impeto, cap_impeto)
+
     new_unit.impeto = new_impeto
     new_unit.slancio = new_slancio
     new_unit.hex_moved_this_turn = 0
@@ -121,10 +127,40 @@ def apply_turn_start(
     return new_unit
 
 
+def compute_initial_impeto(unit: Unit) -> int:
+    """Impeto iniziale = MAX teorico del tiro slancio (ogni d6 = 6).
+
+    Regola Valerio (2026-05-04): l'impeto di setup riflette il "potenziale" di
+    iniziativa del PG. Considera: dadi forzati (+1dado), dadi max (+1dadomax),
+    bonus fissi (+1tiro slancio), e impedimento sottratto alla variabile (floor 0,
+    coerente con `variable_sum`).
+
+    Coerente con `apply_initial_slancio` ma sostituendo il roll variabile col massimo:
+        variabile_max = (2 + extra_max + forced_extra) × 6
+        variable_floored = max(0, variabile_max − impedimento)
+        total = variable_floored + BASE_PG_FIXED + flat_bonuses
+        clamp ≥ 0
+    """
+    ctx = make_slancio_context()
+    extra_max = count_max_dice_extra(unit.skills, ctx)
+    dice_n = 2 + extra_max
+    actual_dice_n = get_actual_dice_count(unit, ctx, dice_n)
+    variable_max = actual_dice_n * 6
+    impediment = get_impediment_total(unit)
+    variable_floored = max(0, variable_max - impediment)
+    flat = BASE_PG_FIXED + count_flat_bonuses(unit.skills, ctx)
+    return max(0, variable_floored + flat)
+
+
 def apply_initial_slancio(unit: Unit, rng: Rng) -> Unit:
     """D-045: Round 0 di setup. Tira slancio iniziale (sempre max dadi) PRIMA del round 1.
 
     Niente recupero dadi, niente slancio→impeto, niente transfer.
+
+    2026-05-04 NEW:
+    - Setta impeto / impeto_max = MAX teorico tiro slancio (`compute_initial_impeto`).
+    - Setta weapon_loaded=False per armi ranged con reload (archi, balestra) →
+      i PG arrivano al campo con l'arma scarica, devono spendere round 1 a caricare.
     """
     ctx = make_slancio_context()
     extra_max = count_max_dice_extra(unit.skills, ctx)
@@ -138,6 +174,18 @@ def apply_initial_slancio(unit: Unit, rng: Rng) -> Unit:
 
     new_unit = _clone_unit(unit)
     new_unit.slancio = new_slancio
+    # Impeto iniziale = max teorico tiro slancio
+    impeto_setup = compute_initial_impeto(unit)
+    new_unit.impeto = impeto_setup
+    new_unit.impeto_max = impeto_setup
+    # Armi ranged con reload partono SCARICHE (round 0 setup)
+    if unit.weapon is not None:
+        from hex_tactics.data.weapons import get_weapon  # lazy import per evitare cicli
+        w = get_weapon(unit.weapon)
+        if w is not None and w.range is not None and (
+            w.range.reload is not None or w.range.reload_cost_slancio is not None
+        ):
+            new_unit.weapon_loaded = False
     return new_unit
 
 
@@ -162,6 +210,7 @@ def can_play(unit: Unit) -> bool:
 __all__ = [
     "compute_dice_recovery",
     "get_max_slancio_roll",
+    "compute_initial_impeto",
     "apply_turn_start",
     "apply_initial_slancio",
     "apply_slancio_penalty",

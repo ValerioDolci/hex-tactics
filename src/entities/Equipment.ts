@@ -39,6 +39,12 @@ export interface AttackMode {
   diceVariable: number;
   /** Bonus fisso dell'arma all'attacco */
   fixedBonus: number;
+  /**
+   * 2026-05-05: il modo richiede 2 mani. Se true, il PG può attingere fino a 1
+   * dado in più dalla sua riserva (cap PG da 1-2 a 1-3). NON modifica bonus fissi
+   * o dadi arma — solo aumenta il cap dei dadi PG selezionabili.
+   */
+  isTwoHanded?: boolean;
 }
 
 /** Categorie di equipaggiamento per matching specializzazioni delle skill */
@@ -68,16 +74,30 @@ export interface Weapon {
 }
 
 export interface WeaponRange {
-  /** Distanza massima per arma da tiro (archi, balestre) */
+  /**
+   * LEGACY: campo descrittivo per categorizzare armi 'da tiro' (archi, balestre).
+   * NOT a hard max range — le armi non hanno gittata massima nel design.
+   * Il malus distanza è gestito da `rangedDivisor` (-1 ogni N hex).
+   */
   distance?: number;
-  /** Distanza massima per il lancio di un'arma da mischia */
+  /**
+   * LEGACY: indica capacità di lancio per armi da mischia. NON è hard max range.
+   */
   throw?: number;
   /** Portata CaC esteso (lancia, spada lunga…) */
   reach?: number;
-  /** Divisore N_arma per il malus distanza */
+  /** Divisore N_arma per il malus distanza (-1 ogni N hex) */
   rangedDivisor?: number;
-  /** Turni di ricarica (es. balestra 7) */
+  /**
+   * LEGACY (pre-2026-05-04): difficoltà tiro abilità per ricarica. Usato come fallback.
+   */
   reload?: number;
+  /**
+   * 2026-05-04: costo slancio fisso per ricaricare/incoccare. Sostituisce la prova
+   * abilità. Se settato → reload paga slancio invece di tirare dadi.
+   * arco_corto=6, arco_lungo=9, balestra=12.
+   */
+  reloadCostSlancio?: number;
 }
 
 export type ShieldCategory = 'scudi';

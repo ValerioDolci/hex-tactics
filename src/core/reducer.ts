@@ -504,9 +504,12 @@ function doResolveCombat(state: GameState): GameState {
 
   // Spendi dadi azione: attaccante perde i suoi dadi PG (chosen, non actual) — D-030
   let newState: GameState = state;
-  // Se arma con reload (es. balestra), dopo il tiro diventa scarica
+  // Se arma con reload (cost-slancio o legacy prova), dopo il tiro diventa scarica
   const attackerWeaponData = getWeapon(pa.weaponId);
-  const becomeUnloaded = pa.isRanged && attackerWeaponData?.range?.reload != null;
+  const becomeUnloaded =
+    pa.isRanged &&
+    (attackerWeaponData?.range?.reload != null ||
+      attackerWeaponData?.range?.reloadCostSlancio != null);
   newState = updateUnit(newState, attacker.id, {
     dadiAzione: Math.max(0, attacker.dadiAzione - pa.attackerDice),
     actionTakenThisTurn: true, // l'attacco consuma l'azione del turno
@@ -671,17 +674,40 @@ function doReload(state: GameState, unitId: string, diceN: number): GameState {
   if (unit.id !== state.turnOrder[state.currentTurnIdx]) {
     return rejectEvent(state, 'RELOAD', `non è il turno di ${unitId}`);
   }
-  if (diceN < 1) return rejectEvent(state, 'RELOAD', `diceN < 1 (minimo 1 dado per ricaricare)`);
-  if (unit.dadiAzione < diceN) {
-    return rejectEvent(state, 'RELOAD', `dadi azione insufficienti (${unit.dadiAzione} < ${diceN})`);
-  }
   if (!unit.weapon) return rejectEvent(state, 'RELOAD', 'nessuna arma equipaggiata');
   const weapon = getWeapon(unit.weapon);
   if (!weapon) return rejectEvent(state, 'RELOAD', 'arma non trovata');
-  if (!weapon.range?.reload) return rejectEvent(state, 'RELOAD', 'arma non richiede ricarica');
+  if (!weapon.range || (weapon.range.reload == null && weapon.range.reloadCostSlancio == null)) {
+    return rejectEvent(state, 'RELOAD', 'arma non richiede ricarica');
+  }
   if (unit.weaponLoaded) return rejectEvent(state, 'RELOAD', 'arma già carica');
   if (unit.actionTakenThisTurn) {
     return rejectEvent(state, 'RELOAD', `${unitId} ha già usato la sua azione questo turno`);
+  }
+
+  // 2026-05-04: NEW path costo-slancio fisso. Sostituisce la prova abilità.
+  // 2026-05-04 (rev2): NON setta actionTakenThisTurn=true — lo SLANCIO è il costo,
+  // non l'azione del turno. Permette reload+shoot nello stesso turno.
+  if (weapon.range.reloadCostSlancio != null) {
+    const cost = weapon.range.reloadCostSlancio;
+    if (unit.slancio < cost) {
+      return rejectEvent(state, 'RELOAD', `slancio insufficiente (${unit.slancio} < ${cost})`);
+    }
+    let newState = updateUnit(state, unitId, {
+      slancio: unit.slancio - cost,
+      weaponLoaded: true,
+    });
+    newState = appendLog(
+      newState,
+      `${unit.name}: ricarica ${weapon.name} (paga ${cost} slancio, slancio rimasto: ${unit.slancio - cost}) → CARICA ✓`,
+    );
+    return newState;
+  }
+
+  // LEGACY: prova abilità (path mantenuto per eventual armi senza reloadCostSlancio)
+  if (diceN < 1) return rejectEvent(state, 'RELOAD', `diceN < 1 (minimo 1 dado per ricaricare)`);
+  if (unit.dadiAzione < diceN) {
+    return rejectEvent(state, 'RELOAD', `dadi azione insufficienti (${unit.dadiAzione} < ${diceN})`);
   }
 
   const ctx = {

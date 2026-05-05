@@ -831,8 +831,12 @@ def _do_resolve_combat(state: GameState) -> GameState:
     # Spendi dadi azione attaccante
     new_state: GameState = state
     weapon_data = get_weapon(pa.weapon_id)
+    # weapon_loaded=False dopo sparo se l'arma richiede reload (cost-slancio o legacy prova)
     become_unloaded = pa.is_ranged and (
-        weapon_data is not None and weapon_data.range is not None and weapon_data.range.reload is not None
+        weapon_data is not None and weapon_data.range is not None and (
+            weapon_data.range.reload is not None
+            or weapon_data.range.reload_cost_slancio is not None
+        )
     )
     patch = dict(
         dadi_azione=max(0, attacker.dadi_azione - pa.attacker_dice),
@@ -997,6 +1001,14 @@ def _do_resolve_combat(state: GameState) -> GameState:
 
 
 def _do_reload(state: GameState, unit_id: str, dice_n: int) -> GameState:
+    """Ricarica/incocca arma ranged. NEW 2026-05-04: paga slancio fisso invece
+    di prova abilità. Il `dice_n` parameter è mantenuto per compat API ma ignorato
+    se reload_cost_slancio è settato (= modalità nuova).
+    Costi (default in weapons.py):
+      arco_corto:  6 slancio
+      arco_lungo:  9 slancio
+      balestra:   12 slancio
+    """
     rj = _ensure_phase(state, "RELOAD", ["choosing-action"])
     if rj is not None:
         return rj
@@ -1005,22 +1017,45 @@ def _do_reload(state: GameState, unit_id: str, dice_n: int) -> GameState:
         return _reject(state, "RELOAD", f"unit {unit_id} non trovata")
     if unit.id != state.turn_order[state.current_turn_idx]:
         return _reject(state, "RELOAD", f"non è il turno di {unit_id}")
-    if dice_n < 1:
-        return _reject(state, "RELOAD", "diceN < 1 (minimo 1 dado per ricaricare)")
-    if unit.dadi_azione < dice_n:
-        return _reject(state, "RELOAD", f"dadi azione insufficienti ({unit.dadi_azione} < {dice_n})")
     if not unit.weapon:
         return _reject(state, "RELOAD", "nessuna arma equipaggiata")
     weapon = get_weapon(unit.weapon)
     if weapon is None:
         return _reject(state, "RELOAD", "arma non trovata")
-    if weapon.range is None or weapon.range.reload is None:
+    if weapon.range is None or (weapon.range.reload is None and weapon.range.reload_cost_slancio is None):
         return _reject(state, "RELOAD", "arma non richiede ricarica")
     if unit.weapon_loaded:
         return _reject(state, "RELOAD", "arma già carica")
     if unit.action_taken_this_turn:
         return _reject(state, "RELOAD", f"{unit_id} ha già usato la sua azione questo turno")
 
+    # NEW: meccanica costo-slancio fisso.
+    # 2026-05-04 (rev2): NON settiamo action_taken_this_turn=True.
+    # Con il path slancio, lo SLANCIO è il costo della ricarica, non l'azione del turno.
+    # Permette reload+shoot nello stesso turno se l'arciere ha slancio sufficiente.
+    # Il double-reload è già impedito dal check `not weapon_loaded`.
+    if weapon.range.reload_cost_slancio is not None:
+        cost = weapon.range.reload_cost_slancio
+        if unit.slancio < cost:
+            return _reject(state, "RELOAD", f"slancio insufficiente ({unit.slancio} < {cost})")
+        new_state = update_unit(
+            state,
+            unit_id,
+            slancio=unit.slancio - cost,
+            weapon_loaded=True,
+        )
+        new_state = append_log(
+            new_state,
+            f"{unit.name}: ricarica {weapon.name} (paga {cost} slancio, "
+            f"slancio rimasto: {unit.slancio - cost}) → CARICA ✓"
+        )
+        return new_state
+
+    # LEGACY: prova abilità (path mantenuto per compat con eventual armi senza reload_cost_slancio)
+    if dice_n < 1:
+        return _reject(state, "RELOAD", "diceN < 1 (minimo 1 dado per ricaricare)")
+    if unit.dadi_azione < dice_n:
+        return _reject(state, "RELOAD", f"dadi azione insufficienti ({unit.dadi_azione} < {dice_n})")
     ctx = RollContext(
         azione="ricaricare",
         stat="forza",
@@ -1031,15 +1066,11 @@ def _do_reload(state: GameState, unit_id: str, dice_n: int) -> GameState:
     actual_dice = get_actual_dice_count(unit, ctx, dice_n)
     roll = make_roll(rng, actual_dice, BASE_PG_FIXED)
     roll.fixed += count_flat_bonuses(unit.skills, ctx)
-    # V2: imp alla VARIABILE (non più fissa).
     roll.variable_mod -= get_impediment_total(unit)
-    # forced extra già contabilizzato in get_actual_dice_count; calcolato qui solo per parità con TS (no-op)
     _ = count_forced_extra_dice(unit.skills, ctx)
-
     total = roll_total(roll)
     difficulty = weapon.range.reload
     success = total >= difficulty
-
     new_state = update_unit(
         state,
         unit_id,
@@ -1055,10 +1086,6 @@ def _do_reload(state: GameState, unit_id: str, dice_n: int) -> GameState:
         f"= {total} vs diff {difficulty}) → "
         f"{'CARICA ✓' if success else 'fallita, ritenta'}",
     )
-    # NB: il TS non avanza rng_seed in RELOAD! Ricontrollare:
-    # ... [legge il TS] ... non c'è `rngSeed: rng.getState()` in doReload.
-    # Quindi il seed RESTA quello pre-reload (una potenziale stranezza, ma è il TS
-    # source of truth → replichiamo fedelmente). Niente set di rng_seed qui.
     return new_state
 
 

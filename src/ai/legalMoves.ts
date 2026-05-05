@@ -18,6 +18,14 @@ import { baseDistance, getBaseHexes } from '@core/hex/base';
 import { getWeapon } from '@data/weapons';
 import { getShield } from '@data/shields';
 import { canFireRanged } from '@core/ranged';
+import {
+  countMaxDiceExtra,
+  makeAttackContext,
+  makeDodgeContext,
+  makeParryContext,
+  makeSlancioContext,
+} from '@core/stats';
+import { computeInitialImpeto } from '@core/turn';
 import { findClosestEnemy } from './basicAi';
 
 /**
@@ -83,19 +91,23 @@ function legalCaricaMoves(state: GameState, unit: Unit): GameEvent[] {
 
 /** Mosse legali per la fase turn-start (scelta dadi slancio + transfer impeto→slancio D-044) */
 function legalSlancioMoves(state: GameState, unitId: UnitId): GameEvent[] {
-  // Base: 0, 1, 2 dadi (range standard)
-  const base: GameEvent[] = [
-    { type: 'START_TURN', slancioDice: 0 },
-    { type: 'START_TURN', slancioDice: 1 },
-    { type: 'START_TURN', slancioDice: 2 },
-  ];
-  // D-044: se l'unità ha impeto disponibile, considera anche varianti con transfer impeto→slancio.
-  // Discretizziamo: 3, 6, 9 punti (per limitare branching). Solo con slancioDice=2 (caso più aggressivo).
+  // 2026-05-05 fix:
+  //  - dadi cap fino a 2 + countMaxDiceExtra (skill `+1dadomax [slancio/...]` ora attiva)
+  //  - transfer continui da 1 a min(impeto, max teorico tiro slancio) — granularità 1
   const me = state.units[unitId];
-  if (!me || me.impeto < 3) return base;
-  const transfers = [3, 6, 9].filter((t) => t <= me.impeto);
-  for (const t of transfers) {
-    base.push({ type: 'START_TURN', slancioDice: 2, impetoToSlancio: t });
+  if (!me) return [{ type: 'START_TURN', slancioDice: 0 }];
+  const ctx = makeSlancioContext();
+  const extraMax = countMaxDiceExtra(me.skills, ctx);
+  const maxDice = 2 + extraMax;
+  const base: GameEvent[] = [];
+  for (let d = 0; d <= maxDice; d++) {
+    base.push({ type: 'START_TURN', slancioDice: d });
+  }
+  if (me.impeto <= 0) return base;
+  const maxSlancio = computeInitialImpeto(me); // = max teorico tiro slancio
+  const upperTransfer = Math.min(me.impeto, maxSlancio);
+  for (let t = 1; t <= upperTransfer; t++) {
+    base.push({ type: 'START_TURN', slancioDice: maxDice, impetoToSlancio: t });
   }
   return base;
 }
@@ -152,16 +164,26 @@ function legalActionMoves(state: GameState, unit: Unit): GameEvent[] {
     }
   }
 
-  // RELOAD: se l'arma con reload è scarica
+  // RELOAD: se l'arma con reload (cost-slancio o legacy) è scarica.
+  // 2026-05-04 fix: include reloadCostSlancio (nuovo path) accanto a reload legacy.
   if (
     weapon &&
-    weapon.range?.reload != null &&
+    weapon.range &&
+    (weapon.range.reload != null || weapon.range.reloadCostSlancio != null) &&
     !unit.weaponLoaded &&
     !unit.actionTakenThisTurn &&
     unit.dadiAzione >= 1
   ) {
-    moves.push({ type: 'RELOAD', unitId: unit.id, diceN: 1 });
-    if (unit.dadiAzione >= 2) moves.push({ type: 'RELOAD', unitId: unit.id, diceN: 2 });
+    if (weapon.range.reloadCostSlancio != null) {
+      // Path slancio: serve solo che lo slancio sia ≥ costo
+      if (unit.slancio >= weapon.range.reloadCostSlancio) {
+        moves.push({ type: 'RELOAD', unitId: unit.id, diceN: 1 });
+      }
+    } else {
+      // Path legacy prova abilità
+      moves.push({ type: 'RELOAD', unitId: unit.id, diceN: 1 });
+      if (unit.dadiAzione >= 2) moves.push({ type: 'RELOAD', unitId: unit.id, diceN: 2 });
+    }
   }
 
   // MOVE: discretizzazione intelligente — fino a 5 hex raggiungibili "interessanti"
@@ -220,26 +242,54 @@ function legalActionMoves(state: GameState, unit: Unit): GameEvent[] {
   return moves;
 }
 
-/** Mosse legali per CHOOSE_ATTACKER_DICE: 1 o 2 dadi (basico) */
-function legalAttackerDiceMoves(_state: GameState, unit: Unit): GameEvent[] {
+/**
+ * Mosse legali per CHOOSE_ATTACKER_DICE.
+ * 2026-05-05 fix:
+ *  - cap base = 2 + countMaxDiceExtra (skill `+1dadomax [attaccare/...]` ora attiva)
+ *  - +1 al cap se l'AttackMode dichiarato è isTwoHanded (regola 2h: PG +1d dalla riserva).
+ */
+function legalAttackerDiceMoves(state: GameState, unit: Unit): GameEvent[] {
   const moves: GameEvent[] = [];
-  if (unit.dadiAzione >= 1) moves.push({ type: 'CHOOSE_ATTACKER_DICE', diceN: 1 });
-  if (unit.dadiAzione >= 2) moves.push({ type: 'CHOOSE_ATTACKER_DICE', diceN: 2 });
+  let extraMax = 0;
+  let twoHandedBonus = 0;
+  const pa = state.pendingAction;
+  const weaponId = pa && 'weaponId' in pa ? (pa.weaponId as string) : unit.weapon;
+  const modeIdx = pa && 'attackModeIdx' in pa ? (pa.attackModeIdx as number) : 0;
+  if (weaponId) {
+    const w = getWeapon(weaponId);
+    if (w) {
+      const ctx = makeAttackContext(w.id, w.category, undefined);
+      extraMax = countMaxDiceExtra(unit.skills, ctx);
+      if (modeIdx >= 0 && modeIdx < w.attackModes.length && w.attackModes[modeIdx].isTwoHanded) {
+        twoHandedBonus = 1;
+      }
+    }
+  }
+  const maxDice = 2 + extraMax + twoHandedBonus;
+  const upper = Math.min(maxDice, unit.dadiAzione);
+  for (let d = 1; d <= upper; d++) {
+    moves.push({ type: 'CHOOSE_ATTACKER_DICE', diceN: d });
+  }
   return moves;
 }
 
-/** Mosse legali per CHOOSE_DEFENSE: schivata/parata/niente con 0/1/2 dadi */
+/**
+ * Mosse legali per CHOOSE_DEFENSE.
+ * 2026-05-05 fix: dodge/parry cap +1dadomax (skill); parry +1d se arma 2h.
+ */
 function legalDefenseMoves(_state: GameState, unit: Unit): GameEvent[] {
   const moves: GameEvent[] = [];
   // Niente difesa è sempre legale
   moves.push({ type: 'CHOOSE_DEFENSE', defenseType: 'none', diceN: 0 });
 
-  // Schivata se ha dadi
-  for (let n = 1; n <= Math.min(2, unit.dadiAzione); n++) {
+  // Dodge: skill `+1dadomax [schivare/...]`
+  const dodgeExtra = countMaxDiceExtra(unit.skills, makeDodgeContext());
+  const dodgeMax = 2 + dodgeExtra;
+  for (let n = 1; n <= Math.min(dodgeMax, unit.dadiAzione); n++) {
     moves.push({ type: 'CHOOSE_DEFENSE', defenseType: 'dodge', diceN: n });
   }
 
-  // Parata se ha arma/scudo idoneo
+  // Parry: skill `+1dadomax [parare/...]` + bonus 2h se l'arma ha qualsiasi modo 2h.
   const tryParry = (slot: 'weapon' | 'offhand'): void => {
     const id = slot === 'weapon' ? unit.weapon : unit.offhand;
     if (!id) return;
@@ -247,7 +297,11 @@ function legalDefenseMoves(_state: GameState, unit: Unit): GameEvent[] {
     const sh = getShield(id);
     const canParry = (w && w.parry !== null) || sh != null;
     if (!canParry) return;
-    for (let n = 1; n <= Math.min(2, unit.dadiAzione); n++) {
+    const cat = w ? w.category : sh!.category;
+    const parryExtra = countMaxDiceExtra(unit.skills, makeParryContext(id, cat));
+    const twoHandedBonus = w && w.attackModes.some((m) => m.isTwoHanded) ? 1 : 0;
+    const parryMax = 2 + parryExtra + twoHandedBonus;
+    for (let n = 1; n <= Math.min(parryMax, unit.dadiAzione); n++) {
       moves.push({ type: 'CHOOSE_DEFENSE', defenseType: 'parry', parryWith: slot, diceN: n });
     }
   };

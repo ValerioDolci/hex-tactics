@@ -167,8 +167,16 @@ export function aiDecideAction(state: GameState, unitId: UnitId): GameEvent {
       return attack;
     }
   }
-  // Arma scarica con reload (es. balestra) → ricarica anche in mischia (azione difensiva)
-  if (canAct && w && w.range?.reload != null && !me.weaponLoaded && me.dadiAzione > 0) {
+  // Arma scarica con reload (cost-slancio o legacy) → ricarica anche in mischia.
+  // 2026-05-04 fix: include reloadCostSlancio (nuovo path) accanto a reload legacy.
+  if (
+    canAct &&
+    w &&
+    w.range &&
+    (w.range.reload != null || w.range.reloadCostSlancio != null) &&
+    !me.weaponLoaded &&
+    me.dadiAzione > 0
+  ) {
     const dice = Math.min(2, me.dadiAzione);
     return { type: 'RELOAD', unitId: me.id, diceN: dice };
   }

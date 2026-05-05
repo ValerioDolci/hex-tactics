@@ -64,7 +64,7 @@ export const MANUAL: ManualChapter[] = [
         rows: [
           ['HP', '20', 'Vita. A 0 sei fuori.'],
           ['Forza / Agilità / Volontà', '2 / 2 / 2', 'Determinano la "dimensione" del pool dadi azione e quali skill puoi attivare.'],
-          ['Impeto', '14', 'Determina chi gioca prima nel round. Più alto → giochi prima.'],
+          ['Impeto', '14*', 'Determina chi gioca prima nel round. Più alto → giochi prima. *Baseline 14, ma all\'inizio della battaglia parti col MAX teorico del tuo tiro slancio. CAP DINAMICO: impeto_max = HP_attuali + impeto_iniziale (chi è ferito perde anche iniziativa).'],
           ['Slancio', '0', 'Energia cinetica. Si spende per muoversi e biddare. Diventa impeto a inizio del tuo turno successivo.'],
           ['Dadi azione', '6', 'Risorsa primaria per attaccare, parare, schivare, ricaricare. Si recupera in parte ogni turno.'],
         ],
@@ -155,6 +155,15 @@ export const MANUAL: ManualChapter[] = [
       {
         type: 'p',
         text: 'Quando l\'impeto va a 0, il recovery dadi è cappato a 1/turno: sei in disperazione operativa.',
+      },
+      { type: 'subheading', text: 'Cap dinamico impeto (2026-05-05)' },
+      {
+        type: 'p',
+        text: 'L\'impeto non cresce all\'infinito. Cap massimo dinamico = HP_attuali + impeto_iniziale. Esempio: arciere baseline (impeto iniziale 21, HP max 20) ha cap 41 quando pieno HP, scende a 26 quando perde 15 HP.',
+      },
+      {
+        type: 'p',
+        text: 'Effetti di design: chi sta subendo danni perde anche potenziale di iniziativa (snowball). Inoltre rende sub-ottimale "fuggire e accumulare impeto" — oltre il cap il transfer è inutile, conviene attaccare.',
       },
       { type: 'subheading', text: 'Transfer impeto → slancio (a inizio turno)' },
       {
@@ -250,6 +259,11 @@ export const MANUAL: ManualChapter[] = [
           'Se invece avesse tirato 1d6 PG + 1d6 spada = 5 dadi totali, var=5−6=−1 → floor 0, slancio−=1.',
         ],
       },
+      { type: 'subheading', text: 'Armi a 2 mani: +1 dado dalla riserva' },
+      {
+        type: 'p',
+        text: 'Con un\'arma impugnata a 2 mani (spada lunga 2h, ascia 2h, lancia 3m, arco lungo) il PG può attingere fino a 1 dado in più dalla sua riserva: il cap dei dadi PG passa da 1-2 a 1-3 (sia in attacco che in parata). NON modifica i bonus fissi né i dadi propri dell\'arma — solo il cap della tua scelta di dadi PG.',
+      },
       { type: 'subheading', text: 'Implicazione di design' },
       {
         type: 'list',
@@ -257,6 +271,7 @@ export const MANUAL: ManualChapter[] = [
           'Armi a fisso puro (mazza, balestra) sono devastanti se passano, ma molto schivabili: la schivata blocca tutto se vince.',
           'L\'impedimento ora morde la variabile → un PG ingombro è ancora più vulnerabile alle schivate (variabile più bassa → schivata vince più spesso).',
           'Ridurre impedimento è doppiamente prezioso: aumenta il danno passante E rende l\'attacco più affidabile contro la schivata.',
+          'Le armi 2h pagano in impedimento (più alto) ma offrono il bonus "+1 dado riserva" → variabile più alta in attacco e parata.',
         ],
       },
     ],
@@ -313,19 +328,44 @@ export const MANUAL: ManualChapter[] = [
       { type: 'subheading', text: 'Formula del tiro' },
       {
         type: 'p',
-        text: 'Risultato = 1-2 d6 + 2 + bonus_arma + visibilità − ⌊distanza / N⌋ − slancio_target − impedimento',
+        text: 'Risultato = 1-2 d6 + 2 + bonus_arma + visibilità − ⌊distanza / N⌋ − slancio_target − impedimento − ⌊hex_mossi/2⌋',
       },
       {
         type: 'p',
-        text: 'Lo scudo del difensore (se ha) sottrae passivamente il suo bonus parry. L\'armatura del difensore sottrae la sua riduzione danno.',
+        text: 'Note: lo scudo del difensore sottrae passivamente il suo bonus parry. L\'armatura sottrae la sua riduzione danno. Nessuna gittata massima — il malus distanza decresce gradualmente con N (es. arco_lungo N=2: −1 ogni 2 hex).',
+      },
+      { type: 'subheading', text: 'Malus movimento (kite-and-shoot)' },
+      {
+        type: 'p',
+        text: 'Se ti muovi prima di sparare nello stesso turno, ricevi −1 al tiro ogni 2 hex mossi. Riposizionarsi di 1 hex è gratis, ma chi tenta il "kite" pesante vede il bonus arma annullato dal malus movimento.',
+      },
+      { type: 'subheading', text: 'Setup: archi e balestra partono SCARICHI' },
+      {
+        type: 'p',
+        text: 'All\'inizio della battaglia gli archi e le balestre arrivano scarichi. Devi spendere un\'azione di RICARICA prima di poter sparare.',
+      },
+      { type: 'subheading', text: 'Ricarica via slancio' },
+      {
+        type: 'p',
+        text: 'Ricaricare un arco/balestra costa SLANCIO (non un dado azione, e non consuma l\'azione del turno). Quindi puoi reload+spara nello stesso turno se hai abbastanza slancio.',
+      },
+      {
+        type: 'table',
+        headers: ['Arma', 'Costo slancio'],
+        rows: [
+          ['Arco corto', '6'],
+          ['Arco lungo', '9'],
+          ['Balestra', '12'],
+        ],
       },
       {
         type: 'example',
         title: 'Esempio',
         lines: [
-          'Arciere con arco lungo (1d6+6, N=5) tira a tank a 8 hex con slancio 0, scudo medio (+8), armatura media (RD 6).',
-          'Tiro: 3d6 + 2 + 6 + 4 (vis) − 1 (dist) − 0 − 8 (scudo) − 6 (RD) − 3 (imp) = ~4.5 di danno medio.',
-          'Lo stesso tank con slancio 8: 4.5 − 8 = −3.5 → l\'attacco fallisce in media.',
+          'Arciere round 1: parte con arco lungo scarico, slancio iniziale 16.',
+          'RELOAD: paga 9 slancio → slancio = 7, arco caricato.',
+          'MOVE 4 hex (1 gratis + 3 sla): slancio = 4. Hex_mossi = 4.',
+          'DECLARE_RANGED 2d (arco_lungo è 2h → cap PG 1-3): variabile = 2d PG + 2d arma + bonus visibilità + bonus arma 6, malus distanza ⌊d/2⌋, malus mov ⌊4/2⌋=2.',
         ],
       },
       { type: 'p', text: 'Trade-off del bersaglio: tenere slancio alto ti protegge dal ranged ma costa dadi azione.' },
@@ -405,17 +445,21 @@ export const MANUAL: ManualChapter[] = [
           ['Pugnale', '1d6+2', '1d6', '0', 'lancio 0.5m'],
           ['Spada', '1d6+2/+2', '1d6+2', '3', 'F/A condizionato'],
           ['Spada lunga 1h', '1d6+2', '1d6+6', '6', 'reach 1m'],
-          ['Spada lunga 2h', '1d6+6', '1d6+6', '6', 'reach 1m'],
+          ['Spada lunga 2h', '1d6+6', '1d6+6', '6', 'reach 1m, +1d riserva (2h)'],
           ['Mazza', '+9', '+3', '3', 'solo fissa'],
           ['Ascia 1h', '1d6+6', '+3', '3', 'lancio 0.5m'],
-          ['Ascia 2h', '1d6+15', '+3', '6', '–'],
+          ['Ascia 2h', '1d6+15', '+3', '6', '+1d riserva (2h)'],
           ['Lancia 2m', '2d6', '+3', '3', 'lancio 1m, reach 2m'],
-          ['Lancia 3m', '2d6+4', '+1', '6', 'reach 3m'],
+          ['Lancia 3m', '2d6+4', '+1', '6', 'reach 3m, +1d riserva (2h)'],
           ['Giavellotto', '+6', '+1', '3', 'lancio 1.5m'],
-          ['Arco corto', '1d6+6', '–', '3', 'distanza 1.5m, N=3'],
-          ['Arco lungo', '2d6+6', '–', '6', 'distanza 2.0m, N=5'],
-          ['Balestra', '+15', '–', '3', 'distanza 1.0m, N=3, ricarica 7'],
+          ['Arco corto', '1d6+6', '–', '3', 'N=2, reload 6 sla'],
+          ['Arco lungo', '2d6+6', '–', '6', 'N=2, reload 9 sla, +1d riserva (2h)'],
+          ['Balestra', '+15', '–', '3', 'N=2, reload 12 sla'],
         ],
+      },
+      {
+        type: 'p',
+        text: 'Note: gli archi e la balestra partono SCARICHI all\'inizio della battaglia. Il "reload N sla" è il costo in slancio per ricaricarli (paga solo lo slancio, non l\'azione del turno → reload+spara nello stesso turno è possibile).',
       },
       { type: 'subheading', text: 'Scudi' },
       {

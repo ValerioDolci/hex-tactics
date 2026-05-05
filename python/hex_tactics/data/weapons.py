@@ -48,7 +48,7 @@ WEAPONS: dict[str, Weapon] = {
         category="spade",
         attack_modes=(
             AttackMode(label="1 mano", stat="either", dice_variable=1, fixed_bonus=2),
-            AttackMode(label="2 mani", stat="either", dice_variable=1, fixed_bonus=6),
+            AttackMode(label="2 mani", stat="either", dice_variable=1, fixed_bonus=6, is_two_handed=True),
         ),
         parry=RollSpec(dice=1, fixed=6),
         impediment=6,
@@ -81,7 +81,7 @@ WEAPONS: dict[str, Weapon] = {
         name="Ascia 2h",
         category="asce",
         attack_modes=(
-            AttackMode(label="default", stat="either", dice_variable=1, fixed_bonus=15),
+            AttackMode(label="default", stat="either", dice_variable=1, fixed_bonus=15, is_two_handed=True),
         ),
         parry=RollSpec(dice=0, fixed=3),
         impediment=6,
@@ -103,7 +103,7 @@ WEAPONS: dict[str, Weapon] = {
         name="Lancia 3m (2h)",
         category="lance",
         attack_modes=(
-            AttackMode(label="default", stat="either", dice_variable=2, fixed_bonus=4),  # M-3 fix (era 0)
+            AttackMode(label="default", stat="either", dice_variable=2, fixed_bonus=4, is_two_handed=True),  # M-3 fix (era 0)
         ),
         parry=RollSpec(dice=0, fixed=1),
         impediment=6,
@@ -129,18 +129,18 @@ WEAPONS: dict[str, Weapon] = {
         ),
         parry=None,
         impediment=3,
-        range=WeaponRange(distance=3, ranged_divisor=3),
+        range=WeaponRange(distance=3, ranged_divisor=2, reload_cost_slancio=6),
     ),
     "arco_lungo": Weapon(
         id="arco_lungo",
         name="Arco lungo",
         category="archi",
         attack_modes=(
-            AttackMode(label="default", stat="either", dice_variable=2, fixed_bonus=6),
+            AttackMode(label="default", stat="either", dice_variable=2, fixed_bonus=6, is_two_handed=True),
         ),
         parry=None,
         impediment=6,
-        range=WeaponRange(distance=4, ranged_divisor=5),
+        range=WeaponRange(distance=4, ranged_divisor=2, reload_cost_slancio=9),
     ),
     "balestra": Weapon(
         id="balestra",
@@ -151,7 +151,7 @@ WEAPONS: dict[str, Weapon] = {
         ),
         parry=None,
         impediment=3,
-        range=WeaponRange(distance=2, ranged_divisor=3, reload=7),
+        range=WeaponRange(distance=2, ranged_divisor=2, reload=7, reload_cost_slancio=12),
     ),
 }
 

@@ -122,6 +122,12 @@ export function applyTurnStart(
     newSlancio += transferable;
   }
 
+  // 2026-05-05 NEW: cap dinamico impeto = HP_attuali + impeto_iniziale.
+  // Evita stallo "fuga reciproca per accumulare impeto all'infinito" (Nash degenere).
+  // Più HP perdi → meno cap → snowball pressure narrativa.
+  const capImpeto = unit.hp + computeInitialImpeto(unit);
+  newImpeto = Math.min(newImpeto, capImpeto);
+
   return {
     ...unit,
     dadiAzione: newDadi,
@@ -138,9 +144,29 @@ export function applyTurnStart(
 }
 
 /**
+ * 2026-05-04 NEW: Impeto iniziale = MAX teorico tiro slancio (ogni d6 = 6).
+ * L'impeto di setup riflette il "potenziale" di iniziativa del PG.
+ */
+export function computeInitialImpeto(unit: Unit): number {
+  const ctx = makeSlancioContext();
+  const extraMax = countMaxDiceExtra(unit.skills, ctx);
+  const diceN = 2 + extraMax;
+  const actualDiceN = getActualDiceCount(unit, ctx, diceN);
+  const variableMax = actualDiceN * 6;
+  const impediment = getImpedimentTotal(unit);
+  const variableFloored = Math.max(0, variableMax - impediment);
+  const flat = BASE_PG_FIXED + countFlatBonuses(unit.skills, ctx);
+  return Math.max(0, variableFloored + flat);
+}
+
+/**
  * D-045: Round 0 di setup. Tira slancio iniziale (sempre 2d, max dadi) PRIMA del round 1.
  * Non recupera dadi azione, non applica slancio→impeto, non consente transfer impeto→slancio.
- * "Preso di sorpresa" (futuro D-???) salta questo passaggio e parte con slancio 0.
+ *
+ * 2026-05-04 NEW:
+ *  - Setta impeto / impetoMax al MAX teorico tiro slancio (computeInitialImpeto).
+ *  - Setta weaponLoaded=false per armi ranged con reload (archi, balestra) → arrivano
+ *    al campo con l'arma scarica.
  */
 export function applyInitialSlancio(unit: Unit, rng: Rng): Unit {
   const ctx = makeSlancioContext();
@@ -149,11 +175,22 @@ export function applyInitialSlancio(unit: Unit, rng: Rng): Unit {
   const actualDiceN = getActualDiceCount(unit, ctx, diceN);
   const slancioRoll = makeRoll(rng, actualDiceN, BASE_PG_FIXED);
   slancioRoll.fixed += countFlatBonuses(unit.skills, ctx);
-  // V2: imp alla VARIABILE (coerenza con applyTurnStart). Eventuale negativo viene
-  // ASSORBITO: nel round 0 di setup non c'è slancio da cui sottrarre, quindi clamp 0.
   slancioRoll.variableMod = (slancioRoll.variableMod ?? 0) - getImpedimentTotal(unit);
   const newSlancio = Math.max(0, rollTotal(slancioRoll));
-  return { ...unit, slancio: newSlancio };
+  // Impeto iniziale = max teorico tiro slancio
+  const impetoSetup = computeInitialImpeto(unit);
+  // Armi ranged con reload partono SCARICHE
+  let weaponLoaded = unit.weaponLoaded;
+  if (unit.weapon) {
+    // Lazy import per evitare cicli
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { getWeapon } = require('@data/weapons');
+    const w = getWeapon(unit.weapon);
+    if (w?.range && (w.range.reload != null || w.range.reloadCostSlancio != null)) {
+      weaponLoaded = false;
+    }
+  }
+  return { ...unit, slancio: newSlancio, impeto: impetoSetup, impetoMax: impetoSetup, weaponLoaded };
 }
 
 /** Applica una penalty di slancio (es. dopo schivata fallita avversaria) con propagazione a impeto se < 0 */

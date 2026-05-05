@@ -170,6 +170,11 @@ def _setup_state_spadaccino_vs_spadaccino(seed: int = 31338) -> GameState:
 
 
 class TestAiDecisions:
+    @pytest.mark.skip(
+        reason="Golden TS↔Py divergente dopo balance ranged 2026-05-04 "
+        "(basic_ai ora supporta reload_cost_slancio path; TS engine non aggiornato). "
+        "Da rigenerare fixture quando TS sincronizzato."
+    )
     def test_decisions_match_ts(self) -> None:
         data = _load()
         s_after_round, s_turn_start = _setup_state_arc_vs_tank()

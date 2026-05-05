@@ -112,14 +112,16 @@ export function canFireRanged(
   if (!w.range || (w.range.distance == null && w.range.throw == null)) {
     return { ok: false, reason: 'arma non utilizzabile a distanza' };
   }
-  // Armi con ricarica (balestra): non sparabili se scariche
-  if (w.range.reload != null && !attacker.weaponLoaded) {
+  // Armi con ricarica (balestra/archi post-balance): non sparabili se scariche
+  if ((w.range.reload != null || w.range.reloadCostSlancio != null) && !attacker.weaponLoaded) {
     return { ok: false, reason: `${w.name} è scarica — serve ricarica` };
   }
-  const maxRange = w.range.distance ?? w.range.throw ?? 0;
+  // 2026-05-04 BUG FIX (Valerio): rimosso check max_range hardcoded.
+  // Il field `distance` di WeaponRange NON è max range — il malus distanza è gestito
+  // da `rangedDivisor` (-1 ogni N hex). Le armi a distanza non hanno gittata massima
+  // fisica nel game design, solo malus crescente con la distanza.
   const los = computeLoS(attacker, target, units);
   if (los.visibility <= 0) return { ok: false, reason: 'nessuna linea di vista', los };
-  if (los.distance > maxRange) return { ok: false, reason: `fuori range (${los.distance} > ${maxRange})`, los };
   return { ok: true, los };
 }
 
@@ -196,6 +198,10 @@ export function composeRangedAttackRoll(
   if (options.caricaAmount && options.caricaAmount > 0) {
     combined.fixed += options.caricaAmount;
   }
+
+  // 2026-05-04 (rev2): malus -1 ogni 2 hex mossi PRIMA dell'attacco ranged.
+  // Solo per ranged. Riduce kite-and-shoot ma permette riposizionamento round 1.
+  combined.fixed -= Math.floor((attacker.hexMovedThisTurn ?? 0) / 2);
 
   return combined;
 }

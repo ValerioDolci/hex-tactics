@@ -110,24 +110,26 @@ class RangedCheck:
 def can_fire_ranged(
     attacker: Unit, target: Unit, weapon_id: str, units: Mapping[str, Unit]
 ) -> RangedCheck:
-    """Verifica fattibilità attacco ranged: range ok + LoS > 0 + arma carica."""
+    """Verifica fattibilità attacco ranged: LoS > 0 + arma carica.
+
+    BUG FIX 2026-05-04 (Valerio): rimosso check max_range hardcoded.
+    Il field `distance` di WeaponRange NON è max range — il malus distanza
+    è gestito da `ranged_divisor` (-1 ogni N hex) in compose_ranged_attack_roll.
+    Le armi a distanza non hanno gittata massima fisica nel game design,
+    solo malus crescente con la distanza.
+    """
     w = get_weapon(weapon_id)
     if w is None:
         return RangedCheck(ok=False, reason="arma non trovata")
     if w.range is None or (w.range.distance is None and w.range.throw is None):
         return RangedCheck(ok=False, reason="arma non utilizzabile a distanza")
-    # Armi con ricarica (balestra): non sparabili se scariche
-    if w.range.reload is not None and not attacker.weapon_loaded:
+    # Armi con ricarica (balestra/archi post-balance): non sparabili se scariche
+    if (w.range.reload is not None or w.range.reload_cost_slancio is not None) and not attacker.weapon_loaded:
         return RangedCheck(ok=False, reason=f"{w.name} è scarica — serve ricarica")
-    max_range = w.range.distance if w.range.distance is not None else (w.range.throw or 0)
 
     los = compute_los(attacker, target, units)
     if los.visibility <= 0:
         return RangedCheck(ok=False, reason="nessuna linea di vista", los=los)
-    if los.distance > max_range:
-        return RangedCheck(
-            ok=False, reason=f"fuori range ({los.distance} > {max_range})", los=los
-        )
     return RangedCheck(ok=True, los=los)
 
 
@@ -194,6 +196,11 @@ def compose_ranged_attack_roll(
 
     # Fase 1: carica bonus alla fissa (per giavellotti/lance da lancio)
     combined.fixed += carica_amount
+
+    # 2026-05-04 NEW (rev2): malus -1 ogni 2 hex mossi PRIMA dell'attacco ranged.
+    # Solo per ranged. Riduce kite-and-shoot ma permette riposizionamento round 1 senza
+    # punire troppo (vecchia regola -1/hex era troppo restrittiva → arciere paralizzato).
+    combined.fixed -= attacker.hex_moved_this_turn // 2
 
     return combined
 

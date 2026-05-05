@@ -42,12 +42,17 @@ class AttackMode:
     - Armi a impugnatura unica con scelta forza/agilità (Spada): 2 modi con stat differenti
     - Armi 1h/2h (Spada lunga): 2 modi con `label` differente, stat='either'
     - Armi a modo unico: 1 entry, stat='either'
+
+    `is_two_handed` (2026-05-05): se True il PG può tirare fino a 1 dado in più
+    dalla sua riserva (cap PG: 1-2 → 1-3). NON modifica bonus arma o dadi arma —
+    solo aumenta il cap dei dadi PG selezionabili.
     """
 
     label: str
     stat: ModeStat
     dice_variable: int
     fixed_bonus: int
+    is_two_handed: bool = False
 
 
 @dataclass(frozen=True)
@@ -55,15 +60,22 @@ class WeaponRange:
     """Range di un'arma. Tutti i campi opzionali (default None = arma non lo possiede)."""
 
     distance: Optional[int] = None
-    """Distanza max per arma da tiro (archi, balestre)."""
+    """LEGACY: campo descrittivo per categorizzare armi 'da tiro' (archi, balestre).
+    NOT a hard max range — le armi non hanno gittata massima nel design.
+    Il malus distanza è gestito da `ranged_divisor` (-1 ogni N hex)."""
     throw: Optional[int] = None
-    """Distanza max per il lancio di un'arma da mischia."""
+    """Indica capacità di lancio per armi da mischia (pugnale, ascia 1h, giavellotto).
+    Anche qui NON è hard max — solo flag/legacy descriptor."""
     reach: Optional[int] = None
     """Portata CaC esteso (lancia, spada lunga…)."""
     ranged_divisor: Optional[int] = None
     """Divisore N_arma per il malus distanza."""
     reload: Optional[int] = None
-    """Turni di ricarica (es. balestra 7)."""
+    """LEGACY (pre-2026-05-04): difficoltà tiro abilità per ricarica. Usato solo come fallback."""
+    reload_cost_slancio: Optional[int] = None
+    """Costo slancio fisso per ricaricare/incoccare. Sostituisce la prova abilità.
+    Se settato → reload paga slancio invece di tirare dadi.
+    arco_corto=6, arco_lungo=9, balestra=12 (default proposti)."""
 
 
 @dataclass(frozen=True)

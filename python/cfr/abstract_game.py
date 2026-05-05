@@ -62,6 +62,7 @@ _GAME_TYPE = pyspiel.GameType(
         "preset_b": "tank",
         "seed": 12345,
         "max_rounds": 25,
+        "variable_initial_state": False,
     },
 )
 
@@ -100,6 +101,10 @@ class HexTacticsAbstractGame(pyspiel.Game):
         self.preset_b = params.get("preset_b", "tank")
         self.seed = int(params.get("seed", 12345))
         self.max_rounds = int(params.get("max_rounds", 25))
+        # Livello B: se True, ogni new_initial_state pesca un seed game diverso
+        # (CFR addestra su distribuzione di starting states, non su uno solo).
+        self.variable_initial_state = bool(params.get("variable_initial_state", False))
+        self._init_call_counter = 0
 
         # Build A/B custom (impostati da from_build_specs)
         self._custom_build_a: Optional[BuildSpec] = None
@@ -137,8 +142,15 @@ class HexTacticsAbstractGame(pyspiel.Game):
     # Helper interno: crea CFRState iniziale rispettando custom build se presenti
     def _create_initial_cfr_state(self) -> CFRState:
         import random
+        # Livello B: seed che cambia ogni chiamata se variable_initial_state=True.
+        if self.variable_initial_state:
+            effective_seed = (self.seed + self._init_call_counter * 7919) & 0x7FFFFFFF
+            self._init_call_counter += 1
+        else:
+            effective_seed = self.seed
+
         if self._custom_build_a is not None and self._custom_build_b is not None:
-            local_rng = random.Random(self.seed)
+            local_rng = random.Random(effective_seed)
             A = unit_from_build_spec(
                 self._custom_build_a, "A", offset_to_axial(Offset(4, 8)),
                 custom_id="A-build", validate=False,  # già validato in from_build_specs
@@ -153,8 +165,8 @@ class HexTacticsAbstractGame(pyspiel.Game):
             return CFRState(game_state=gs, a_unit_id=A.id, b_unit_id=B.id, rng_seed=game_seed)
         else:
             # Preset path
-            model = HexTacticsGameModel(seed=self.seed)
-            return model.reset(preset_a=self.preset_a, preset_b=self.preset_b, seed=self.seed)
+            model = HexTacticsGameModel(seed=effective_seed)
+            return model.reset(preset_a=self.preset_a, preset_b=self.preset_b, seed=effective_seed)
 
 
 class HexTacticsAbstractState(pyspiel.State):
