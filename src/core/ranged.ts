@@ -199,9 +199,10 @@ export function composeRangedAttackRoll(
     combined.fixed += options.caricaAmount;
   }
 
-  // 2026-05-04 (rev2): malus -1 ogni 2 hex mossi PRIMA dell'attacco ranged.
-  // Solo per ranged. Riduce kite-and-shoot ma permette riposizionamento round 1.
-  combined.fixed -= Math.floor((attacker.hexMovedThisTurn ?? 0) / 2);
+  // 2026-05-05 (rev3): malus -1 PER OGNI hex mosso prima del tiro ranged.
+  // Riduce kite-and-shoot. L'arciere deve scegliere: muoversi (perde tiro) o stare fermo
+  // (rischia melee). Compensato da reload+shoot stesso turno e transfer impeto→slancio.
+  combined.fixed -= (attacker.hexMovedThisTurn ?? 0);
 
   return combined;
 }

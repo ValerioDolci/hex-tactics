@@ -129,7 +129,7 @@ WEAPONS: dict[str, Weapon] = {
         ),
         parry=None,
         impediment=3,
-        range=WeaponRange(distance=3, ranged_divisor=2, reload_cost_slancio=6),
+        range=WeaponRange(distance=3, ranged_divisor=4, reload_cost_slancio=6),
     ),
     "arco_lungo": Weapon(
         id="arco_lungo",
@@ -140,7 +140,7 @@ WEAPONS: dict[str, Weapon] = {
         ),
         parry=None,
         impediment=6,
-        range=WeaponRange(distance=4, ranged_divisor=2, reload_cost_slancio=9),
+        range=WeaponRange(distance=4, ranged_divisor=5, reload_cost_slancio=9),
     ),
     "balestra": Weapon(
         id="balestra",
@@ -151,7 +151,7 @@ WEAPONS: dict[str, Weapon] = {
         ),
         parry=None,
         impediment=3,
-        range=WeaponRange(distance=2, ranged_divisor=2, reload=7, reload_cost_slancio=12),
+        range=WeaponRange(distance=2, ranged_divisor=3, reload=7, reload_cost_slancio=12),
     ),
 }
 

@@ -110,8 +110,8 @@ export const WEAPONS: Record<string, Weapon> = {
     attackModes: [{ label: 'default', stat: 'either', diceVariable: 1, fixedBonus: 6 }],
     parry: null, // archi non parano
     impediment: 3,
-    // 2026-05-04: rangedDivisor 3→2 (malus -1 ogni 2 hex), reload via slancio
-    range: { distance: 3, rangedDivisor: 2, reloadCostSlancio: 6 },
+    // 2026-05-05 (rev3): rangedDivisor 4 (malus -1 ogni 4 hex), reload via slancio
+    range: { distance: 3, rangedDivisor: 4, reloadCostSlancio: 6 },
   },
   arco_lungo: {
     id: 'arco_lungo',
@@ -120,8 +120,8 @@ export const WEAPONS: Record<string, Weapon> = {
     attackModes: [{ label: 'default', stat: 'either', diceVariable: 2, fixedBonus: 6, isTwoHanded: true }],
     parry: null,
     impediment: 6,
-    // 2026-05-04: rangedDivisor 5→2, reload via slancio costo 9 (alto = arco lungo richiede setup)
-    range: { distance: 4, rangedDivisor: 2, reloadCostSlancio: 9 },
+    // 2026-05-05 (rev3): rangedDivisor 5 (preciso a distanza), reload via slancio costo 9
+    range: { distance: 4, rangedDivisor: 5, reloadCostSlancio: 9 },
   },
   balestra: {
     id: 'balestra',
@@ -130,8 +130,8 @@ export const WEAPONS: Record<string, Weapon> = {
     attackModes: [{ label: 'default', stat: 'either', diceVariable: 0, fixedBonus: 15 }],
     parry: null,
     impediment: 3,
-    // 2026-05-04: rangedDivisor 3→2, reload via slancio costo 12 (massimo = bilanciamento +15 fisso)
-    range: { distance: 2, rangedDivisor: 2, reload: 7, reloadCostSlancio: 12 },
+    // 2026-05-05 (rev3): rangedDivisor 3, reload via slancio costo 12 (alto = +15 fisso compensa)
+    range: { distance: 2, rangedDivisor: 3, reload: 7, reloadCostSlancio: 12 },
   },
 };
 

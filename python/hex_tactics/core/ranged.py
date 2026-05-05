@@ -197,10 +197,10 @@ def compose_ranged_attack_roll(
     # Fase 1: carica bonus alla fissa (per giavellotti/lance da lancio)
     combined.fixed += carica_amount
 
-    # 2026-05-04 NEW (rev2): malus -1 ogni 2 hex mossi PRIMA dell'attacco ranged.
-    # Solo per ranged. Riduce kite-and-shoot ma permette riposizionamento round 1 senza
-    # punire troppo (vecchia regola -1/hex era troppo restrittiva → arciere paralizzato).
-    combined.fixed -= attacker.hex_moved_this_turn // 2
+    # 2026-05-05 (rev3): malus -1 PER OGNI hex mosso prima del tiro ranged (regola Valerio).
+    # Riduce kite-and-shoot. L'arciere deve scegliere: muoversi (perde tiro) o stare fermo
+    # (rischia melee). Compensato da reload+shoot stesso turno (slancio) e transfer impeto→slancio.
+    combined.fixed -= attacker.hex_moved_this_turn
 
     return combined
 

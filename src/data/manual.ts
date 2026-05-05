@@ -328,7 +328,7 @@ export const MANUAL: ManualChapter[] = [
       { type: 'subheading', text: 'Formula del tiro' },
       {
         type: 'p',
-        text: 'Risultato = 1-2 d6 + 2 + bonus_arma + visibilità − ⌊distanza / N⌋ − slancio_target − impedimento − ⌊hex_mossi/2⌋',
+        text: 'Risultato = 1-2 d6 + 2 + bonus_arma + visibilità − ⌊distanza / N⌋ − slancio_target − impedimento − hex_mossi',
       },
       {
         type: 'p',
@@ -337,7 +337,7 @@ export const MANUAL: ManualChapter[] = [
       { type: 'subheading', text: 'Malus movimento (kite-and-shoot)' },
       {
         type: 'p',
-        text: 'Se ti muovi prima di sparare nello stesso turno, ricevi −1 al tiro ogni 2 hex mossi. Riposizionarsi di 1 hex è gratis, ma chi tenta il "kite" pesante vede il bonus arma annullato dal malus movimento.',
+        text: 'Se ti muovi prima di sparare nello stesso turno, ricevi −1 al tiro per ogni hex mosso. Aggressivo: anche 1 hex costa 1. L\'arciere deve scegliere tra muoversi (per posizionamento) e tirare bene (stando fermo).',
       },
       { type: 'subheading', text: 'Setup: archi e balestra partono SCARICHI' },
       {
@@ -452,9 +452,9 @@ export const MANUAL: ManualChapter[] = [
           ['Lancia 2m', '2d6', '+3', '3', 'lancio 1m, reach 2m'],
           ['Lancia 3m', '2d6+4', '+1', '6', 'reach 3m, +1d riserva (2h)'],
           ['Giavellotto', '+6', '+1', '3', 'lancio 1.5m'],
-          ['Arco corto', '1d6+6', '–', '3', 'N=2, reload 6 sla'],
-          ['Arco lungo', '2d6+6', '–', '6', 'N=2, reload 9 sla, +1d riserva (2h)'],
-          ['Balestra', '+15', '–', '3', 'N=2, reload 12 sla'],
+          ['Arco corto', '1d6+6', '–', '3', 'N=4, reload 6 sla'],
+          ['Arco lungo', '2d6+6', '–', '6', 'N=5, reload 9 sla, +1d riserva (2h)'],
+          ['Balestra', '+15', '–', '3', 'N=3, reload 12 sla'],
         ],
       },
       {
