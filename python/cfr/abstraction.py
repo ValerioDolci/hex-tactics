@@ -87,6 +87,9 @@ class BuildSpec:
     weapon: Optional[str] = None  # id arma (es. 'spada_lunga')
     offhand: Optional[str] = None  # id arma 2 / scudo
     armor: Optional[str] = None  # id armatura
+    # 2026-05-05: inventario armi da lancio + backup
+    thrown_inventory: Tuple[str, ...] = ()  # extra giavellotti/lance pronti al lancio
+    backup_weapon: Optional[str] = None  # arma estratta dopo aver finito le throw
     skills: Tuple[SkillSpec, ...] = ()
     forza: int = 2
     agilita: int = 2
@@ -154,6 +157,8 @@ def unit_from_build_spec(
     u.weapon = build.weapon
     u.offhand = build.offhand
     u.armor = build.armor
+    u.thrown_inventory = list(build.thrown_inventory)
+    u.backup_weapon = build.backup_weapon
     u.skills = [s.to_acquired(uid, i) for i, s in enumerate(build.skills)]
     return u
 

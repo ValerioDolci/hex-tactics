@@ -70,6 +70,14 @@ class Unit:
     offhand: Optional[str] = None  # scudo o seconda arma
     armor: Optional[str] = None
 
+    # 2026-05-05 NEW: inventario per armi da lancio single-use.
+    # `thrown_inventory`: lista di armi extra da lancio (giavellotti, lance pronte).
+    #   Quando si lancia weapon (throw single-use), si pop la prossima da qui.
+    # `backup_weapon`: arma main alternativa estratta quando finiscono le throw.
+    #   Es. lanciere con backup spada: lancia tutte le lance, poi estrae spada.
+    thrown_inventory: List[str] = field(default_factory=list)
+    backup_weapon: Optional[str] = None
+
     # ID preset di provenienza (per AI matchup-aware)
     preset_id: Optional[str] = None
 

@@ -52,6 +52,14 @@ export interface Unit {
   offhand?: WeaponId | ShieldId;
   armor?: ArmorId;
 
+  /**
+   * 2026-05-05: Inventario armi da lancio single-use.
+   * Quando il PG lancia un'arma `throw` (no distance), si pop la prossima da `thrownInventory`.
+   * Se inventario vuoto, estrae `backupWeapon`. Se anche backup vuoto → weapon=undefined (disarmato).
+   */
+  thrownInventory?: WeaponId[];
+  backupWeapon?: WeaponId;
+
   /** Skill acquistate via character builder */
   skills: AcquiredSkill[];
 

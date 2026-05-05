@@ -510,17 +510,30 @@ function doResolveCombat(state: GameState): GameState {
     pa.isRanged &&
     (attackerWeaponData?.range?.reload != null ||
       attackerWeaponData?.range?.reloadCostSlancio != null);
-  // 2026-05-05 (rev3): armi 'throw' (no distance) sono SINGLE-USE → perse dopo lancio.
+  // 2026-05-05 (rev3): armi 'throw' (no distance) sono SINGLE-USE.
+  // Dopo lancio: pop prossima da thrownInventory → altrimenti backupWeapon → altrimenti disarmato.
   const isThrownSingleUse =
     pa.isRanged &&
     attackerWeaponData?.range?.throw != null &&
     attackerWeaponData?.range?.distance == null;
-  newState = updateUnit(newState, attacker.id, {
+  const update: Partial<typeof attacker> = {
     dadiAzione: Math.max(0, attacker.dadiAzione - pa.attackerDice),
     actionTakenThisTurn: true,
     ...(becomeUnloaded ? { weaponLoaded: false } : {}),
-    ...(isThrownSingleUse ? { weapon: null } : {}),
-  });
+  };
+  if (isThrownSingleUse) {
+    const inv = attacker.thrownInventory ? [...attacker.thrownInventory] : [];
+    if (inv.length > 0) {
+      update.weapon = inv.shift() as any;
+      update.thrownInventory = inv;
+    } else if (attacker.backupWeapon) {
+      update.weapon = attacker.backupWeapon;
+      update.backupWeapon = undefined;
+    } else {
+      update.weapon = undefined;
+    }
+  }
+  newState = updateUnit(newState, attacker.id, update);
   if (!pa.isRanged && pa.defense && pa.defense.type !== 'none') {
     newState = updateUnit(newState, target.id, {
       dadiAzione: Math.max(0, target.dadiAzione - pa.defense.diceN),

@@ -35,6 +35,9 @@ class PresetSpec:
     offhand: Optional[str]
     armor: Optional[str]
     skills: tuple[PresetSkillSpec, ...]
+    # 2026-05-05: inventario armi da lancio + backup
+    thrown_inventory: tuple[str, ...] = ()
+    backup_weapon: Optional[str] = None
 
 
 def unit_from_preset(
@@ -53,6 +56,8 @@ def unit_from_preset(
     u.weapon = spec.weapon
     u.offhand = spec.offhand
     u.armor = spec.armor
+    u.thrown_inventory = list(spec.thrown_inventory)
+    u.backup_weapon = spec.backup_weapon
     u.skills = [
         AcquiredSkill(
             id=f"{u.id}-skill-{i}",
