@@ -339,6 +339,11 @@ export const MANUAL: ManualChapter[] = [
         type: 'p',
         text: 'Se ti muovi prima di sparare nello stesso turno, ricevi −1 al tiro per ogni hex mosso. Aggressivo: anche 1 hex costa 1. L\'arciere deve scegliere tra muoversi (per posizionamento) e tirare bene (stando fermo).',
       },
+      { type: 'subheading', text: 'Armi da lancio: SINGLE USE' },
+      {
+        type: 'p',
+        text: 'Pugnale, ascia 1h, lancia 2m, giavellotto sono armi da MISCHIA che si possono LANCIARE come ranged (throw). Una volta lanciate, l\'arma è PERSA — il PG resta disarmato (può ancora attaccare con offhand se ce l\'ha). Diverso da archi/balestra che hanno reload.',
+      },
       { type: 'subheading', text: 'Setup: archi e balestra partono SCARICHI' },
       {
         type: 'p',

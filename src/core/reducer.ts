@@ -510,10 +510,16 @@ function doResolveCombat(state: GameState): GameState {
     pa.isRanged &&
     (attackerWeaponData?.range?.reload != null ||
       attackerWeaponData?.range?.reloadCostSlancio != null);
+  // 2026-05-05 (rev3): armi 'throw' (no distance) sono SINGLE-USE → perse dopo lancio.
+  const isThrownSingleUse =
+    pa.isRanged &&
+    attackerWeaponData?.range?.throw != null &&
+    attackerWeaponData?.range?.distance == null;
   newState = updateUnit(newState, attacker.id, {
     dadiAzione: Math.max(0, attacker.dadiAzione - pa.attackerDice),
-    actionTakenThisTurn: true, // l'attacco consuma l'azione del turno
+    actionTakenThisTurn: true,
     ...(becomeUnloaded ? { weaponLoaded: false } : {}),
+    ...(isThrownSingleUse ? { weapon: null } : {}),
   });
   if (!pa.isRanged && pa.defense && pa.defense.type !== 'none') {
     newState = updateUnit(newState, target.id, {

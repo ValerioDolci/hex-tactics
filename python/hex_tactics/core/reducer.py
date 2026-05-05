@@ -838,12 +838,21 @@ def _do_resolve_combat(state: GameState) -> GameState:
             or weapon_data.range.reload_cost_slancio is not None
         )
     )
+    # 2026-05-05 (rev3): armi 'throw' (pugnale, ascia 1h, lancia 2m, giavellotto) sono SINGLE-USE.
+    # Dopo lancio (RANGED senza distance, ma con throw) → arma persa, attacker disarmato.
+    is_thrown_single_use = pa.is_ranged and (
+        weapon_data is not None and weapon_data.range is not None
+        and weapon_data.range.throw is not None
+        and weapon_data.range.distance is None
+    )
     patch = dict(
         dadi_azione=max(0, attacker.dadi_azione - pa.attacker_dice),
         action_taken_this_turn=True,
     )
     if become_unloaded:
         patch["weapon_loaded"] = False
+    if is_thrown_single_use:
+        patch["weapon"] = None  # arma persa dopo lancio (single-use)
     new_state = update_unit(new_state, attacker.id, **patch)
 
     if (not pa.is_ranged) and pa.defense_type is not None and pa.defense_type != "none":
