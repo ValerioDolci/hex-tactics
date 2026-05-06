@@ -339,7 +339,7 @@ export class MainMenuScene extends Phaser.Scene {
       }
       for (const lv of levels) {
         const isSelected = getLevel() === lv;
-        const labelText = lv === 'easy' ? 'Facile' : lv === 'hard' ? '★ Difficile (DT)' : '★★ Expert (Deep CFR)';
+        const labelText = lv === 'easy' ? 'Facile' : lv === 'hard' ? '★ Difficile (Deep CFR)' : '★★ Expert (Deep CFR full)';
         this.makeChoiceButton(x, yy, labelText, isSelected, () => {
           setLevel(lv);
           saveSetup(this.setup);
