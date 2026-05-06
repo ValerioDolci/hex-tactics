@@ -497,6 +497,134 @@ class MatchReplay:
             "combat_B": _combat_summary(combat["B"]),
         }
 
+    # ── Per-round aggregation (modal flow narrative) ──
+
+    def aggregate_by_round(self, traces: List[GameTrace], max_rounds: int = 8) -> Dict[int, Dict[str, Any]]:
+        """Per ogni round R, per ogni player P, aggrega:
+        - frequenza eventi (% partite in cui appaiono in quel round)
+        - stato medio fine-round: HP, slancio, impeto, distanza
+        - sequenza tipica di azioni (es. "START_TURN → MOVE×3 → DECL_ATK[RANGED]")
+
+        Output: {round: {"A": {...}, "B": {...}, "n_games": ...}}
+        """
+        per_round: Dict[int, Dict[str, Any]] = {}
+        # Per ogni (round, player) raccolgo: lista di eventi, last step state
+        for r in range(1, max_rounds + 1):
+            per_round[r] = {
+                "A": {"events_per_game": [], "end_state": {"hp": [], "sl": [], "imp": [], "dist": [], "in_def": []}},
+                "B": {"events_per_game": [], "end_state": {"hp": [], "sl": [], "imp": [], "dist": [], "in_def": []}},
+                "n_games_reaching": 0,
+                "n_games_ending_here": 0,
+            }
+        for trace in traces:
+            if not trace.steps:
+                continue
+            steps_by_round: Dict[int, List[TraceStep]] = {}
+            for s in trace.steps:
+                steps_by_round.setdefault(s.round, []).append(s)
+            max_r = max(steps_by_round.keys())
+            for r, steps in steps_by_round.items():
+                if r > max_rounds:
+                    continue
+                per_round[r]["n_games_reaching"] += 1
+                if r == max_r:
+                    per_round[r]["n_games_ending_here"] += 1
+                # Suddividi per player
+                ev_a, ev_b = [], []
+                for s in steps:
+                    info_types = {"MOVE", "DECLARE_ATTACK", "CHOOSE_ATTACKER_DICE", "CHOOSE_DEFENSE",
+                                  "RELOAD", "BID_MOVEMENT", "TOGGLE_DEFENSIVE", "CHOOSE_CARICA"}
+                    if s.raw_type not in info_types:
+                        continue
+                    target_list = ev_a if s.player == "A" else ev_b
+                    target_list.append(s.event)
+                per_round[r]["A"]["events_per_game"].append(ev_a)
+                per_round[r]["B"]["events_per_game"].append(ev_b)
+                last_step = steps[-1]
+                per_round[r]["A"]["end_state"]["hp"].append(last_step.hp_a)
+                per_round[r]["A"]["end_state"]["sl"].append(last_step.sl_a)
+                per_round[r]["A"]["end_state"]["imp"].append(last_step.imp_a)
+                per_round[r]["A"]["end_state"]["dist"].append(last_step.dist)
+                per_round[r]["A"]["end_state"]["in_def"].append(last_step.in_def_stance_a)
+                per_round[r]["B"]["end_state"]["hp"].append(last_step.hp_b)
+                per_round[r]["B"]["end_state"]["sl"].append(last_step.sl_b)
+                per_round[r]["B"]["end_state"]["imp"].append(last_step.imp_b)
+                per_round[r]["B"]["end_state"]["dist"].append(last_step.dist)
+                per_round[r]["B"]["end_state"]["in_def"].append(last_step.in_def_stance_b)
+        # Compatto in stats: frequenza eventi, end-state mean
+        out = {}
+        for r in range(1, max_rounds + 1):
+            ng = per_round[r]["n_games_reaching"]
+            if ng == 0:
+                continue
+            entry: Dict[str, Any] = {
+                "n_games_reaching": ng,
+                "n_games_ending_here": per_round[r]["n_games_ending_here"],
+            }
+            for p in ("A", "B"):
+                ev_lists = per_round[r][p]["events_per_game"]
+                # Frequenza eventi (per categoria)
+                cat_counter: Counter = Counter()
+                detail_counter: Counter = Counter()
+                for ev_list in ev_lists:
+                    cats_seen = set()
+                    for ev in ev_list:
+                        cat = ev.split("[")[0].strip()
+                        cats_seen.add(cat)
+                        detail_counter[ev] += 1
+                    for cat in cats_seen:
+                        cat_counter[cat] += 1
+                end = per_round[r][p]["end_state"]
+                entry[p] = {
+                    "n_games": ng,
+                    "events_freq": [(cat, cnt, cnt/ng) for cat, cnt in cat_counter.most_common()],
+                    "events_detail_top": detail_counter.most_common(8),
+                    "n_actions_per_round_mean": float(np.mean([len(ev) for ev in ev_lists])),
+                    "hp_end_mean": float(np.mean(end["hp"])),
+                    "sl_end_mean": float(np.mean(end["sl"])),
+                    "imp_end_mean": float(np.mean(end["imp"])),
+                    "dist_end_mean": float(np.mean(end["dist"])),
+                    "in_def_pct": float(np.mean(end["in_def"])),
+                }
+            out[r] = entry
+        return out
+
+    def render_round_narrative(self, traces: List[GameTrace], max_rounds: int = 8) -> str:
+        """Render testuale del flow modale per round."""
+        out = []
+        out.append(f"## Flow modale {self.label} ({len(traces)} sim)")
+        out.append("")
+        out.append(f"_A: {self.build_a.weapon} + {self.build_a.offhand} / {self.build_a.armor}_  ")
+        out.append(f"_B: {self.build_b.weapon} + {self.build_b.offhand} / {self.build_b.armor}_")
+        out.append("")
+        per_round = self.aggregate_by_round(traces, max_rounds=max_rounds)
+        for r, entry in sorted(per_round.items()):
+            ng = entry["n_games_reaching"]
+            ng_end = entry["n_games_ending_here"]
+            survival_pct = 100 * ng / len(traces)
+            ending_pct = 100 * ng_end / len(traces)
+            out.append(f"### Round {r}  ·  raggiunto {ng}/{len(traces)} ({survival_pct:.0f}%) · finisce qui {ng_end}/{len(traces)} ({ending_pct:.0f}%)")
+            out.append("")
+            for p in ("A", "B"):
+                d = entry[p]
+                out.append(f"**Player {p}**: {d['n_actions_per_round_mean']:.1f} azioni/round")
+                # Eventi modali con %
+                evs = []
+                for cat, cnt, freq in d["events_freq"]:
+                    if freq >= 0.3:  # solo se appare in ≥30% delle partite
+                        evs.append(f"`{cat}` ({100*freq:.0f}%)")
+                if evs:
+                    out.append(f"- Azioni tipiche: {', '.join(evs)}")
+                # Top eventi dettagliati (escludo MOVE singoli che sono rumore decisionale)
+                tactical = [(ev, cnt) for ev, cnt in d["events_detail_top"]
+                            if not ev.startswith("MOVE[")]
+                top_detail = [f"`{ev}`×{cnt}" for ev, cnt in tactical[:5] if cnt >= ng * 0.15]
+                if top_detail:
+                    out.append(f"- Eventi tattici: {', '.join(top_detail)}")
+                out.append(f"- Fine round: HP medio **{d['hp_end_mean']:.1f}**, slancio **{d['sl_end_mean']:.1f}**, impeto **{d['imp_end_mean']:.1f}**, distanza **{d['dist_end_mean']:.1f} hex**, in_def_stance {100*d['in_def_pct']:.0f}%")
+                out.append("")
+        return "\n".join(out)
+
     # ── Selection of representative traces ──
 
     def select_representative(self, traces: List[GameTrace], k: int = 4) -> List[Tuple[str, GameTrace]]:
@@ -656,6 +784,8 @@ def main():
     ap.add_argument("--out", default=None, help="File markdown di output (se omesso, stampa stdout)")
     ap.add_argument("--n-narrative", type=int, default=4, help="Numero partite rappresentative narrate (default 4)")
     ap.add_argument("--summary-only", action="store_true", help="Solo stats aggregate (no narrative)")
+    ap.add_argument("--by-round", action="store_true",
+                    help="Output flow modale per round (cosa fa A/B tipicamente al T1, T2, ecc.)")
     args = ap.parse_args()
 
     mr = MatchReplay.from_dir(args.model_dir)
@@ -664,7 +794,9 @@ def main():
     traces = mr.simulate(n_games=args.n, seed_base=args.seed)
     print(f"Done. Aggregating + rendering...", file=sys.stderr)
 
-    if args.summary_only:
+    if args.by_round:
+        report = mr.render_summary(mr.aggregate(traces)) + "\n\n" + mr.render_round_narrative(traces)
+    elif args.summary_only:
         report = mr.render_summary(mr.aggregate(traces))
     else:
         report = mr.render_full_report(traces, n_narrative=args.n_narrative)

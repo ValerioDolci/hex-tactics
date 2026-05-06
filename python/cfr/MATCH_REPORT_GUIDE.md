@@ -51,6 +51,54 @@ Ogni report contiene per ogni matchup:
    - `B_win`: vittoria B mediana
    - `draw_longest`: draw più lungo (se presenti)
 
+## Narrazione modale per round (post-2026-05-06 update)
+
+Per produrre una narrazione tipo:
+
+> "Al primo turno il tank carica ma tiene X slancio pronto, l'arciere si tiene a distanza, attiva def stance, lancia ranged a Y. Al secondo turno l'iniziativa si inverte..."
+
+usa `--by-round` nel CLI:
+
+```bash
+python -m cfr.match_replay <model_dir> --n 50 --by-round --out /tmp/byround.md
+```
+
+Output: per ogni round R, per ogni player A/B:
+- Frequenza categorie evento (% partite in cui appare)
+- Eventi tattici dettagliati (esclude singoli MOVE step)
+- Stato medio fine-round: HP, slancio, impeto, distanza, % in_def_stance
+- N. partite che raggiungono / finiscono in quel round
+
+Poi delegare a un subagent per traduzione narrativa italiana, prompt template:
+
+```
+Trasforma in narrazione italiana il "flow modale per round" di un matchup hex-tactics.
+
+Path dati: <byround.md>
+
+Convenzione:
+- A = <build A>
+- B = <build B>
+
+REGOLE GIOCO (per senso meccanico):
+- Round 1 ordine = chi ha più impeto. Tutti partono impeto 14.
+- START_TURN: recupera dadi, slancio→impeto, tiro slancio 0-2d.
+- Movimento: 1° hex gratis, gli altri costano 1 slancio.
+- TOGGLE_DEF: con scudo, raddoppia parry.fixed passive (anti-ranged).
+- DECL_ATK: scelte ATK_DICE e CHOOSE_DEFENSE simultanee, private.
+- BID_MOVEMENT: solo se l'avversario ha arma reach ≥4 (lance 4, lance3m 6).
+
+Per ogni round 1..6 scrivi 6-10 righe in italiano fluido che racconti:
+- Chi ha iniziativa (più impeto)
+- Cosa fa A in modo TIPICO (>50% partite) — racconta, non elencare percentuali
+- Cosa fa B in modo TIPICO
+- Cosa succede a HP / distanza / slancio
+- Decisioni "non ovvie" della policy CFR (es. perché TOGGLE_DEF in quel momento?)
+
+Stile: scorrevole, leggibile, NIENTE tabelle, NIENTE %, NIENTE elenchi puntati.
+Solo prosa descrittiva. Termina con sintesi (3-4 righe) dell'esito tipico.
+```
+
 ## Combat episodes (post-2026-05-06 update)
 
 Dal `match_replay.py` v2 in poi, la sezione `### Combat episodes` nel summary contiene per ciascun player:
