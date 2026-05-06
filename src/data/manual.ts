@@ -332,17 +332,26 @@ export const MANUAL: ManualChapter[] = [
       },
       {
         type: 'p',
-        text: 'Note: lo scudo del difensore sottrae passivamente il suo bonus parry. L\'armatura sottrae la sua riduzione danno. Nessuna gittata massima — il malus distanza decresce gradualmente con N (es. arco_lungo N=2: −1 ogni 2 hex).',
+        text: 'Note: lo scudo del difensore sottrae passivamente il suo bonus parry. L\'armatura sottrae la sua riduzione danno. Nessuna gittata massima — il malus distanza decresce gradualmente con N (più alto = decade meno con la distanza).',
+      },
+      {
+        type: 'table',
+        headers: ['Arma ranged', 'N (divisore distanza)'],
+        rows: [
+          ['Arco corto', '4'],
+          ['Arco lungo', '5'],
+          ['Balestra', '3'],
+        ],
       },
       { type: 'subheading', text: 'Malus movimento (kite-and-shoot)' },
       {
         type: 'p',
         text: 'Se ti muovi prima di sparare nello stesso turno, ricevi −1 al tiro per ogni hex mosso. Aggressivo: anche 1 hex costa 1. L\'arciere deve scegliere tra muoversi (per posizionamento) e tirare bene (stando fermo).',
       },
-      { type: 'subheading', text: 'Armi da lancio: SINGLE USE' },
+      { type: 'subheading', text: 'Armi da lancio: inventario + backup' },
       {
         type: 'p',
-        text: 'Pugnale, ascia 1h, lancia 2m, giavellotto sono armi da MISCHIA che si possono LANCIARE come ranged (throw). Una volta lanciate, l\'arma è PERSA — il PG resta disarmato (può ancora attaccare con offhand se ce l\'ha). Diverso da archi/balestra che hanno reload.',
+        text: 'Pugnale, ascia 1h, lancia 2m, giavellotto sono armi da MISCHIA che si possono LANCIARE come ranged (throw). Sono SINGLE-USE: dopo il lancio l\'arma volata via non torna indietro. Però il PG può portare un INVENTARIO di armi da lancio aggiuntive: dopo il primo lancio si estrae automaticamente la prossima dall\'inventario, e quando finiscono si passa al BACKUP_WEAPON (es. spada di riserva). Solo se sia inventario sia backup sono vuoti il PG resta disarmato. Diverso da archi/balestra, che hanno una sola arma con reload.',
       },
       { type: 'subheading', text: 'Setup: archi e balestra partono SCARICHI' },
       {
@@ -370,7 +379,7 @@ export const MANUAL: ManualChapter[] = [
           'Arciere round 1: parte con arco lungo scarico, slancio iniziale 16.',
           'RELOAD: paga 9 slancio → slancio = 7, arco caricato.',
           'MOVE 4 hex (1 gratis + 3 sla): slancio = 4. Hex_mossi = 4.',
-          'DECLARE_RANGED 2d (arco_lungo è 2h → cap PG 1-3): variabile = 2d PG + 2d arma + bonus visibilità + bonus arma 6, malus distanza ⌊d/2⌋, malus mov ⌊4/2⌋=2.',
+          'DECLARE_RANGED 2d (arco_lungo è 2h → cap PG 1-3): variabile = 2d PG + 2d arma + bonus visibilità + bonus arma 6, malus distanza ⌊d/5⌋ (arco_lungo N=5), malus mov −4 (1 hex mosso = −1).',
         ],
       },
       { type: 'p', text: 'Trade-off del bersaglio: tenere slancio alto ti protegge dal ranged ma costa dadi azione.' },
