@@ -149,6 +149,22 @@ Per una baseline initial, queste 8 feature sono sufficienti per ~70-80% della pe
 
 ---
 
+## Update 13:30 — Build esotiche P5 chiuse
+
+| Matchup | V_a final | A_shield | B_shield | ATK A | Verdetto |
+|---|---|---|---|---|---|
+| spadone_vs_lanc | **-0.275** | none (offhand=null) | scudo piccolo | spada_lunga `1D6+6` | A perde 14 wr% |
+| ascia2h_vs_lanc | **-0.040** | none (offhand=null) | scudo piccolo | ascia_2h `1D6+15` | A bilanciato |
+
+**Insight strutturale aggiunto**: la mancanza di scudo NON è sufficiente a perdere — serve anche ATK basso. Le build no-scudo high-damage (ascia 2h `1D6+15`) sopravvivono perché ogni colpo che passa la parry è devastante. L'ascia 2h è una build legittima alternativa: high-risk (no scudo, no defensive stance) vs high-damage (1D6+15). Il design tollera lo spazio.
+
+**Implicazione per la spada lunga 2h**: ATK `1D6+6` per un'arma 2h è probabilmente sotto-tarato (~9 punti di fisso in meno dell'ascia 2h). Il preset spadaccino `spa_preset` perde sistematicamente non solo per lo scudo mancante ma anche per l'ATK insufficiente. Possibili fix:
+- Spada lunga 2h: portare ATK a `1D6+10` o `2D6+6`
+- Oppure: aggiungere parata 2h con +X (ora la 2h para `1D6+6`, lo stesso del 1h)
+- Oppure: skill exclusive 2h che amplifica il damage in carica
+
+---
+
 ## Limiti dell'analisi
 
 1. **n=50 sim per matchup** — rumore residuo ~±0.10 sul `v_a_proxy`. Per analisi più precise, n=200+.
