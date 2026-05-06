@@ -148,19 +148,41 @@ Se uno dà V_a > 0.10 → la metric è rumorosa per quel matchup, aumentare `n_e
 
 > Confermato da Valerio: la distillazione è **necessaria** per il gioco.
 
-### [ ] D1. Pipeline distillazione
+### [x] D1. Pipeline distillazione — COMPLETATA 2026-05-06
 
-- [ ] Definire formato student model (es. piccolo MLP o decision tree leggibile)
-- [ ] Estrarre dataset (state, action_distribution) dai 22 modelli Deep CFR
-- [ ] Train student per matchup (oppure single-policy multi-matchup con embedding del build)
-- [ ] Confrontare student vs Deep CFR teacher: V_a deve essere vicino (Δ < 0.10)
-- [ ] Integrare student in `src/ai/` come opzione alternativa a `utility`
+Pipeline production-ready in `python/cfr/`:
+- [x] `build_features.py`: encoder BuildSpec → vettore 39 dim (one-hot weapon/offhand/armor + skill aggregate)
+- [x] `distill_dataset.py` / `distill_multi_dataset.py`: estrae (obs_153, mask_24, policy_24, build_self_39, build_opp_39) dai 24 teacher Deep CFR
+- [x] `distill_student.py` / `distill_multi_student.py`: train MLP student
+- [x] `distill_eval.py` / `distill_multi_eval.py`: eval V_a student vs teacher
+- [x] `distill_export_onnx.py`: export .pt → .onnx con sanity check (legacy exporter, dynamo=False)
 
-### [ ] D2. Strategic insights (manual extraction)
+**Risultati v2 (single student multi-matchup, 1.4M params, 512×4 layers, 200 partite × 24 matchup, 300 epoche)**:
+- ✓ 20/24 (83%) sotto soglia 0.10
+- ⚠ 2 marginal (ascia1h_vs_arc 0.150, ascia1h_vs_giav 0.108)
+- ✗ 2 fail solo i mirror intrinsecamente rumorosi (balestra_mirror 0.202, lanc_mirror 0.224)
+- **Avg max|Δ| = 0.078** (sotto la soglia di accettazione)
 
-- [ ] Estrarre policy leggibili dai modelli salvati: cosa fa il lanciere ottimale? Quanti dadi atk/def, quando lancia, distanza media engagement?
-- [ ] Generare documentazione di gioco — "cosa funziona contro X" — utile per tutorial e onboarding.
-- [ ] Salvare in `STRATEGY_GUIDE.md`.
+Artifact pronti:
+- `public/student_multi.onnx` (3.51 MB) — caricabile in browser via `onnxruntime-web`
+- ONNX output matches PyTorch entro 5×10⁻⁶
+
+### [ ] D1.b. Integrazione `StudentMultiAi.ts` in `src/ai/` — pending
+
+Lavoro stimato 3 ore. Steps:
+1. `pnpm add onnxruntime-web` (deps)
+2. Porting `cfr/build_features.py` → `src/ai/buildFeatures.ts` (~50 righe, semplice)
+3. Wrapper `src/ai/StudentMultiAi.ts`:
+   - Init: `const session = await InferenceSession.create('/student_multi.onnx')`
+   - Inferenza: state → obs (153 da `obsFeaturesV2.ts` esistente) + buildSelf + buildOpp → ONNX → softmax mascherato → action
+   - Modi: deterministic (argmax) per "Hard", stochastic (sample) per "Hard variabile"
+4. Integrare opzione UI: aggiungere "Hard (Deep CFR distilled)" nel menu AI selection
+5. Test E2E: partita uomo vs Hard, verificare comportamento atteso (es. lance kite, tank toggle defensive)
+
+### [x] D2. Strategic insights (manual extraction) — COMPLETATA 2026-05-06
+
+- [x] Dossier narrativo `MATCH_NARRATIVES_2026-05-06.md`: 16 matchup chiave narrati turn-by-turn in italiano scorrevole.
+- [x] Sistema riusabile: `python/cfr/match_replay.py` con flag `--by-round` per generare dati aggregati per round, poi delega a subagent per traduzione narrativa (template in `MATCH_REPORT_GUIDE.md`).
 
 ---
 

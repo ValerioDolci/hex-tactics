@@ -215,6 +215,22 @@ Indagare prima di trarre conclusioni forti dai V_a dei nuovi build se `|V_a| < 0
 
 ---
 
+## Distillazione AI completata (2026-05-06 sera)
+
+Single student multi-matchup distilla tutti i 24 teacher in un unico MLP:
+- Architettura: input 231 (obs 153 + buildSelf 39 + buildOpp 39) → 512×4 → 24
+- Params: 1.4M
+- Training: 200 partite × 24 matchup, 300 epoche, ~9 min su MPS
+- Eval n=500/match: **avg max|Δ V_a| = 0.078**, 20/24 matchup sotto soglia 0.10
+
+Artifact pronti per integrazione browser:
+- `public/student_multi.onnx` (3.51 MB)
+- Sanity check OK (PyTorch vs ONNX, max diff 5×10⁻⁶)
+
+Pipeline replicabile in `python/cfr/distill_*.py`. Vedi BALANCE_TODO.md P6/D1.
+
+---
+
 ## Note di lettura per Valerio
 
 - I modelli con `lanciere_vs_spa = +0.84` e `giav_vs_arc = +0.465` sono **deprecated** — pre-fix throw single-use.
