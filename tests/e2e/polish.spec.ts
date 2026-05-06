@@ -31,9 +31,11 @@ test('HtmlPrompt: input nome funziona via DOM', async ({ page }) => {
   });
   await page.waitForTimeout(1000);
 
-  // Test diretto via import dynamico (la funzione è async + ritorna Promise)
-  // Verifichiamo che HtmlPrompt funzioni invocandolo via window:
+  // Test diretto via import dynamico (la funzione è async + ritorna Promise).
+  // NB: path runtime Vite (/src/ui/HtmlPrompt.ts) — TS non risolve il literal,
+  // ma a runtime Vite lo serve. @ts-expect-error documenta l'override.
   const promptResult = await page.evaluate(async () => {
+    // @ts-expect-error — Vite-served path string, not a TS module
     const mod = await import('/src/ui/HtmlPrompt.ts').catch(() => null);
     return mod ? 'imported' : 'fallback';
   });

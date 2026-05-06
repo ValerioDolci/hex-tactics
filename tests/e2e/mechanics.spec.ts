@@ -85,6 +85,7 @@ async function dispatchEvent(page: Page, event: object): Promise<any> {
 }
 
 /** Helper: leggi state corrente senza dispatch */
+// @ts-expect-error helper conservato per debug futuro, ts-noemit no-unused
 async function readState(page: Page): Promise<any> {
   return await page.evaluate(() => {
     const game = (window as any).__hexGame;

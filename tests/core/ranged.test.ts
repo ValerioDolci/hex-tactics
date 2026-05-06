@@ -56,13 +56,16 @@ describe('canFireRanged', () => {
     expect(r.ok).toBe(true);
   });
 
-  it('arco corto fuori range fallisce', () => {
+  it('arco corto NON ha più gittata massima hard (commit f04c7aa: range max rimosso)', () => {
+    // Regola post-balance: niente max range fisico. Il malus distanza è
+    // gestito da ranged_divisor (-1 ogni N hex) in compose_ranged_attack_roll.
+    // canFireRanged deve quindi dare ok=true anche a 20 hex (solo penalità).
     const a = createBaselineUnit({ id: 'a', name: 'A', faction: 'A', position: { q: 0, r: 0 } });
     a.weapon = 'arco_corto';
+    a.weaponLoaded = true; // serve carica per ok
     const b = createBaselineUnit({ id: 'b', name: 'B', faction: 'B', position: { q: 20, r: 0 } });
     const r = canFireRanged(a, b, 'arco_corto', { a, b });
-    expect(r.ok).toBe(false);
-    expect(r.reason).toContain('fuori range');
+    expect(r.ok).toBe(true);
   });
 
   it('spada non utilizzabile a distanza', () => {

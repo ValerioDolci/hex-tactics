@@ -49,6 +49,7 @@ test('Repro real: dopo umano vs AI mischia, menu cliccabile', async ({ page }) =
     const scene = game.scene.getScene('BattleScene') as any;
     const aId = Object.keys(scene.state.units).find((id: string) => scene.state.units[id].faction === 'A');
     const bId = Object.keys(scene.state.units).find((id: string) => scene.state.units[id].faction === 'B');
+    if (!aId || !bId) throw new Error('units not found');
     const a = scene.state.units[aId];
     const b = scene.state.units[bId];
     a.position = { q: 0, r: 9 }; a.positionAtTurnStart = { q: 0, r: 9 };
@@ -85,6 +86,7 @@ test('Repro real: dopo umano vs AI mischia, menu cliccabile', async ({ page }) =
     const scene = game.scene.getScene('BattleScene') as any;
     const aId = Object.keys(scene.state.units).find((id: string) => scene.state.units[id].faction === 'A');
     const bId = Object.keys(scene.state.units).find((id: string) => scene.state.units[id].faction === 'B');
+    if (!aId || !bId) throw new Error('units not found');
     const a = scene.state.units[aId];
     // Simula bottone "Attacca" che chiama startAttackFlow(aId, bId, weapon, 0, stat, false)
     scene.startAttackFlow(aId, bId, a.weapon, 0, 'forza', false);

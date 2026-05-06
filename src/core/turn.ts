@@ -25,6 +25,7 @@ import {
   makeSlancioContext,
 } from './stats';
 import { BASE_PG_FIXED } from './combat';
+import { getWeapon } from '@data/weapons';
 
 /** Calcola dadi azione recuperati a inizio turno: ⌊(F+A+V)/2⌋, cap 1 se impeto=0 */
 export function computeDiceRecovery(unit: Unit): number {
@@ -182,9 +183,6 @@ export function applyInitialSlancio(unit: Unit, rng: Rng): Unit {
   // Armi ranged con reload partono SCARICHE
   let weaponLoaded = unit.weaponLoaded;
   if (unit.weapon) {
-    // Lazy import per evitare cicli
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { getWeapon } = require('@data/weapons');
     const w = getWeapon(unit.weapon);
     if (w?.range && (w.range.reload != null || w.range.reloadCostSlancio != null)) {
       weaponLoaded = false;

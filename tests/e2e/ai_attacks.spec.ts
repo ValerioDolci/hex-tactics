@@ -42,6 +42,7 @@ test('AI in mischia sceglie ATTACK', async ({ page }) => {
     const scene = game.scene.getScene('BattleScene') as any;
     const aId = Object.keys(scene.state.units).find((id: string) => scene.state.units[id].faction === 'A');
     const bId = Object.keys(scene.state.units).find((id: string) => scene.state.units[id].faction === 'B');
+    if (!aId || !bId) throw new Error('units not found');
     const a = scene.state.units[aId];
     const b = scene.state.units[bId];
     a.position = { q: 5, r: 9 }; a.positionAtTurnStart = { q: 5, r: 9 };

@@ -15,8 +15,8 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 
 import { offsetToAxial } from '@core/hex/coords';
-import { unitFromPreset, getPreset, PRESETS } from '@data/presets';
-import { createInitialState, GameState } from '@core/state';
+import { unitFromPreset, getPreset } from '@data/presets';
+import { createInitialState } from '@core/state';
 import { reduce } from '@core/reducer';
 import { GameEvent } from '@core/events';
 import {
@@ -101,7 +101,10 @@ function runBattle(presetA: string, presetB: string, seed: number, maxRounds = 3
     }
 
     // turn-end / round-end → END_TURN ciclo
-    if (state.phase === 'choosing-action' || state.phase === 'turn-start') {
+    // NB: il narrowing TS qui dice che 'choosing-action'/'turn-start' sono già stati
+    // gestiti, ma manteniamo i fallback per robustezza (state.phase può ricomparire
+    // in scenari di ricezione asincrona). Cast a string per silenziare TS2367.
+    if ((state.phase as string) === 'choosing-action' || (state.phase as string) === 'turn-start') {
       state = reduce(state, { type: 'END_TURN' });
       eventsCount++;
       continue;

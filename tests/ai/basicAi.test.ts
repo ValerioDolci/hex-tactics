@@ -66,11 +66,12 @@ describe('aiDecideAction', () => {
     expect(ev.type).toBe('END_TURN');
   });
 
-  it('arco corto: spara se in range', () => {
+  it('arco corto: spara se in range (richiede arma carica, post-D-037)', () => {
     const s = setupBattle();
     s.units.B.weapon = 'arco_corto';
+    s.units.B.weaponLoaded = true; // post-D-037 archi/balestra partono scarichi: forziamo carica per il test
     s.units.A.position = { q: 0, r: 0 };
-    s.units.B.position = { q: 4, r: 0 }; // distanza ~ 2-3 (basetta), in range arco corto
+    s.units.B.position = { q: 4, r: 0 };
     const ev = aiDecideAction(s, 'B');
     expect(ev.type).toBe('DECLARE_ATTACK');
     if (ev.type === 'DECLARE_ATTACK') {

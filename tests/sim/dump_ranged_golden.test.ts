@@ -15,11 +15,10 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 
 import { offsetToAxial } from '@core/hex/coords';
-import { unitFromPreset, PRESETS, getPreset } from '@data/presets';
+import { unitFromPreset, getPreset } from '@data/presets';
 import { createRng } from '@/utils/rng';
 import { computeLoS, canFireRanged, composeRangedAttackRoll } from '@core/ranged';
 import { Unit } from '@entities/Unit';
-import { Stat } from '@entities/Equipment';
 
 function rollToJson(r: { variable: number[]; fixed: number }) {
   return { variable: r.variable.slice(), fixed: r.fixed };

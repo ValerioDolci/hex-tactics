@@ -16,17 +16,11 @@ import { resolve, dirname } from 'node:path';
 
 import { offsetToAxial } from '@core/hex/coords';
 import { unitFromPreset, getPreset } from '@data/presets';
-import { createInitialState, GameState } from '@core/state';
+import { createInitialState } from '@core/state';
 import { reduce } from '@core/reducer';
 import { GameEvent } from '@core/events';
 import { legalMoves } from '@ai/legalMoves';
 import { utilityDecideMove, DEFAULT_WEIGHTS, scoreMove } from '@ai/utilityAi';
-import {
-  aiDecideSlancio,
-  aiDecideAction,
-  aiDecideAttackerDice,
-  aiDecideDefense,
-} from '@ai/basicAi';
 
 function eventToJson(e: GameEvent): any {
   return JSON.parse(JSON.stringify(e));

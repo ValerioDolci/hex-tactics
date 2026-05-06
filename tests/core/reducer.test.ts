@@ -310,9 +310,11 @@ describe('reducer — ricarica balestra (D-037 reload come tiro abilità)', () =
     return createInitialState({ units: [a, b], board: { cols: 24, rows: 18 }, rngSeed: seed });
   }
 
-  it('balestra parte CARICA (weaponLoaded = true)', () => {
+  it('balestra parte SCARICA al setup (D-037: ranged-with-reload arrivano scariche)', () => {
     const s = setupWithCrossbow();
-    expect(s.units.A.weaponLoaded).toBe(true);
+    // Regola post-D-037: archi/balestra al setup hanno weaponLoaded=false.
+    // Devono spendere un RELOAD nel round 1 prima di poter sparare.
+    expect(s.units.A.weaponLoaded).toBe(false);
   });
 
   it('dopo aver sparato la balestra è SCARICA', () => {
