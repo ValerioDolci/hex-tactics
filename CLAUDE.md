@@ -126,10 +126,17 @@
 - Fazione
 - HP: **20**
 - Forza / Agilità / Volontà: **2 / 2 / 2** (baseline)
-- Impeto: **14**
-- Slancio: **0**
+- Impeto: **14** baseline teorico, ma in setup → MAX teorico tiro slancio (D-045, vedi sotto)
+- Slancio: **0** baseline; al setup → roll iniziale dei dadi slancio max (vedi `apply_initial_slancio`)
 - Dadi azione: pool iniziale **6**
 - Equipaggiamento
+
+**D-045 (impeto iniziale = max teorico tiro slancio)**: `compute_initial_impeto` (in `core/turn.py:130-152`) calcola l'impeto effettivo di setup come `(2 + extra_max_dice) × 6 + base_fisso + skill_bonus_slancio − impedimento`. Quindi:
+- PG senza skill slancio: 2d × 6 + 2 = **14**
+- PG con `+1tiro slancio`: 2d × 6 + 2 + 1 = **15**
+- PG con `+1tiro slancio` + `+1dadomax slancio`: 3d × 6 + 2 + 1 = **21**
+
+Le build con `+1dadomax slancio` (tank, arciere, lanc/giav/ascia1h con inventario) partono **6 punti sopra** i baseline e giocano sempre per primi al round 1.
 
 ### Architettura tiri: parte VARIABILE + parte FISSA
 

@@ -8,6 +8,11 @@
 
 **ERRATA (2026-05-06)**: alcuni passaggi delle narrative menzionano che il `BID_MOVEMENT` (asta zona controllo) si attiva "solo per armi reach ≥ 4 (lance)". Questa interpretazione era basata sulla vecchia formulazione di `CLAUDE.md` M-1. La regola corretta, **confermata da Valerio** e implementata in `reducer.py:266`, è: **TUTTE le armi da mischia con reach ≥ 1 triggerano l'asta** (regola universale). Le sezioni dove questo conta sono `ascia1h_vs_lanc` (round 3) e `lanc_vs_giav` (round 1, 3): il BID si attiva sempre quando uno dei due è in reach dell'altro, indipendentemente dall'arma. Le dinamiche e i dati restano corretti — è solo il commento sul trigger ad essere stato impreciso. CLAUDE.md M-1 è stato aggiornato.
 
+**ERRATA #2 (2026-05-06)**: in più passaggi le narrative dicono "tutti partono con impeto 14, tiebreak random al round 1". È sbagliato. Verificato in `core/turn.py:130-152`, `compute_initial_impeto`: l'**impeto iniziale è il MAX teorico del tiro slancio** del PG (D-045 di Valerio). Con `2 + extra_max` dadi × 6 + fisso − impedimento. Quindi i preset partono con impeto **diverso**:
+- senza `+1dadomax slancio`: 2d × 6 + 2 + 1(skill +1tiro) = **15** (spadaccino preset, lanciere baseline)
+- con `+1dadomax slancio`: 3d × 6 + 2 + 1 = **21** (tank, arciere, lanc inv, giav inv, ascia1h_lanciatore)
+Lo spadaccino preset (no dadomax) gioca **per ultimo al round 1** contro qualsiasi build con dadomax. Il tank/arciere/throwers entrano a 21, non 14. I dati delle narrative restano validi (dal report aggregato), è la mia spiegazione meccanica del round 1 a essere imprecisa.
+
 ---
 
 ## Indice
