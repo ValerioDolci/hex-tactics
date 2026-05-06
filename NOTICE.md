@@ -24,18 +24,28 @@ visibile pubblicamente:
 L'autore (ValerioDolci) si riserva di concedere licenze d'uso caso per caso
 tramite contatto diretto.
 
-## Idee, regole e meccaniche del gioco
+## Meccanica e design del gioco
 
-Le **regole di gioco** (architettura tiri variabile/fissa, asta zona di
-controllo, sistema slancio/impeto, skill system, ecc.) sono parte del design
-e non ricadono direttamente sotto copyright del codice (negli USA e UE le
-"regole di gioco" come concept non sono brevettabili né tutelate da
-copyright). Tuttavia ogni **espressione specifica** delle regole nel codice
-è coperta da copyright.
+Le **meccaniche, regole, sistemi e design** di hex-tactics (architettura
+tiri variabile/fissa, asta zona di controllo, sistema slancio/impeto,
+skill system, build templates, balance numerico, AI distillata, ecc.)
+sono **frutto del lavoro originale dell'autore** e sono considerate
+**proprietà intellettuale di ValerioDolci**.
 
-In altre parole: puoi leggere come funziona il gioco e progettare un tuo
-sistema diverso ispirato a questo, ma non puoi riusare le linee di codice
-in `src/`, `python/`, o gli artifact di training (modelli, dataset).
+L'autore richiede esplicitamente:
+- Di **non reimplementare** queste meccaniche in altri giochi senza
+  permesso scritto
+- Di **non riusare** numeri specifici, tabelle, formule, o pesi delle
+  build, anche reimplementando il codice da zero
+- Di **non distribuire** modelli AI derivati da o ispirati a questo lavoro
+
+L'autore è disponibile a discutere licenze caso per caso. Per richieste:
+GitHub Issues su <https://github.com/ValerioDolci/hex-tactics/issues>.
+
+> NOTA TECNICA: alcune giurisdizioni (es. Sec. 102(b) Copyright Act USA)
+> non estendono il copyright sul codice alle "idee" o "metodi di operazione"
+> in esso contenuti. Pur in quel quadro, l'autore considera la meccanica
+> di gioco proprietaria e si aspetta rispetto della richiesta sopra.
 
 ## Modelli AI
 

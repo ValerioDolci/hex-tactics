@@ -1289,7 +1289,8 @@ export class BattleScene extends Phaser.Scene {
     const validKeys = new Set(reachHexes.map((h) => `${h.q},${h.r}`));
     this.board.setHighlightedMove(reachHexes);
 
-    // Zone di minaccia: hex entro reach >= 4 di nemici eligibili (lance, slancio>0).
+    // Zone di minaccia: hex entro reach (>= 1) di nemici eligibili con slancio>0
+    // e arma melee. Regola V2 universale: tutte le armi melee triggerano l'asta.
     // L'utente vede in rosso/arancio dove rischia di entrare in asta.
     const threatHexes: Axial[] = [];
     for (const other of Object.values(this.state.units)) {

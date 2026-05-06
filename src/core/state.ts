@@ -55,8 +55,10 @@ export interface PendingAction {
 
 /**
  * Tracking del movimento multi-step con possibili aste di controllo zona (meccanica A).
- * MOVE è decomposto in singoli hex. Per ogni hex contestato (zona-reach >= 4 di un
- * difensore vivo con slancio>0), si apre un'asta nascosta di slancio.
+ * MOVE è decomposto in singoli hex. Per ogni hex contestato (zona-reach di un
+ * difensore vivo con slancio>0 e arma melee con reach >= 1), si apre un'asta
+ * nascosta di slancio. Regola V2 universale: TUTTE le armi melee triggerano,
+ * non solo le lance reach >= 4.
  */
 export interface MoveInProgress {
   unitId: UnitId;

@@ -86,7 +86,7 @@ REGOLE GIOCO (per senso meccanico):
 - Movimento: 1° hex gratis, gli altri costano 1 slancio.
 - TOGGLE_DEF: con scudo, raddoppia parry.fixed passive (anti-ranged).
 - DECL_ATK: scelte ATK_DICE e CHOOSE_DEFENSE simultanee, private.
-- BID_MOVEMENT: solo se l'avversario ha arma reach ≥4 (lance 4, lance3m 6).
+- BID_MOVEMENT: regola V2 universale — TUTTE le armi melee con reach >= 1 triggerano l'asta (era "solo lance reach >= 4" in M-1 deprecata).
 
 Per ogni round 1..6 scrivi 6-10 righe in italiano fluido che racconti:
 - Chi ha iniziativa (più impeto)

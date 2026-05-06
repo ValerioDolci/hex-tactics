@@ -38,8 +38,8 @@ Apri `http://localhost:5173` nel browser.
 
 1. **Main menu**: scegli per ogni fazione (A blu sx, B rosso dx) un preset (Spadaccino / Arciere / Tank) e la modalità (Umano / AI). Per le fazioni AI è disponibile la difficoltà:
    - **Facile** — heuristic basicAi
-   - **★ Difficile (DT)** — Decision Tree distillato dal modello PPO v14 (~2 KB, sync)
-   - **★★ Expert (Deep CFR)** — modello Deep CFR multi-matchup distillato (3.5 MB ONNX, 1.4M params, async via `onnxruntime-web`). Non disponibile in build singlefile/mobile (richiede file ONNX servito separatamente).
+   - **★ Difficile (Deep CFR)** — MLP small distillato dal Deep CFR multi-matchup (197K params, sync, pesi inline base64; ~70% top-1 match con teacher equilibrium). Disponibile anche in build singlefile/mobile.
+   - **★★ Expert (Deep CFR full)** — modello Deep CFR full (1.4M params, ONNX 3.5 MB caricato async via `onnxruntime-web` + WASM). Disponibile solo in build multi-file (desktop/dev): non bundlato in singlefile per evitare 25 MB di WASM inline.
    Click "Inizia battaglia".
 2. **Battaglia**: a ogni turno, un'unità di una fazione si muove e/o agisce.
 3. **Comandi**:

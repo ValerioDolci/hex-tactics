@@ -182,7 +182,7 @@ export async function aiDecideExpert(
     return moves[0];
   }
 
-  // Action masking: se actionId è fuori range, fallback come dtAI
+  // Action masking: se actionId è fuori range, fallback heuristic (preferenza ATTACK > MOVE > altro)
   if (actionId < 0 || actionId >= moves.length) {
     const attack = moves.find((m) => m.type === 'DECLARE_ATTACK');
     if (attack) return attack;

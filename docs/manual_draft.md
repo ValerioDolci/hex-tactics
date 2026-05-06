@@ -1,5 +1,17 @@
 # Manuale di hex-tactics
 
+> ⚠️ **DOCUMENTO STORICO / BOZZA** (2026-05-02). Le regole sono evolute dopo
+> la stesura. In particolare:
+> - **Asta zona controllo**: estesa a TUTTE le armi melee reach >= 1 (era "solo lance reach >= 4")
+> - **Impeto iniziale**: ora pari al MAX teorico del tiro slancio del PG (D-045), non 14 fisso
+> - **Armi da lancio**: post-fix introdotto `thrownInventory + backupWeapon` — l'arma lanciata viene rimpiazzata dalla prossima nell'inventario, non lascia il PG disarmato
+> - **Ranged divisor**: arco_corto N=4, arco_lungo N=5, balestra N=3
+> - **Malus mov ranged**: -1 per ogni hex mosso prima del tiro
+>
+> Per le regole correnti, fonte autoritativa: `src/data/manual.ts` (manuale
+> in-game) e `CLAUDE.md` (regole + log decisioni). Questo file rimane come
+> archivio storico della bozza didattica.
+
 > Bozza per review didattica. Verrà poi splittato in sezioni della `ManualScene`.
 > Lo stile è **conciso e operativo** — chi lo legge sta imparando a giocare, non a fare un esame.
 > I box `> esempio` sono pensati per essere rendered in box visivi distinti.

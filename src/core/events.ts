@@ -90,7 +90,8 @@ export interface EventEndRound {
  * Asta nascosta di slancio per attraversare zona di controllo (meccanica A).
  * Stesso evento è emesso da attaccante (in awaiting-attacker-bid) e da difensore
  * (in awaiting-defender-bid). Il reducer determina chi sta biddando in base alla phase.
- * Solo armi con reach >= 4 (lance vere) attivano la zona di controllo.
+ * Regola V2 universale (post 2026-05-06): TUTTE le armi melee con reach >= 1
+ * attivano la zona di controllo (era "solo lance reach >= 4").
  */
 export interface EventBidMovement {
   type: 'BID_MOVEMENT';

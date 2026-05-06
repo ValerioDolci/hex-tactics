@@ -131,7 +131,7 @@ export class HexBoard {
     this.render();
   }
 
-  /** Hex sotto minaccia (es. zone di controllo lance reach >= 4). */
+  /** Hex sotto minaccia (zona di controllo: arma melee nemica con reach, V2 universale). */
   setHighlightedThreat(hexes: Axial[]): void {
     this.highlightedThreat = new Set(hexes.map((h) => this.key(h)));
     this.render();
