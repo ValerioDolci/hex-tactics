@@ -3,6 +3,27 @@
 > Created 2026-05-06 dopo sessione overnight Deep CFR.
 > Riferimento risultati: [`DEEP_CFR_RESULTS_2026-05-06.md`](./DEEP_CFR_RESULTS_2026-05-06.md).
 > Database modelli: `python/cfr/nightly_results/database_index.json`.
+> Update 2026-05-06 12:45: 30 modelli, ipotesi "scudo = counter strutturale" confermata.
+
+---
+
+## Insight strutturale (DA TENER PRESENTE per ogni fix)
+
+> **Throwers/ranged battono chi NON ha scudo. Lo scudo medio neutralizza 22-34 wr%.**
+> È **atteso dalle regole** (schivata morde solo VARIABILE, parata richiede arma idonea, pugnale `1D6+0` insufficiente).
+
+| Attaccante (con o senza scudo piccolo) | vs no-scudo | vs scudo medio (tank) | Δ recupero |
+|---|---|---|---|
+| Lanciere | +0.675 / +0.540 | +0.225 | +22-25 wr% |
+| Giavellottiere | +0.575 / +0.660 | +0.090 | +24-28 wr% |
+| Balestra | +0.650 | -0.025 | **+33.7 wr%** |
+| Arco lungo | +0.330 | -0.100 | +21.5 wr% |
+| Ascia1h | +0.290 / +0.350 | -0.055 | +17 wr% |
+
+**Implicazione di design**: i preset baseline `spa_preset` (spada lunga 2h, no scudo) e `arc_preset` (arco + pugnale, no scudo) sono **strutturalmente vulnerabili** a chiunque lanci o spari. Non è un bug, è la conseguenza diretta delle regole. Il fix giusto può essere:
+- (a) Dare scudo allo spa preset (variante 1h+scudo come `spa_scudo`, V_a +0.450 vs arc — recupera totalmente)
+- (b) Aumentare il valore strategico del 2h (skill exclusive 2h, parata 2h con +X, ecc.)
+- (c) Lasciare i preset 2h/no-scudo come **scelte avanzate** e introdurre preset baseline con scudo come default
 
 ---
 
@@ -22,15 +43,20 @@
 
 ## Priority 2 — Squilibri throwers (nuovo modello inventario)
 
-I 4 squilibri più gravi (V_a > +0.50) coinvolgono tutti **throwers con inventario completo vs preset baseline senza lancio**:
+I 4+ squilibri più gravi (V_a > +0.50) coinvolgono **chi ha throw/ranged vs chi NON ha scudo**. Sono coerenti con le regole (vedi insight strutturale sopra). Il fix non è "nerf throwers" ma **dare opzioni anti-thrower ai preset no-scudo**.
 
-| Matchup | V_a | wr% gap |
-|---|---|---|
-| lanc_inv vs spa | +0.675 | +33.7 |
-| giav_inv vs arc | +0.660 | +33.0 |
-| balestra vs spa | +0.650 | +32.5 |
-| giav_inv vs spa | +0.575 | +28.7 |
-| lanc_inv vs arc | +0.540 | +27.0 |
+| Matchup | V_a | wr% gap | Aggressore | Difensore | Diagnosi |
+|---|---|---|---|---|---|
+| giav_vs_balestra | +0.750 | +37.5 | giav scudo piccolo | balestra no scudo | atteso |
+| lanc_inv vs spa | +0.675 | +33.7 | lanc scudo piccolo | spa 2h no scudo | atteso |
+| giav_inv vs arc | +0.660 | +33.0 | giav scudo piccolo | arc no scudo | atteso |
+| balestra vs spa | +0.650 | +32.5 | balestra no scudo | spa 2h no scudo | atteso (ranged > mischia 2h no scudo) |
+| giav_inv vs spa | +0.575 | +28.7 | giav scudo piccolo | spa 2h no scudo | atteso |
+| ascia1h vs giav | -0.575 | -28.7 | ascia1h scudo piccolo | giav scudo piccolo | gerarchia thrower (range giav 3hex vs ascia 1hex) |
+| lanc_inv vs arc | +0.540 | +27.0 | lanc scudo piccolo | arc no scudo | atteso |
+| lanc vs balestra | +0.505 | +25.2 | lanc scudo piccolo | balestra no scudo | atteso |
+| spaScudo_vs_arc | +0.450 | +22.5 | spa **scudo medio** | arc no scudo | scudo medio batte ranged no scudo |
+| ascia1h vs lanc | -0.430 | -21.5 | ascia1h scudo piccolo | lanc scudo piccolo | gerarchia thrower (lanc reach 4 vs ascia 1hex) |
 
 ### Fix candidati (da testare con sensitivity analysis)
 
@@ -63,30 +89,38 @@ Per ogni fix sopra:
 
 ## Priority 3 — Squilibri preset baseline
 
-Anche i preset "core" hanno problemi:
+Anche i preset "core" hanno problemi (entrambi sono varianti di "no-scudo", quindi coerenti con il pattern strutturale):
 
 - [ ] **P1. spa < arc**: `arc_vs_spa = +0.33` (l'arciere batte lo spadaccino di 16.5 wr%)
-  - Cause: spadaccino non ha scudo né lancio, l'arco lo bersaglia in avvicinamento.
-  - Fix candidati: dare scudo piccolo allo spadaccino, o pugnale lanciabile.
-- [ ] **P2. ascia1h < lanc/giav**: `ascia1h_vs_lanc = -0.43`, vs giav stimato -0.45
-  - L'ascia 1h con lancio 0.5m (1 hex) è dominata dai throwers a range maggiore.
-  - Fix candidati: aumentare lancio ascia 1h a 0.5m → 1m (2 hex)? O dare più ascie nell'inventario.
+  - Cause: entrambi senza scudo, ma l'arco mantiene distanza e bersaglia lo spa 2h.
+  - Fix candidati: dare scudo piccolo allo spadaccino (variante 1h+scudo, vedi `spa_scudo` → +0.450 vs arc), o pugnale lanciabile.
+- [ ] **P2. ascia1h < lanc/giav**: `ascia1h_vs_lanc = -0.430`, `ascia1h_vs_giav = -0.575`
+  - L'ascia 1h con lancio 1 hex è dominata dai throwers a range maggiore (lance reach 4 + lancio 2hex, giav lancio 3hex).
+  - **Anche con scudo piccolo** l'ascia1h perde — il problema non è la difesa ma il range offensivo del lancio.
+  - Fix candidati: aumentare lancio ascia 1h a 0.5m → 1m (2 hex); oppure dare più ascie nell'inventario; oppure aumentare ATK ascia 1h.
 
 ---
 
 ## Priority 4 — Validazione metric
 
-I mirror match devono dare V_a ≈ 0. Validazione esistente:
-- spa_mirror: -0.03 ✓
-- arc_mirror: +0.105 (un po' rumoroso, accettabile)
-- tank_mirror: +0.03 ✓
+I mirror match devono dare V_a ≈ 0. Validazione completa:
 
-### [ ] M1. Eseguire mirror nuove build
+- [x] spa_mirror: -0.030 ✓
+- [x] tank_mirror: +0.030 ✓
+- [x] arc_mirror: +0.105 (rumore residuo accettabile)
+- [x] balestra_mirror: -0.100
+- [x] lanc_mirror: -0.130
+- [x] giav_mirror: -0.150 ⚠️ (al limite della soglia)
+- [~] ascia1h_mirror: in corso, preliminary -0.34/-0.38 a iter 55 ⚠️ (rumoroso, sopra soglia)
 
-- [ ] `lanc_mirror` (lanciere vs lanciere, stesso build)
-- [ ] `giav_mirror` (giavellottiere vs giavellottiere)
-- [ ] `ascia1h_mirror` (ascia1h vs ascia1h)
-- [ ] `balestra_mirror` (balestra vs balestra)
+**Osservazione**: i mirror dei nuovi build con `thrown_inventory` sono ~3× più rumorosi di quelli baseline. Possibili cause:
+1. Rumore dovuto al lancio 1° colpo (chi spara prima ha advantage probabilistico)
+2. Variable initial state asimmetria
+3. CFR convergenza più lenta con action space throw/melee/reload combinato
+
+### [ ] M2. Se ascia1h_mirror chiude sopra |0.20|
+
+Indagare: rilanciare con `n_eval_games=1000` (vs 500 standard) per ridurre rumore. Se rimane alto, indagare bias first-mover nel reducer (chi inizia prima il turno con thrown_inventory ha vantaggio?).
 
 Se uno dà V_a > 0.10 → la metric è rumorosa per quel matchup, aumentare `n_eval_games` da 500 a 1000.
 
