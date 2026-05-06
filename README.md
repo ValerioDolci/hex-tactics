@@ -4,8 +4,6 @@ Tactical 1v1 RPG su griglia esagonale — TypeScript + Phaser 3 + AI distillata 
 
 🎮 **Gioca subito**: <https://valeriodolci.github.io/hex-tactics-play/>
 
-📜 **Diritti**: questo repo è pubblico ma **NON open-source**. Vedi [`NOTICE.md`](./NOTICE.md).
-
 > Documentazione completa: [`CLAUDE.md`](./CLAUDE.md) (regole + stato), [`ARCHITECTURE.md`](./ARCHITECTURE.md), [`DECISIONS.md`](./DECISIONS.md), [`TODO.md`](./TODO.md).
 
 ## Requisiti
