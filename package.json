@@ -1,9 +1,20 @@
 {
   "name": "hex-tactics",
   "version": "0.1.0",
-  "description": "Tactical RPG a turni con esagoni — MVP locale",
+  "description": "Tactical 1v1 RPG su griglia esagonale. TypeScript + Phaser 3. AI distillata da Deep CFR.",
   "private": true,
   "type": "module",
+  "license": "UNLICENSED",
+  "author": "ValerioDolci",
+  "homepage": "https://valeriodolci.github.io/hex-tactics-play/",
+  "keywords": [
+    "tactical-rpg",
+    "hexagonal-grid",
+    "phaser",
+    "typescript",
+    "ai",
+    "deep-cfr"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

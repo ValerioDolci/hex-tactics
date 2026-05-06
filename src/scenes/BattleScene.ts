@@ -45,14 +45,11 @@ import {
   aiDecideDefense,
   aiDecideSlancio,
 } from '@ai/basicAi';
-import { aiDecideHard as aiDecideDtV14 } from '@ai/dtAI';
-import { aiDecideStudentMlp } from '@ai/studentMlpAi';
+import { aiDecideStudentMlp as aiDecideHard } from '@ai/studentMlpAi';
 import { aiDecideExpert, preloadStudentMulti } from '@ai/studentMultiAi';
-
-// "Hard" è ora il MLP distillato sync dal Deep CFR multi-matchup (non più il DT v14 PPO).
-// Il vecchio dtAI è disponibile come fallback se serve (importato come aiDecideDtV14).
-const aiDecideHard = aiDecideStudentMlp;
-void aiDecideDtV14; // deprecated, mantenuto per ricostruzione storica
+// "Hard" = MLP distillato sync dal Deep CFR multi-matchup (commit aa9d4e1, 6/5/2026).
+// Il vecchio DT distillato dal PPO v14 (src/ai/dtAI*.ts) è stato rimosso col cleanup
+// pre-apertura repo (non più usato dopo la sostituzione con MLP).
 import { FactionId } from '@entities/Unit';
 import { getScenario, TutorialScenario, TutorialStep } from '@data/tutorial';
 import { TutorialOverlay } from '@ui/TutorialOverlay';

@@ -25,3 +25,6 @@ python/cfr/nightly_results/
 *.c
 *.so
 build/
+
+# Reports auto-generati (output di python -m cfr.match_report_all)
+reports/
