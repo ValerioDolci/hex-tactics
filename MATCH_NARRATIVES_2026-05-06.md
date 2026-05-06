@@ -1,6 +1,6 @@
 # Match Narratives — flow modale 2026-05-06
 
-> Narrazioni in italiano scorrevole del flow turn-by-turn di 6 matchup chiave del database Deep CFR.
+> Narrazioni in italiano scorrevole del flow turn-by-turn di 11 matchup chiave del database Deep CFR.
 > Generate da subagent partendo dai dati `--by-round` di `match_replay.py` (50 sim/match).
 > Stile: prosa descrittiva, niente tabelle/percentuali/elenchi.
 >
@@ -18,6 +18,11 @@
 - [lanc_vs_giav](#4-lanc_vs_giav-mind-game-thrower-vs-thrower) — bilanciato +0.035
 - [giav_vs_balestra](#5-giav_vs_balestra-record-stomp-sessione) — stomp record +0.75
 - [balestra_vs_tank](#6-balestra_vs_tank-stallo-da-scudo-medio) — stallo -0.025 (80% draw)
+- [lanc_vs_balestra](#7-lanc_vs_balestra-lance-stomp-balestra) — stomp +0.505
+- [balestra_vs_spa](#8-balestra_vs_spa-balestra-stomp-spadaccino) — stomp +0.65
+- [giav_inv_vs_arc](#9-giav_inv_vs_arc-giav-stomp-arciere--ranged-vs-ranged-sbilanciato) — stomp +0.66
+- [ascia2h_vs_lanc](#10-ascia2h_vs_lanc-high-risk-high-damage-bilanciato) — bilanciato -0.04
+- [ascia1h_vs_giav](#11-ascia1h_vs_giav-gerarchia-thrower-1-vs-3-hex) — stomp inverso -0.575
 
 ---
 
@@ -149,3 +154,104 @@ Questo è il matchup più sbilanciato della sessione (V_a_train +0.750, +37.5 wr
 
 ### Sintesi
 Il matchup è uno stallo strutturale: lo scudo medio porta parry.fixed effettivo a 16 quando attivo, e il +15 della balestra a quel punto trova il tank solo con un tiro alto, con malus distanza ⌊d/3⌋ che peggiora le cose nei round di kiting. La balestra ha un solo colpo ogni 8 turni (sparo + ricarica 7) e nel mezzo è inerme: il pugnale offhand a 1D6 non scalfisce armatura media. Il tank dal canto suo non ha minacce ranged, quindi se A mantiene 11+ hex non viene mai toccato dalla mazza — e infatti il BID non si attiva mai, perché nessuna delle due armi avversarie è reach ≥4. Risultato: 80% draw a tempo, 4% wins A, 16% wins B (B ha leggero edge solo quando riesce a chiudere prima del secondo bolt).
+
+---
+
+## 7. lanc_vs_balestra (lance stomp balestra)
+
+## Flow modale del matchup lanc_vs_balestra
+
+**Round 1.** Tutti partono a impeto 14, ma è A che apre per primo ed entra subito in modalità "lanciatore disciplinato": muove a coprire la distanza utile, accende lo scudo piccolo per beneficiare del parry.fixed contro la balestra (il TOGGLE_DEF compare in oltre metà delle simulazioni) e scaglia la prima delle due lance da 2 metri appena la finestra ranged si apre, preferendo il tiro a piene risorse. B, dall'altra parte, ha l'arma fredda: la balestra non è ancora carica all'ingaggio, e dato che la ricarica costa 7 turni la policy CFR consuma il primo round quasi soltanto a muoversi e iniziare il caricamento. A chiusura A è ancora a quasi venti HP con la postura difensiva attiva, B ha già perso terreno sui punti vita pur restando lontano (circa dieci esagoni) perché un lancio è andato a segno mentre lui era scoperto.
+
+**Round 2.** L'iniziativa torna ad A, che ha conservato impeto e ha lo slancio dalla parte giusta. Replica il pattern: scudo su, secondo lancio di lancia inquadrato, e qui la novità è che inizia a comparire anche la dichiarazione di attacco MELEE con la lancia da 2 metri, segno che la policy sta già preparando la transizione alla forbice corta sfruttando reach 4 e la zona di controllo. B finalmente arma il colpo e prova la sua prima salva di balestra con il +15 fisso, ma deve farlo allo scoperto perché non ha scudo: senza il -8 difensivo a proteggerlo, ogni tentativo di B è una scommessa simmetrica. La distanza scende a circa otto esagoni e mezzo, gli HP di B calano di un'altra fetta mentre A resta sopra i diciassette.
+
+**Round 3.** Qui inizia a vedersi il prezzo della ricarica 7: B passa una grossa fetta del round in MOVE+RELOAD perché il quadrello sparato al round 2 lo ha lasciato di nuovo a freddo. A non perdona: TOGGLE_DEF di nuovo sopra il 55%, lance ancora ranged, e compare per la prima volta in modo significativo la BID_MOVEMENT a 1, cioè il lanciere sta bidding per imporre l'ordine di passo e tenere B nel range della propria zona di controllo. Decisione non ovvia della policy: A non chiude subito, preferisce mantenere otto esagoni e mezzo (fuori dal melee del pugnale di B, dentro al proprio thrown), perché stare oltre i 4 esagoni della balestra è inutile, mentre stare a 2-3 sarebbe regalarsi al tiro fisso da +15. Un quarto delle partite finisce qui: B muore o cede prima ancora di completare il secondo ciclo di ricarica.
+
+**Round 4.** È il round della massima densità tattica per A: quasi venti azioni a round, perché spesso si arriva al contatto melee. La policy alterna lancio di lancia e dichiarazione melee, BID a 1 reiterato per assicurarsi la priorità di movimento, e mantiene comunque lo scudo attivo metà del tempo. B è ormai sotto i sette HP medi a fine round, e si vede la firma del disperato: BID a 0 e a 1 da entrambi i lati per contendere l'ordine, qualche tentativo di balestra ancora ranged ma senza più il tempo di un altro reload pulito. La distanza scende sotto gli otto esagoni e A controlla la geometria. Quasi un quarto delle simulazioni si chiude proprio in questo round con A che porta a casa.
+
+**Round 5.** Quando il match arriva fin qui (un quinto dei casi), è perché B ha tirato a sopravvivere e ha guadagnato la finestra per una nuova salva di balestra. Si vede un'inversione: B gioca il round più ricco di azioni, prova a sganciarsi, ricaricare e sparare di nuovo a otto esagoni dove il pugnale non serve. A è invece ridotto all'osso (meno di nove HP medi, slancio risicato), eppure la policy non panica: continua a preferire il tiro ranged della lancia con stance difensivo aperta a quasi metà delle azioni, sapendo che il -8 dello scudo piccolo rende esitante anche il +15 fisso del quadrello. Decisione non ovvia: A non si butta in melee anche se il pugnale di B è ridicolo, perché esporsi al quadrello carico significa accettare un ATK_DICE 2 da venti danni potenziali; meglio stare ai limiti del proprio thrown e continuare a piazzare colpi assestati.
+
+**Round 6 e oltre.** Pochi casi residuali (sotto il 6%), per lo più scenari in cui B è riuscito a trascinare la partita rifiutando ogni ingaggio: si vedono code lunghe a venti-ventiquattro esagoni in cui A si limita a muovere e accendere lo scudo, B prova un ultimo quadrello carico. La policy CFR di A in questa fase smette di forzare e si limita a sopravvivere, perché lo slancio è azzerato e l'impeto crollato; la statistica dice che anche da qui A non perde di brutto, ma è il pareggio o la vittoria di misura che restano sul tavolo.
+
+### Sintesi
+Il lanciere stomp la balestra perché impone tre regole simultanee a sfavore di B: la ricarica 7 trasforma ogni tiro avversario in un evento isolato, mentre lance throw e melee a reach 4 garantiscono ad A una pressione continua su entrambi i registri. Lo scudo piccolo con parry.fixed 4 abbatte il +15 fisso della balestra del valore necessario a togliergli la scorciatoia, e B non può replicare perché ha rinunciato allo scudo per il dado ranged. Infine la BID_MOVEMENT, attivata dal reach grande della lancia, permette al lanciere di scegliere quando stare a otto esagoni e quando entrare, mentre B non ha né mobilità né melee credibile per dettare la geometria: il +25 wr% e il V_a_train +0.505 sono la misura di questo squilibrio strutturale.
+
+---
+
+## 8. balestra_vs_spa (balestra stomp spadaccino)
+
+## Flow modale del matchup balestra_vs_spa
+
+**Round 1.** Entrambi partono con impeto 14, quindi l'iniziativa si gioca sul filo: in pratica i due si muovono quasi in parallelo, con il balestriere che apre da circa sedici hex e cerca subito di imporre la distanza a cui vivere. A spende le sue due azioni quasi solo in MOVE per arretrare o lateralizzare e tenere un cono di tiro pulito, senza ancora dichiarare attacco perché la balestra è già carica ma serve la finestra giusta. B avanza dritto, due o tre passi di MOVE consumando impeto, e accumula un filo di slancio (0.4) che gli servirebbe come bonus passivo se prendesse una freccia. A fine round nessuno ha tirato un colpo, gli HP sono ancora pieni o quasi (18.9 contro 20.0), la distanza si è chiusa appena di un paio di hex e siamo a 10.6: per A è già zona di tiro utile, per B è ancora un deserto da attraversare.
+
+**Round 2.** Qui il match si decide quasi sempre, e i numeri lo dicono: il 42% delle simulazioni finisce in questo round. A ha l'iniziativa perché il suo impeto residuo è più alto, dichiara DECL_ATK ranged sul balestra mode 0 e tira il +15 fisso da nove-dieci hex, fuori reach della spada lunga (che ricordiamolo arriva a 2). Il colpo passa quasi sempre senza che B possa opporre nulla di attivo: niente parata, niente schivata sul ranged, restano solo slancio e RD dell'armatura media, che mordono pochissimo su un danno secco da 15. B incassa intorno a 10 punti medi e si ritrova a 10.3 HP a fine round, dimezzato in un singolo scambio. Nel frattempo A spende RELOAD d1 (62% delle volte) e un MOVE per non lasciarsi raggiungere: il pugnale resta in tasca, è solo una rete di sicurezza. B avanza, prova a guadagnare i due hex mancanti, ma la sua finestra per parry attiva non si apre perché non è ancora a contatto. Distanza 9.5, slancio A 5.8 (sta accumulando per i passivi), B 2.0 e già sotto.
+
+**Round 3.** Solo 29 sim su 50 ci arrivano, le altre B è già caduto. Qui finalmente B può cominciare a mordere: dichiara MELEE spada lunga mode 1 in nove episodi, prova ad arrivare a reach 2 e a piazzare il D6+6. Il problema è che parry attiva la può attivare solo quando è lui il difensore, e se A continua a sparare ranged la parry resta inutile per costruzione (ranged ignora parata e schivata). Quando B entra in melee A risponde alternando: o un secondo colpo di balestra se è ricaricato, o il pugnale come ripiego (cinque DECL_ATK MELEE pugnale mode 0). B comunque colpisce 6 volte su tante tentate, ma il suo damage per hit è 7.6 contro i 15.2 di A: scambio strutturalmente perso. A esce a 14.2 HP, B a 13.0, distanza che si è riaperta a 10.7 perché A fa kiting (52% MOVE) e BID_MOVEMENT può attivarsi a favore di entrambi essendo entrambi melee-capable, ma A vince i bid sul piano tattico evitando l'ingaggio.
+
+**Round 4.** Venti sim su 50, sette finiscono qui. Il pattern è ormai cristallizzato: A ricarica, muove, spara di nuovo (otto DECL_ATK ranged), e la distanza addirittura si allarga a 12.2 hex perché A ha imparato che ogni passo di B è un passo dentro un altro +15. B tira solo 1.1 azioni a round perché o muore subito o resta a inseguire senza arrivare. Lo slancio di B (2.5) è basso proprio perché continua a spendere impeto in MOVE invece che tenerlo per parry/dodge: ma anche tenendolo non gli servirebbe nulla finché il colpo è ranged. La decisione non ovvia qui è di A: continua a tenere il pugnale come riserva mentale ma non passa mai al melee se può evitarlo, perché il +15 fisso senza dadi è un'arma matematicamente superiore al D6+6 dello spadaccino su qualsiasi distanza utile.
+
+**Round 5.** Tredici sim ancora vive, sette chiudono qui. La distanza si è ridotta a 8.2: B è riuscito a fare pressione e A inizia a usare DEF (54% delle azioni), in particolare quattro parry d2 con offhand, che è il pugnale: è qui che il pugnale guadagna senso, non come arma offensiva ma come strumento di parata attiva. B finalmente piazza qualche colpo (sei DECL_ATK spada lunga mode 1, due CARICA per provare a forzare lo slancio), ma arriva con HP già intaccati, 10.1 di media, e A è ancora a 12.2: matematicamente B dovrebbe fare almeno due hit puliti per chiudere, e con A che parry-blocka una buona fetta degli scambi (sei parry blocked sui suoi 24 totali nel match) la finestra si chiude. Le sim oltre il round 5 sono residuali e raccontano sempre la stessa storia: A finisce mediamente a 19.7 HP al round 7, B a 2.3.
+
+### Sintesi
+Lo spadaccino senza scudo non chiude per tre motivi che si sommano. Primo, contro il ranged la sua unica difesa attiva è inutile: parry e dodge non mordono sul tiro di balestra, restano solo slancio e armor RD che su +15 fisso lasciano passare quasi tutto. Secondo, ogni round speso ad avvicinarsi è un round in cui A ricarica e ritira: la pipeline ricarica-7 sembrerebbe penalizzante ma in realtà copre esattamente il tempo che B impiega a colmare dieci hex. Terzo, anche quando B arriva a reach 2, A ha il pugnale come parry offhand e fa kiting via BID_MOVEMENT, riaprendo distanza prima che la spada lunga possa concatenare due colpi consecutivi.
+
+---
+
+## 9. giav_inv_vs_arc (giav stomp arciere — ranged-vs-ranged sbilanciato)
+
+## Flow modale del matchup giav_inv_vs_arc
+
+**Round 1.** L'iniziativa parte pari, impeto 14 a testa, ma il giavellottiere A apre il ballo: appena entrambi sono in linea di vista, attiva la stance difensiva con lo scudo piccolo (parry fissa a 4, malus -8 al tiro nemico) e scaglia il primo giavellotto a circa 10 hex con il suo +6 fisso, mode dadi 2. L'arciere B intanto tende l'arco, ma in metà casi è ancora in fase di RELOAD o di riposizionamento dopo il primo tiro. A chiude il round a 16-17 HP, in stance quasi metà delle volte; B paga subito il pegno e scivola a 12 HP, slancio acceso a 5 ma niente scudo a coprirgli le costole. Distanza stabile a 10 hex: si stanno semplicemente bersagliando da fermi.
+
+**Round 2.** Qui si vede la forbice. A apre 64% delle volte con un altro TOGGLE_DEF, scaglia il secondo giavellotto (ancora RANGED, mode 2) e in qualche caso, quando B prova a chiudere, lo accoglie con giavellotto in MELEE. B continua il suo metronomo arco-RELOAD-arco, ma tira contro un bersaglio in stance: il -8 effettivo gli erode la pioggia di 2D6+6 in modo brutale. L'impeto di A scende a 14, mentre B resta sopra 22 grazie ai movimenti ridotti, ma quel surplus non gli serve perché non lo converte in danno. Distanza ancora 10 hex, HP A 12.3, HP B 7.7: in un terzo delle simulazioni il match si chiude proprio qui, con B abbattuto al secondo o terzo giavellotto.
+
+**Round 3.** Iniziativa di nuovo ad A per impeto residuo, anche se la forbice si è stretta (11.8 vs 20.7). A riapre la stance nel 59% dei casi e tira il terzo e ultimo giavellotto, sempre RANGED mode 2 con il +6 fisso che continua a passare pulito attraverso l'armatura leggera di B. B in questo round si scompone: 29 azioni medie, quasi tutte MOVE, segno che l'AI prova disperatamente a riaprire la distanza o a cercare un angolo, ma è già a 4.3 HP e non ha lo scudo per assorbire un altro colpo. La distanza scende a 9.1 hex. È il round con più chiusure in assoluto: 18/50 (36%) finiscono qui, B che cade prima di completare un altro ciclo arco+RELOAD utile.
+
+**Round 4.** Solo 9 simulazioni su 50 arrivano fin qui, e sono i casi in cui B è riuscito a ferire seriamente A o a forzare distanza. A è ormai senza giavellotti da lancio, perciò compaiono i BID (slancio in salita a 5.9) e la transizione verso la spada backup; tira ancora qualche RANGED nelle prime fasi ma poi cerca il melee. B prova un mix di BID e RELOAD, ma con 3.2 HP medi il margine è zero: basta un colpo passato e crolla. Distanza giù a 8.3 hex. Il +6 giav full sul torace nudo e il -8 da scudo piccolo sull'arco hanno già scritto il finale.
+
+**Round 5.** Coda statistica, 2 sim su 50. A è ridotto a 1 HP medio, B sta a 10: sono i rari casi in cui l'arciere è riuscito a tenere l'angolo e accumulare hit puliti. Qui A non ha più giavellotti, prova la CARICA con scudo piccolo come arma improvvisata in MELEE, mentre B finalmente attiva DEF dodge d2 e ricarica per il colpo di grazia. Distanza 6.5 hex. È l'unica cella in cui B respira, ma il flusso dominante l'ha già perso quattro round prima.
+
+### Sintesi
+Il ranged-vs-ranged è sbilanciato perché i due "ranged" non sono affatto simmetrici: A può attivare lo scudo piccolo come passive durante tutta la fase di tiro, imponendo a B un -8 effettivo su ogni 2D6+6 senza pagare nulla in offesa, mentre B non ha scudo e incassa il giavellotto col +6 fisso a piena potenza sull'armatura leggera. In più, i 3 giavellotti senza ricarica permettono ad A tre colpi netti nei primi due round, esattamente la finestra in cui B è costretto a RELOAD e quindi attacca a metà cadenza. Il giav è progettato per dominare la media distanza con un fisso alto e dadi pochi ma puliti; l'arco lungo, brillante in vacuo, qui sbatte contro una stance difensiva permanente che ne dimezza la curva di hit. Risultato: stomp +33 wr%, B finito già al round 3 nel 70% dei casi.
+
+---
+
+## 10. ascia2h_vs_lanc (high-risk high-damage bilanciato)
+
+## Flow modale del matchup ascia2h_vs_lanc
+
+**Round 1.** Le forze partono distanti, sei esagoni di separazione, e l'iniziativa è tutta del lanciere B che apre la danza con il suo repertorio: scudo piccolo alzato in stance difensiva (TOGGLE attivo nel 54% dei casi) e prima lancia in volo verso A. A risponde nel solo modo che conosce, accorciando la distanza con avanzate continue, il 90% delle azioni è MOVE pura. L'armatura pesante incassa: il primo tiro graffia ma non ferma la marcia, A chiude il round a 19.4 HP, B a 18.1, slancio 4.6 contro 1.1 — l'asciatore sta già caricando.
+
+**Round 2.** B mantiene l'iniziativa e il piano: indietreggia, scaglia la seconda lancia, alterna RANGED e MELEE preventivo a parità di frequenza. La distanza si dilata di nuovo a 8.8 hex — il kite funziona, A non riesce a chiudere il gap. L'asciatore subisce ma resiste, scende a 17.2 HP grazie all'RD 12 che decurta in modo brutale ogni 2D6 del lancio: con dadi medi sui 7, il lanciere fa danno netto risibile o nullo. A spende un terzo delle azioni in DEF reattivo (parry o dodge senza scudo, ma comunque), e l'impeto resta a 7.7 — non sufficiente per chiudere ancora.
+
+**Round 3.** Punto di svolta: A esplode a 10.1 azioni, ricarica slancio e lancia il primo vero affondo in mischia, undici DECL_ATK MELEE con l'ascia, dadi alti (preferenza ATK_DICE[3]) per massimizzare la finestra di hit. La distanza scende a 6.8 hex. B continua a parare-e-scappare con TOGGLE al 64%, ma ora qualche colpo dell'ascia comincia a passare: 1D6+15 contro armatura media e parry da 4 significa che anche un tiro mediocre lascia il segno. HP A 15.8, HP B 16.9 — il fisso a +15 sta facendo il mestiere.
+
+**Round 4.** B riprende fiato e ricomincia il kite, distanza che si riapre a 9.6 hex. A perde momentum, crolla a 2.1 azioni e impeto in negativo (-0.5): è il prezzo dell'aver speso tutto nell'assalto del round 3. B torna in modalità a tutto spettro, RANGED prevalente (16) ma anche colpi di scudo opportunistici quando A si avvicina. L'ascia non picchia, ma l'armatura pesante regge: HP A 14.5, una perdita gestibile.
+
+**Round 5.** Stallo defilato, distanza massima 9.9 hex. A continua a procedere stancamente, slancio 1.7, impeto -2.5, dichiara nove attacchi in mischia ma quasi tutti a vuoto perché B resta fuori reach. B esplode a 12.1 azioni nel round e tira di tutto, dadi a due e a uno alternati per mascherare la lettura. HP A 13.9, HP B 14.8 — il lanciere è leggermente avanti ma non abbastanza per chiudere, e ogni lancio che entra perde dodici punti contro l'RD pesante.
+
+**Round 6.** Ancora kite, B a 12.3 azioni, in_def_stance al 61% — il picco difensivo, sa che l'ascia ormai morde quando arriva. Distanza 8.9 hex. A fatica, 1.5 azioni, impeto -3.4, sta perdendo struttura: HP 12.2 contro 15.1 di B. È qui che si vede che senza scudo e senza lancio A è esposto al consumo lento, ma è anche qui che si capisce perché regge il matchup — ogni volta che riesce a prendere contatto, un singolo hit rimuove il vantaggio accumulato dal lanciere in tre round di kite.
+
+### Sintesi
+L'ascia 2h è la definizione di "high-risk high-damage": senza scudo subisce tutto, senza lancio non controlla la distanza, ma quando arriva un solo 1D6+15 contro armatura media + parry 4 toglie a B in un colpo quello che B ha costruito in cinque round di lanci. È esattamente questo che spiega V_a -0.040 contro il -0.275 dello spadone: i nove punti fissi in più (1D6+15 contro 1D6+6) trasformano il 70.7% di hit-rate dell'asciatore in 7.5 danni medi per hit, cioè letalità reale dopo armatura. Lo spadone con +6 entra in mischia e gratta, l'asciatore one-shotta. Conferma chiara: il no-scudo è una scelta sostenibile se e solo se l'ATK è abbastanza alto da rendere ogni singolo contatto decisivo — in caso contrario diventa carne da kite.
+
+---
+
+## 11. ascia1h_vs_giav (gerarchia thrower 1 vs 3 hex)
+
+## Flow modale del matchup ascia1h_vs_giav
+
+**Round 1.** L'iniziativa è del giavellottiere, che alla campana è già pronto a sfruttare il suo range di tre esagoni: chiude a 7-8 hex e fa partire il primo giavellotto, mentre l'asciaiolo è ancora dentro il bisogno di colmare i due-tre hex che gli mancano per essere a tiro. A entra in stance difensiva nel sessanta per cento delle simulazioni e tenta comunque un lancio della prima ascia, ma a quella distanza è ai limiti della sua gittata e spesso il colpo si perde o viene parato. B alterna toggle difensivo e tiro, segnando i primi danni: A chiude il round attorno ai diciassette HP, B sopra i diciannove, distanza media 7.6 hex. La decisione non ovvia di A è che non può permettersi di restare prudente, ma il suo scudo piccolo lo invita a farlo, ed è una trappola.
+
+**Round 2.** Il volume di azioni esplode: undici e mezzo per parte, segno che entrambi alternano corsa, parate e tiri. A prova a serrare la distanza ma B la riapre attivamente, retrocedendo di un hex e rilanciando: il giavellottiere mette a segno il secondo tiro, e nel dodici per cento delle sim la partita finisce già qui per A che è finito sotto soglia. La distanza media a fine round sale a 9.6 hex, esattamente la zona dove B continua a colpire e A non arriva. A è già a 13.6 HP, B ancora a 18: il differenziale di slancio si è ribaltato, A bid su slancio sette e mezzo per provare a coprire terreno, ma è un investimento in tempo che B converte subito in un altro lancio.
+
+**Round 3.** Round di logoramento, il più lungo per numero medio di azioni. A stringe i denti con ventuno azioni di media, prevalentemente movimento e toggle, e tira la sua seconda e ultima ascia. Fatto. Ora A ha solo melee. B continua a girare attorno mantenendo la forbice di range: lancia il terzo giavellotto e in alcune linee inizia a chiudere lui la distanza con la spada di backup quando la situazione lo permette. HP a fine round: A scivola a 11.2, B regge a 17.0. La decisione tattica non banale è che A deve smettere di lanciare e correre, ma a quel punto entra a pezzi nel mischia.
+
+**Round 4.** Qui si vede la frattura. A è ridotto a 3.3 azioni nel round, segno che molte run finiscono prima della sua second action: nel diciotto per cento delle simulazioni il match termina proprio in questo round, quasi sempre con A sotto soglia. Il giavellottiere tira ancora a 8.2 hex e il suo ATK +6 fisso non perdona: hit-rate sopra il sessanta per cento, danno medio per tentativo intorno a quattro. A esce dalla stance difensiva quasi metà delle volte perché deve correre, ed è proprio lì che incassa i tiri pieni. HP medio di A 8.6, B ancora intatto a 16.8.
+
+**Round 5.** Le linee superstiti sono quelle in cui A è sopravvissuto al tiro a freddo: ma A è ormai a 8 HP medi e l'impeto residuo è solo 6.3, contro 17.4 di B. La distanza si riapre ancora a 8.7 hex, la solita zona dove B ha tutto e A ha niente. A non ha più ascie da lanciare, ricorre a tentativi melee che però non arrivano a contatto, mentre B tira il quarto colpo nelle simulazioni dove le munizioni gli rendono e alterna giavellotto-spada. La decisione meno ovvia è di A che, a corto di slancio, smette di alternare e accetta il duello a media distanza: è la peggiore delle scelte, ma le altre sono già esaurite.
+
+**Round 6.** Fine corsa. A 6.6 HP medi A entra ancora in stance difensiva nel sessantaquattro per cento dei casi, ma ormai è pura sopravvivenza: tira un ultimo improperio melee a 7.8 hex sapendo che non chiuderà la distanza in tempo. B con 14.8 HP lancia il giavellotto residuo e chiude. Nel diciotto per cento delle simulazioni il match termina qui; le restanti si trascinano fino al settimo o ottavo round con A che continua a perdere terreno e HP, ma il verdetto è già scritto da molto prima. La traiettoria HP è lineare per B (19 → 18 → 17 → 16.8 → 16 → 14.8) e in caduta libera per A (16.9 → 13.6 → 11.2 → 8.6 → 8 → 6.6).
+
+### Sintesi
+Lo scudo piccolo simmetrico aiuta entrambi allo stesso modo in stance, ma il problema di A non è la difesa: è non arrivare mai. Il giavellottiere tira tre volte da tre hex con ATK fisso +6, l'asciaiolo tira due volte da un hex con un dado che varia, e mentre A si avvicina B retrocede e ricarica la pressione. Le tre munizioni contro due e il triplo di range di lancio sono esattamente lo stomp: quando A finisce le ascie e cerca il melee è già a un terzo dei suoi HP, e B ha ancora un giavellotto in mano e una distanza che A non chiuderà mai senza pagarla. Lo scudo simmetrico salva A da qualche colpo singolo, non dalla geometria del matchup.
