@@ -48,7 +48,19 @@
 | Arco lungo (range 4hex, 2D6+6) | +0.330 (vs spa) | -0.100 | **+21.5 wr%** |
 | Ascia1h (lancio 1hex) | +0.290 (vs spa) / +0.350 (vs arc) | -0.055 | **+17.2 wr%** |
 
-**Lo scudo medio (RD parry 1D6+8 + IMP 6) annulla 22-34 wr% di vantaggio del thrower/ranged.** Pattern **completamente atteso dalle regole**: schivata morde solo VARIABILE (inutile vs balestra `+15` puro fisso), parata richiede arma idonea (pugnale 1D6+0 troppo debole).
+**Lo scudo medio annulla 22-34 wr% di vantaggio del thrower/ranged.** Spiegazione meccanica (verificata su `core/ranged.py`):
+
+- Per **ranged + lancio** (arco, balestra, giav, ascia 1h, lance, pugnale): nessuna schivata/parata attiva, solo **difese passive** che riducono il tiro dell'attaccante:
+  - `−slancio_target`
+  - `−scudo.parry.fixed` (×2 se difensore in defensive_stance)
+  - `−armor.RD`
+- Quindi lo **scudo medio** (parry.fixed=8) sottrae **−8 al fisso del tiro ranged**, il piccolo (parry.fixed=4) sottrae −4, niente scudo = −0.
+- Per **CaC** (mischia + portata): vale schivata (morde VARIABILE) + parata (morde TUTTO ma richiede arma idonea), oltre allo scudo passivo solo se in defensive_stance.
+
+**Numeri attesi vs balestra (atk = 2 PG + 15 fisso + d6 PG)**:
+- Tank slancio 14, scudo medio (-8), armor media (-6): tiro ridotto di −28 → balestra spesso `≤ 0`
+- Spa 2h slancio 14, no scudo (0), armor media (-6): tiro ridotto di −20 → balestra passa più spesso
+- Differenza: **8 punti dallo scudo**, abbastanza da spostare il matchup di ~30 wr%.
 
 ### Conferma con build alternativa "spa_scudo" vs arco
 
@@ -160,9 +172,10 @@ Soglia accettazione `|V_a| < 0.15` rispettata per spa/tank/arc/balestra/lanc; sf
 
 ### 1. **Lo scudo è il counter primario a ranged/throwers** (atteso dalle regole)
 
-- Schivata morde solo la VARIABILE → inefficace vs `+15` (balestra), `+9` (mazza), `+6` (giav).
-- Parata morde tutto, MA serve arma idonea: pugnale `1D6+0` troppo debole, scudo piccolo `1D6+4` parziale, scudo medio `1D6+8` neutralizza.
-- Risultato: senza scudo, il difensore subisce ~30 wr% in più.
+- Per **ranged + lancio** non c'è schivata/parata attiva (verificato in `core/ranged.py`): difese sono passive (slancio + `scudo.parry.fixed` + `armor.RD`).
+- Lo **scudo medio** dà −8 al fisso del tiro ranged, lo **scudo piccolo** −4, no-scudo −0.
+- Per **CaC** (mischia + portata): la schivata morde la VARIABILE (efficace vs lancia 2D6, debole vs mazza/giav fisso puro); la parata morde TUTTO ma richiede arma con DIF idonea.
+- Risultato netto: senza scudo, il difensore subisce ~30 wr% in più contro chi può lanciare/sparare.
 
 ### 2. **Lo scudo medio è "OP" o gli altri sono sub-ottimali?**
 

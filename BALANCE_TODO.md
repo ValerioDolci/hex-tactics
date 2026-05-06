@@ -10,7 +10,7 @@
 ## Insight strutturale (DA TENER PRESENTE per ogni fix)
 
 > **Throwers/ranged battono chi NON ha scudo. Lo scudo medio neutralizza 22-34 wr%.**
-> È **atteso dalle regole** (schivata morde solo VARIABILE, parata richiede arma idonea, pugnale `1D6+0` insufficiente).
+> Meccanica verificata in `core/ranged.py`: per ranged + lancio non c'è schivata/parata attiva, solo **difese passive**: `slancio + scudo.parry.fixed + armor.RD` sottratti al fisso del tiro. Quindi scudo medio → −8 al tiro ranged, scudo piccolo → −4, no-scudo → −0. La parata attiva e la schivata si applicano **solo in CaC** (e contro mazza/giav in mischia, la schivata è debole perché morde solo la VARIABILE — questi sono fisso puro).
 
 | Attaccante (con o senza scudo piccolo) | vs no-scudo | vs scudo medio (tank) | Δ recupero |
 |---|---|---|---|
