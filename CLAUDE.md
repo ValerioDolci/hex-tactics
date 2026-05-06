@@ -373,7 +373,7 @@ Eredita le 10 regole del CLAUDE.md di workspace (`/Users/flaviacasini/claude-bot
 
 ### M-1. Meccanica A — Asta nascosta di slancio (zona di controllo reach)
 
-**Idea**: armi con portata estesa (lance) possono "minacciare" la zona attorno al difensore. Chi vuole muoversi in zona deve "battere" l'asta del difensore.
+**Idea**: ogni arma da mischia "minaccia" la zona attorno al difensore entro la propria reach. Chi vuole muoversi in zona deve "battere" l'asta del difensore.
 
 **Trigger**: il movimento di un'unità si decompone in **singoli esagoni**. Per ogni esagono che l'attaccante vuole occupare, se l'esagono è entro `reach` di un difensore eligibile, scatta un'asta.
 
@@ -381,15 +381,20 @@ Eredita le 10 regole del CLAUDE.md di workspace (`/Users/flaviacasini/claude-bot
 - Vivo (HP > 0)
 - Faction avversaria
 - Slancio > 0 (chi non ha slancio non può biddare)
-- Equipaggia un'arma da mischia con **`reach >= 4` esplicito** in tabella armi
+- Equipaggia un'arma da mischia con **`reach >= 1`** (regola universale — confermata 2026-05-06 da Valerio)
 
-**Armi che attivano la zona di controllo**:
+**Armi che attivano la zona di controllo** (tutte le melee con reach esplicita):
+- Pugnale, spada, mazza, ascia 1h, ascia 2h: reach 1
+- Spada lunga: reach 2
+- Giavellotto: reach 2
 - Lancia 2m 1h/2h: reach 4
 - Lancia 3m 2h: reach 6
 
-**Armi che NON attivano** (reach < 4 o no reach):
-- Spada lunga (reach 2), giavellotto (reach 2), tutte le armi a 1 hex (mazza, ascia, spada, pugnale)
-- Tutte le armi a distanza (archi, balestra)
+**Armi che NON attivano**:
+- Disarmato (no weapon)
+- Armi solo-ranged senza secondaria melee (arco, balestra) — in `reducer.py` `weapon.range.reach is None`
+
+**Implementazione**: `python/hex_tactics/core/reducer.py:266` — commento "V2 (regola universale): TUTTE le armi melee con reach >= 1 triggerano l'asta".
 
 **Procedura asta** (aggiornata post-analisi CFR — vedi `python/cfr/auction_cfr_iterated_fix.py`):
 1. Attaccante e difensore scelgono **simultaneamente in privato** una puntata intera:

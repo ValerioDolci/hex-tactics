@@ -6,6 +6,8 @@
 >
 > Convenzione: A = primo player nel label, B = secondo. Es. `lanc_inv_vs_spa` → A=lanciere, B=spadaccino.
 
+**ERRATA (2026-05-06)**: alcuni passaggi delle narrative menzionano che il `BID_MOVEMENT` (asta zona controllo) si attiva "solo per armi reach ≥ 4 (lance)". Questa interpretazione era basata sulla vecchia formulazione di `CLAUDE.md` M-1. La regola corretta, **confermata da Valerio** e implementata in `reducer.py:266`, è: **TUTTE le armi da mischia con reach ≥ 1 triggerano l'asta** (regola universale). Le sezioni dove questo conta sono `ascia1h_vs_lanc` (round 3) e `lanc_vs_giav` (round 1, 3): il BID si attiva sempre quando uno dei due è in reach dell'altro, indipendentemente dall'arma. Le dinamiche e i dati restano corretti — è solo il commento sul trigger ad essere stato impreciso. CLAUDE.md M-1 è stato aggiornato.
+
 ---
 
 ## Indice
