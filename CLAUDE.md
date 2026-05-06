@@ -19,15 +19,31 @@
 
 ## Stato corrente
 
-**Fase**: **MVP shippabile** — tutte le 13 milestone (M1→M13 in scope ridotto) completate. **139 test verdi**. Gioco giocabile end-to-end via `npm run dev`.
+**Fase**: **Post-MVP — bilanciamento Deep CFR in corso** (overnight 2026-05-05 → 2026-05-06).
 
-**Cosa funziona**:
+**MVP completato**: tutte le 13 milestone (M1→M13 in scope ridotto), **139 test verdi**, gioco giocabile end-to-end via `npm run dev`.
+
+**Workflow corrente**: Deep CFR su matchup paralleli per stimare V_a (win-rate proxy) di ogni build. 22 modelli salvati in `python/cfr/nightly_results/deep_cfr_*/`.
+
+**File di stato bilanciamento (leggere a inizio sessione balance)**:
+- [`DEEP_CFR_RESULTS_2026-05-06.md`](./DEEP_CFR_RESULTS_2026-05-06.md) — snapshot completo V_a dei 22 modelli, insight strutturali, matrice copertura.
+- [`BALANCE_TODO.md`](./BALANCE_TODO.md) — TODO ordinato per priorità (bug lancia 3m, fix throwers, validazione mirror, distillazione AI, iterazione fino a `|V_a|<0.15`).
+- `python/cfr/nightly_results/database_index.json` — autopopolato, ordinato per imbalance.
+
+**Squilibri principali rilevati** (riepilogo, dettagli in DEEP_CFR_RESULTS):
+- Throwers (lanc/giav/balestra) stomp i preset baseline (spa/arc) di 27-33 wr%.
+- Ascia1h dominata da lanciere/giavellottiere (range lancio insufficiente).
+- Tra i preset, arciere batte spadaccino (+16.5 wr%).
+- **Distillazione AI necessaria** per il gioco — confermato da Valerio.
+- **Bug noto**: lancia 3m matematicamente rotta (vedi M-3) — fix da decidere.
+
+**Cosa funziona** (gameplay):
 - Mappa esagonale 24×18 con camera pan/zoom + deploy zone 7-hex
 - Movimento click-to-move con highlight slancio + costo applicato
 - Combat mischia con schivata/parata attiva + info nascosta hot-seat
 - Combat ranged con LoS dai 7 esagoni della basetta
 - AI heuristic (single-player) o hot-seat
-- 3 preset PG bilanciati su 2000 exp (Spadaccino/Arciere/Tank)
+- 3 preset PG bilanciati su 2000 exp (Spadaccino/Arciere/Tank) + 4 nuove build (Lanciere, Giavellottiere, Ascia 1h lanciatore, Balestriere) con `thrown_inventory + backup_weapon`
 - Persistenza setup in localStorage
 
 **Cosa è rimandato a post-MVP** (D-035, D-036):
