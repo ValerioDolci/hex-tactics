@@ -46,6 +46,7 @@ import {
   aiDecideSlancio,
 } from '@ai/basicAi';
 import { aiDecideHard } from '@ai/dtAI';
+import { aiDecideExpert, preloadStudentMulti } from '@ai/studentMultiAi';
 import { FactionId } from '@entities/Unit';
 import { getScenario, TutorialScenario, TutorialStep } from '@data/tutorial';
 import { TutorialOverlay } from '@ui/TutorialOverlay';
@@ -75,8 +76,12 @@ export class BattleScene extends Phaser.Scene {
 
   /** Modalità di controllo per fazione (default: A umano vs B AI) */
   private controlMode: Record<FactionId, 'human' | 'ai'> = { A: 'human', B: 'ai' };
-  /** Livello AI per fazione (default 'easy' = basicAi heuristic). 'hard' usa DT distillato v14. */
-  private aiLevel: Record<FactionId, 'easy' | 'hard'> = { A: 'easy', B: 'easy' };
+  /** Livello AI per fazione.
+   * - 'easy' = basicAi heuristic
+   * - 'hard' = DT distillato v14 (sync)
+   * - 'expert' = Deep CFR multi-matchup distilled (ONNX, async). Sub-fasi usano DT come 'hard'.
+   */
+  private aiLevel: Record<FactionId, 'easy' | 'hard' | 'expert'> = { A: 'easy', B: 'easy' };
 
   // Camera state (replicato da M2)
   private keys!: {
@@ -133,6 +138,10 @@ export class BattleScene extends Phaser.Scene {
         A: this.incomingSetup.aiLevelA ?? 'easy',
         B: this.incomingSetup.aiLevelB ?? 'easy',
       };
+      // Pre-carica il modello ONNX se almeno una fazione è Expert (warm-up async)
+      if (this.aiLevel.A === 'expert' || this.aiLevel.B === 'expert') {
+        void preloadStudentMulti();
+      }
     }
   }
 
@@ -729,19 +738,29 @@ export class BattleScene extends Phaser.Scene {
 
     // Piccolo delay per dare tempo al giocatore di vedere lo stato
     // Delay aumentato per leggibilità: l'AI è troppo veloce, il giocatore non vede cosa fa.
-    this.time.delayedCall(1100, () => this.executeAiAction());
+    this.time.delayedCall(1100, () => {
+      // executeAiAction è async (per supportare livello 'expert' con ONNX). Phaser
+      // delayedCall accetta callback sync ma TS permette di "fire-and-forget" una promise.
+      void this.executeAiAction();
+    });
   }
 
-  private executeAiAction(): void {
+  private async executeAiAction(): Promise<void> {
     if (this.state.phase !== 'choosing-action') return;
     const unitId = this.state.turnOrder[this.state.currentTurnIdx];
     const unit = this.state.units[unitId];
     if (!unit) return;
     if (this.controlMode[unit.faction] !== 'ai') return;
 
-    // Modalità Hard: usa il DT distillato per scegliere l'azione (e tutte le fasi successive)
-    const isHard = this.aiLevel[unit.faction] === 'hard';
-    const event = isHard ? aiDecideHard(this.state, unit.id) : aiDecideAction(this.state, unit.id);
+    // Livelli AI: 'expert' (Deep CFR distilled, async) → 'hard' (DT) → 'easy' (heuristic).
+    // Per 'expert': solo l'azione principale del turno usa il modello distillato; le
+    // sub-fasi (CHOOSE_ATTACKER_DICE, CHOOSE_DEFENSE) ricadono su DT come 'hard'.
+    const level = this.aiLevel[unit.faction];
+    const isHard = level === 'hard' || level === 'expert';
+    const isExpert = level === 'expert';
+    const event = isExpert
+      ? await aiDecideExpert(this.state, unit.id)
+      : (isHard ? aiDecideHard(this.state, unit.id) : aiDecideAction(this.state, unit.id));
     // Diagnostica: aggiungi al log la decisione AI cosi è visibile durante playtest.
     // Util per capire perché AI sceglie MOVE invece di ATTACK in qualche edge case.
     const choice =

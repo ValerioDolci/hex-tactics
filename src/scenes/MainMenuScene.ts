@@ -321,15 +321,16 @@ export class MainMenuScene extends Phaser.Scene {
         .setOrigin(0.5, 0);
       this.addToContent(aiLabel);
       yy += labelGap;
-      const getLevel = (): 'easy' | 'hard' =>
+      const getLevel = (): 'easy' | 'hard' | 'expert' =>
         (faction === 'A' ? this.setup.aiLevelA : this.setup.aiLevelB) ?? 'easy';
-      const setLevel = (lv: 'easy' | 'hard') => {
+      const setLevel = (lv: 'easy' | 'hard' | 'expert') => {
         if (faction === 'A') this.setup.aiLevelA = lv;
         else this.setup.aiLevelB = lv;
       };
-      for (const lv of ['easy', 'hard'] as const) {
+      for (const lv of ['easy', 'hard', 'expert'] as const) {
         const isSelected = getLevel() === lv;
-        this.makeChoiceButton(x, yy, lv === 'easy' ? 'Facile' : '★ Difficile (DT)', isSelected, () => {
+        const labelText = lv === 'easy' ? 'Facile' : lv === 'hard' ? '★ Difficile (DT)' : '★★ Expert (Deep CFR)';
+        this.makeChoiceButton(x, yy, labelText, isSelected, () => {
           setLevel(lv);
           saveSetup(this.setup);
           this.refresh();

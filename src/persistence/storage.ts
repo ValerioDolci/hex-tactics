@@ -15,10 +15,14 @@ export interface BattleSetup {
   customBuildIdA?: string;
   /** Se presente, ignora `presetB`. */
   customBuildIdB?: string;
-  /** Difficoltà AI per fazione A (default 'easy'). 'hard' usa il DT distillato dal v14. */
-  aiLevelA?: 'easy' | 'hard';
+  /** Difficoltà AI per fazione A (default 'easy').
+   * - 'easy' = basicAi heuristic
+   * - 'hard' = DT distillato v14 (sync, ~2 KB)
+   * - 'expert' = Deep CFR multi-matchup distilled (ONNX ~3.5 MB, async)
+   */
+  aiLevelA?: 'easy' | 'hard' | 'expert';
   /** Difficoltà AI per fazione B. */
-  aiLevelB?: 'easy' | 'hard';
+  aiLevelB?: 'easy' | 'hard' | 'expert';
 }
 
 export function saveSetup(setup: BattleSetup): void {
