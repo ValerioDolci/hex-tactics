@@ -51,7 +51,16 @@ Ogni report contiene per ogni matchup:
    - `B_win`: vittoria B mediana
    - `draw_longest`: draw più lungo (se presenti)
 
-## Template per subagent
+## Combat episodes (post-2026-05-06 update)
+
+Dal `match_replay.py` v2 in poi, la sezione `### Combat episodes` nel summary contiene per ciascun player:
+- `n_attempts`, `hit_rate`, `damage / attempt`, `damage / hit (mean / max)`
+- `ranged / melee attempts`
+- `outcomes_by_defense`: dict del tipo `{'parry_blocked': N, 'parry_hit': N, 'dodge_blocked': N, ...}`
+
+Questi dati sono il fondamento dell'analisi meccanica: ogni claim del subagent deve essere ancorato a uno di questi numeri.
+
+## Template per subagent (v2 — anchoring meccanico forzato)
 
 Quando si vuole delegare l'analisi narrativa a un subagent, usare:
 
@@ -60,22 +69,59 @@ Subagent type: general-purpose
 Description: "Match X dynamics analysis"
 Prompt:
 """
-Analizza le dinamiche di gioco di un matchup hex-tactics dal report Deep CFR.
+Analizza con RIGORE MECCANICO le dinamiche di un matchup hex-tactics. Il tuo compito non è descrivere "cosa fa A e B" — è SPIEGARE I NUMERI con riferimento alle regole.
 
 Path report: <path/al/report/markdown>
+Path regole: /Users/flaviacasini/claude-bot/sandboxes/valerio/hex-tactics/CLAUDE.md
 
-Il report contiene:
-- Summary stats di N partite simulate con la policy CFR
-- 3-4 partite rappresentative narrate turn-by-turn (categorie: A_win_fastest, A_win_longest, B_win, draw_longest)
+CONTESTO BUILD:
+- A: <weapon, offhand, armor, scudo SI/NO, throw inventory> (estrai dal report)
+- B: <stesso>
 
-Output desiderato (max 300 parole):
-1. **Verdetto**: chi vince, di quanto (% wr), quanto sono lunghe le partite (round medi)
-2. **Strategia di A**: cosa fa A nei turni iniziali e finali, quando e da quanto attacca, uso difensiva
-3. **Strategia di B**: stesso ma per B, focus su cosa fa quando perde
-4. **Fase decisiva**: in che round si decide tipicamente la partita, qual è l'azione chiave
-5. **Note di game design**: se emergono pattern utili per balancing (es. armi/skill che dominano)
+REGOLE IMPORTANTI (per ancoraggio):
+- Schivata morde solo VARIABILE; parata morde TUTTO ma serve arma idonea (pugnale 1D6+0 debole)
+- Ranged + lancio: NON c'è schivata/parata attiva. Difese passive: slancio + scudo.parry.fixed (-4/-8/-12) + armor.RD
+- Defensive stance raddoppia parry.fixed scudo (×2)
+- BID_MOVEMENT si attiva SOLO contro armi reach ≥4 (lance 2m=4, lance 3m=6) — se vedi BID con armi senza reach, è un BUG
+- 3 dadi attack: lo spadaccino baseline NON ha skill +1dadomax — se sceglie 3 dadi, è anomalia da segnalare
 
-Sii conciso e diretto. Cita esempi specifici dalle partite (es. "A_win_fastest: lanciere chiude in 2 round con 1 lancio + finisher") ma non parafrasare l'intera trace.
+OUTPUT desiderato (max 350 parole, ogni claim deve avere un numero ancorato):
+
+1. **Verdetto numerico** (3 righe):
+   - WR A/B/Draw, V_a_sim vs V_a_train (gap?)
+   - Round medi
+   - HP finale medio (se asimmetrico, evidenzia)
+
+2. **Combat efficiency** (4 righe — usa la sezione "Combat episodes" del report):
+   - Hit rate A vs B (es. "A 63%, B 40%")
+   - Damage / attempt A vs B
+   - Damage / hit (mean e max)
+   - Quale player è più "efficiente"? Quanto?
+
+3. **Defense breakdown** (3-4 righe — usa "outcomes_by_defense"):
+   - Cosa para B (es. "parry_blocked 18 / parry_hit 9 = 67% successo parata")
+   - Cosa schiva (dodge_blocked / dodge_hit)
+   - Quando B "non si difende" (none_hit count) — perché?
+
+4. **Pattern strategico** (3-4 righe — solo se serve a spiegare i numeri):
+   - Distanza primo attacco A vs B (citata)
+   - Uso TOGGLE_DEFENSIVE (citato)
+   - Anomalie? (es. spa con 3 dadi, BID senza reach → SEGNALA come potenziali bug)
+
+5. **Spiegazione meccanica** (3 righe):
+   - Quale specifica regola spiega il +X wr% di A su B?
+   - Es: "A scudo medio (parry.fixed 8) sottrae -8 al fisso del lancio B" oppure "A ha hit rate 1.6x perché B non può parare ranged"
+
+6. **Game design** (2 righe):
+   - 1 fix concreto + valore atteso V_a post-fix (best guess)
+
+REGOLE DI STILE:
+- Niente "il PG kita strategicamente" — sostituisci con "A muove per X turni, distanza media Y hex, hit rate Z%"
+- Niente note generiche tipo "balance issue" — devi specificare la meccanica responsabile
+- Cita SEED specifici per le partite narrate
+- Se vedi un dato anomalo o inspiegabile, dichiaralo: "ANOMALIA: X non spiegabile dalle regole"
+
+Output: SCRIVI L'ANALISI INLINE, NON salvare file (la policy non lo permette).
 """
 ```
 

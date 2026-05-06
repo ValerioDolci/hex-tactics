@@ -118,11 +118,34 @@ class TraceStep:
 
 
 @dataclass
+class AttackEpisode:
+    """Un singolo episodio di attacco: dichiarazione → difesa → esito.
+
+    Ricostruito post-hoc dalla trace osservando il delta HP del target.
+    """
+    round: int
+    attacker: str          # "A" or "B"
+    target: str            # "A" or "B"
+    weapon: str            # weapon_id
+    is_ranged: bool
+    distance: int          # hex distance al momento del DECLARE_ATTACK
+    atk_dice: Optional[int] = None
+    def_type: Optional[str] = None     # "parry" / "dodge" / "none" / None (ranged: nessuna scelta attiva)
+    def_dice: Optional[int] = None
+    parry_with: Optional[str] = None
+    target_hp_before: int = 20
+    target_hp_after: int = 20
+    damage: int = 0
+    hit: bool = False                  # True se damage > 0
+
+
+@dataclass
 class GameTrace:
     """Trace completa di una partita."""
     steps: List[TraceStep] = field(default_factory=list)
     returns: List[float] = field(default_factory=lambda: [0.0, 0.0])
     seed: int = 0
+    episodes: List[AttackEpisode] = field(default_factory=list)
 
     @property
     def winner(self) -> str:
@@ -143,6 +166,88 @@ class GameTrace:
     @property
     def hp_b_final(self) -> int:
         return self.steps[-1].hp_b if self.steps else 20
+
+
+def _extract_episodes(trace: GameTrace) -> List[AttackEpisode]:
+    """Ricostruisce gli episodi di attacco dalla sequenza di step.
+
+    Pattern atteso nei step:
+        DECLARE_ATTACK (atk player, weapon, is_ranged, [target_id implicito])
+        [CHOOSE_CARICA] (atk player, opzionale)
+        CHOOSE_ATTACKER_DICE (atk player, dice_n)
+        [CHOOSE_DEFENSE] (target player, defense_type, dice_n) — solo per CaC
+        ... (resolve auto-applicato fra gli step, hp del target può variare)
+
+    Damage = hp_target_pre_DECLARE − hp_target_min_within_window.
+    """
+    episodes: List[AttackEpisode] = []
+    steps = trace.steps
+    i = 0
+    while i < len(steps):
+        s = steps[i]
+        if s.raw_type == "DECLARE_ATTACK":
+            # Estrai weapon + is_ranged + chi è il target dal suffisso
+            ev_str = s.event  # "DECL_ATK[RANGED lancia_2m mode=0]" or "DECL_ATK[MELEE ...]"
+            try:
+                inner = ev_str.split("[", 1)[1].rstrip("]")
+                kind, weapon, _ = inner.split(" ", 2)
+                is_ranged = kind == "RANGED"
+            except Exception:
+                weapon = "?"
+                is_ranged = False
+            attacker = s.player
+            target = "B" if attacker == "A" else "A"
+            target_hp_before = s.hp_b if target == "B" else s.hp_a
+            ep = AttackEpisode(
+                round=s.round,
+                attacker=attacker,
+                target=target,
+                weapon=weapon,
+                is_ranged=is_ranged,
+                distance=s.dist,
+                target_hp_before=target_hp_before,
+            )
+            # Scan forward per atk_dice + def_choice + nuovo HP
+            j = i + 1
+            min_hp = target_hp_before
+            while j < len(steps):
+                sj = steps[j]
+                # Se inizia un nuovo episodio (DECLARE_ATTACK), termina questo
+                if sj.raw_type == "DECLARE_ATTACK":
+                    break
+                # Aggiorno hp_target visto fino ad ora
+                hp_t = sj.hp_b if target == "B" else sj.hp_a
+                if hp_t < min_hp:
+                    min_hp = hp_t
+                if sj.raw_type == "CHOOSE_ATTACKER_DICE":
+                    try:
+                        ep.atk_dice = int(sj.event.split("[")[1].rstrip("]"))
+                    except Exception:
+                        pass
+                elif sj.raw_type == "CHOOSE_DEFENSE":
+                    try:
+                        inner = sj.event.split("[")[1].rstrip("]")
+                        parts = inner.split()
+                        ep.def_type = parts[0]
+                        for p in parts[1:]:
+                            if p.startswith("d"):
+                                ep.def_dice = int(p[1:])
+                            elif p.startswith("w/"):
+                                ep.parry_with = p[2:]
+                    except Exception:
+                        pass
+                # Se siamo abbastanza avanti (>=8 step dal DECLARE) o cambia round, chiudo episodio
+                if sj.round != s.round and j > i + 4:
+                    break
+                j += 1
+            ep.target_hp_after = min_hp
+            ep.damage = max(0, target_hp_before - min_hp)
+            ep.hit = ep.damage > 0
+            episodes.append(ep)
+            i = j
+            continue
+        i += 1
+    return episodes
 
 
 def _event_to_str(ev) -> str:
@@ -281,6 +386,7 @@ class MatchReplay:
             st.apply_action(a)
         if st.is_terminal():
             trace.returns = list(st.returns())
+        trace.episodes = _extract_episodes(trace)
         return trace
 
     def simulate(self, n_games: int = 50, seed_base: int = 42) -> List[GameTrace]:
@@ -327,6 +433,44 @@ class MatchReplay:
                 final_hp["A"].append(t.hp_a_final)
                 final_hp["B"].append(t.hp_b_final)
 
+        # Combat episodes statistics
+        combat = {"A": {"n": 0, "hits": 0, "dmg_total": 0, "ranged": 0, "melee": 0,
+                        "by_def": Counter(), "dmg_when_hit": []},
+                  "B": {"n": 0, "hits": 0, "dmg_total": 0, "ranged": 0, "melee": 0,
+                        "by_def": Counter(), "dmg_when_hit": []}}
+        for t in traces:
+            for ep in t.episodes:
+                c = combat[ep.attacker]
+                c["n"] += 1
+                if ep.hit:
+                    c["hits"] += 1
+                    c["dmg_when_hit"].append(ep.damage)
+                c["dmg_total"] += ep.damage
+                if ep.is_ranged:
+                    c["ranged"] += 1
+                else:
+                    c["melee"] += 1
+                # outcome chiave: difesa scelta (None per ranged)
+                key = ep.def_type if ep.def_type else "n/a"
+                # marker speciale: hit/parato
+                key += "_hit" if ep.hit else "_blocked"
+                c["by_def"][key] += 1
+
+        def _combat_summary(c):
+            if c["n"] == 0:
+                return {"n_attempts": 0}
+            return {
+                "n_attempts": c["n"],
+                "hit_rate": c["hits"] / c["n"],
+                "dmg_total": c["dmg_total"],
+                "dmg_per_attempt": c["dmg_total"] / c["n"],
+                "dmg_per_hit_mean": float(np.mean(c["dmg_when_hit"])) if c["dmg_when_hit"] else 0,
+                "dmg_per_hit_max": int(np.max(c["dmg_when_hit"])) if c["dmg_when_hit"] else 0,
+                "ranged_attempts": c["ranged"],
+                "melee_attempts": c["melee"],
+                "outcomes_by_defense": dict(c["by_def"].most_common()),
+            }
+
         return {
             "label": self.label,
             "n_games": n,
@@ -349,6 +493,8 @@ class MatchReplay:
             "rounds_per_game_max": int(np.max(rounds_per_game)) if rounds_per_game else None,
             "hp_A_final_mean": float(np.mean(final_hp["A"])) if final_hp["A"] else None,
             "hp_B_final_mean": float(np.mean(final_hp["B"])) if final_hp["B"] else None,
+            "combat_A": _combat_summary(combat["A"]),
+            "combat_B": _combat_summary(combat["B"]),
         }
 
     # ── Selection of representative traces ──
@@ -409,6 +555,37 @@ class MatchReplay:
         out.append("")
         out.append(f"**Round medi**: {stats['rounds_per_game_mean']:.1f} (max {stats['rounds_per_game_max']})")
         out.append(f"**V_a sim**: {stats['v_a_proxy']:+.3f}  **V_a train**: {stats['v_a_train']:+.3f}")
+        out.append("")
+        out.append("### Combat episodes (per-attacker)")
+        out.append("")
+        ca, cb = stats.get("combat_A", {}), stats.get("combat_B", {})
+        out.append("| Metric | A | B |")
+        out.append("|---|---|---|")
+        out.append(f"| Attacks attempted | {ca.get('n_attempts',0)} | {cb.get('n_attempts',0)} |")
+        out.append(f"| Hit rate (hits / attempts) | "
+                   + (f"{100*ca.get('hit_rate',0):.1f}%" if ca.get('n_attempts') else "—")
+                   + " | "
+                   + (f"{100*cb.get('hit_rate',0):.1f}%" if cb.get('n_attempts') else "—")
+                   + " |")
+        out.append(f"| Damage / attempt | "
+                   + (f"{ca.get('dmg_per_attempt',0):.2f}" if ca.get('n_attempts') else "—")
+                   + " | "
+                   + (f"{cb.get('dmg_per_attempt',0):.2f}" if cb.get('n_attempts') else "—")
+                   + " |")
+        out.append(f"| Damage / hit (mean / max) | "
+                   + (f"{ca.get('dmg_per_hit_mean',0):.1f} / {ca.get('dmg_per_hit_max',0)}" if ca.get('n_attempts') else "—")
+                   + " | "
+                   + (f"{cb.get('dmg_per_hit_mean',0):.1f} / {cb.get('dmg_per_hit_max',0)}" if cb.get('n_attempts') else "—")
+                   + " |")
+        out.append(f"| Ranged / Melee attempts | "
+                   + (f"{ca.get('ranged_attempts',0)}/{ca.get('melee_attempts',0)}" if ca.get('n_attempts') else "—")
+                   + " | "
+                   + (f"{cb.get('ranged_attempts',0)}/{cb.get('melee_attempts',0)}" if cb.get('n_attempts') else "—")
+                   + " |")
+        out.append("")
+        out.append(f"**Outcomes A** (def_type → hit/blocked count): `{ca.get('outcomes_by_defense', {})}`")
+        out.append("")
+        out.append(f"**Outcomes B**: `{cb.get('outcomes_by_defense', {})}`")
         return "\n".join(out)
 
     def render_narrative(self, trace: GameTrace, max_rounds_show: int = 12) -> str:
