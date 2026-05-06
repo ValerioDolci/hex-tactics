@@ -27,7 +27,17 @@ const ONNX_PATH = '/student_multi.onnx';
 // Cache lazy della sessione ONNX (1 sola init per pagina)
 let _sessionPromise: Promise<unknown> | null = null;
 
+/**
+ * True quando l'Expert AI è effettivamente utilizzabile (build multi-file con
+ * onnxruntime-web bundlato). False in singlefile: il dynamic import qui sotto
+ * fallirebbe a runtime perché 'onnxruntime-web' è external nel rollup config.
+ */
+export const EXPERT_AI_AVAILABLE: boolean = !__SINGLEFILE__;
+
 async function getSession(): Promise<unknown> {
+  if (__SINGLEFILE__) {
+    throw new Error('Expert AI non disponibile in build singlefile');
+  }
   if (!_sessionPromise) {
     _sessionPromise = (async () => {
       // dynamic import per non rompere SSR/test ambienti senza ONNX

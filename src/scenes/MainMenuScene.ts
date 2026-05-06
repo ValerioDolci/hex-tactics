@@ -327,7 +327,17 @@ export class MainMenuScene extends Phaser.Scene {
         if (faction === 'A') this.setup.aiLevelA = lv;
         else this.setup.aiLevelB = lv;
       };
-      for (const lv of ['easy', 'hard', 'expert'] as const) {
+      // Expert nascosto in build singlefile (onnxruntime-web non bundlato per
+      // evitare 25 MB di WASM inline → file singlefile esploderebbe).
+      const levels: ReadonlyArray<'easy' | 'hard' | 'expert'> = __SINGLEFILE__
+        ? ['easy', 'hard']
+        : ['easy', 'hard', 'expert'];
+      // Se l'utente aveva salvato 'expert' su build full, in singlefile fallback a 'hard'
+      if (__SINGLEFILE__ && getLevel() === 'expert') {
+        setLevel('hard');
+        saveSetup(this.setup);
+      }
+      for (const lv of levels) {
         const isSelected = getLevel() === lv;
         const labelText = lv === 'easy' ? 'Facile' : lv === 'hard' ? '★ Difficile (DT)' : '★★ Expert (Deep CFR)';
         this.makeChoiceButton(x, yy, labelText, isSelected, () => {

@@ -25,6 +25,12 @@ export default defineConfig({
     },
   },
   plugins: SINGLE_FILE ? [viteSingleFile()] : [],
+  // Flag compile-time: in singlefile l'Expert AI (Deep CFR ONNX) NON è disponibile
+  // perché onnxruntime-web includerebbe ~25 MB di WASM inline. Il code path
+  // dinamico viene dead-code-eliminated da Vite quando __SINGLEFILE__ è true.
+  define: {
+    __SINGLEFILE__: JSON.stringify(SINGLE_FILE),
+  },
   server: {
     host: true,
     port: 5173,
@@ -35,5 +41,12 @@ export default defineConfig({
     sourcemap: !SINGLE_FILE,
     // Per il single-file: niente sourcemap inline (sennò il file esplode), niente asset separati
     assetsInlineLimit: SINGLE_FILE ? 100_000_000 : 4096,
+    rollupOptions: SINGLE_FILE
+      ? {
+          // In singlefile, esternalizza onnxruntime-web: il dynamic import esiste ma
+          // a runtime fallisce e il fallback heuristic prende il sopravvento.
+          external: ['onnxruntime-web'],
+        }
+      : undefined,
   },
 });
