@@ -746,7 +746,12 @@ function doReload(state: GameState, unitId: string, diceN: number): GameState {
   void forcedExtra;
 
   const total = rollTotal(roll);
+  // Path "ricarica con tiro abilità" valido solo se l'arma ha un valore di reload definito.
+  // Per armi senza reload (cioè non ranged-con-ricarica) si rigetta — non dovrebbe arrivare qui.
   const difficulty = weapon.range.reload;
+  if (difficulty == null) {
+    return rejectEvent(state, 'RELOAD', `arma ${weapon.name} non ha un valore di reload`);
+  }
   const success = total >= difficulty;
 
   let newState = updateUnit(state, unitId, {

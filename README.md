@@ -32,7 +32,11 @@ Apri `http://localhost:5173` nel browser.
 
 ## Come si gioca
 
-1. **Main menu**: scegli per ogni fazione (A blu sx, B rosso dx) un preset (Spadaccino / Arciere / Tank) e la modalità (Umano / AI). Click "Inizia battaglia".
+1. **Main menu**: scegli per ogni fazione (A blu sx, B rosso dx) un preset (Spadaccino / Arciere / Tank) e la modalità (Umano / AI). Per le fazioni AI è disponibile la difficoltà:
+   - **Facile** — heuristic basicAi
+   - **★ Difficile (DT)** — Decision Tree distillato dal modello PPO v14 (~2 KB, sync)
+   - **★★ Expert (Deep CFR)** — modello Deep CFR multi-matchup distillato (3.5 MB ONNX, 1.4M params, async via `onnxruntime-web`). Non disponibile in build singlefile/mobile (richiede file ONNX servito separatamente).
+   Click "Inizia battaglia".
 2. **Battaglia**: a ogni turno, un'unità di una fazione si muove e/o agisce.
 3. **Comandi**:
    - Click esagono → seleziona
@@ -58,6 +62,7 @@ Apri `http://localhost:5173` nel browser.
 ✅ Skill system: 4 modificatori × 4 liste specializzazioni
 ✅ 3 preset PG bilanciati su 2000 exp
 ✅ AI heuristic (single-player vs CPU)
+✅ AI Expert: Deep CFR distilled (24 matchup, avg gap 7.8 wr% vs teacher equilibrium)
 ✅ Hot-seat (PvP locale stesso device)
 ✅ Persistenza setup in localStorage
 
