@@ -4,6 +4,27 @@
 
 ---
 
+## 🔄 Rollback marker — Skirmish work in progress
+
+**Branch corrente di sviluppo**: `feat/skirmish` (creato 2026-05-14 sera).
+
+**Commit stabile pre-skirmish** (rollback se necessario):
+- Hash: **`6189209`**
+- Branch: `design/codex-tacticus` (HEAD a quel commit)
+- Descrizione: "Combat narrator overlay: leggibilità + no overlap con popup UI"
+- Deployato live su `valeriodolci.github.io/hex-tactics-play/` (singlefile)
+
+**Per rollback** (in caso il lavoro skirmish rompa qualcosa):
+```bash
+git checkout design/codex-tacticus
+git reset --hard 6189209  # solo se servono modifiche post-6189209 da scartare
+bash scripts/deploy_pages.sh "rollback to pre-skirmish"
+```
+
+Le modifiche su `feat/skirmish` NON impattano `design/codex-tacticus` finché non viene fatto merge.
+
+---
+
 ## File del progetto — leggere SEMPRE a inizio sessione
 
 | File | Cosa contiene | Quando aggiornare |
