@@ -438,14 +438,20 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /**
-   * Genera una linea di narrazione (overlay sopra la scena) per gli eventi
-   * che meritano commento (combat, reload, movement, init swap). Per eventi
-   * sub-step (CHOOSE_DEFENSE, BID_MOVEMENT, ...) il narratore ritorna null.
+   * Genera una linea di narrazione (overlay in basso sulla scena) per gli eventi
+   * che meritano commento (combat, reload, movement, init swap, carica). Per
+   * eventi sub-step (CHOOSE_DEFENSE, BID_MOVEMENT, ...) il narratore ritorna null.
    *
    * Hold della linea: 4.5s per i combat (più letterari), 2.5s per movement/reload.
+   *
+   * Soppressione: durante le fasi con popup UI attivo (DiceChoiceUI, SliderChoiceUI,
+   * HandoffOverlay) sopprimiamo l'overlay per evitare sovrapposizione visiva.
+   * La linea viene accodata e mostrata appena la fase torna sgombra.
    */
   private maybeShowNarration(prev: GameState, curr: GameState, event: GameEvent): void {
     if (!this.narration) return;
+    // Sincronizza soppressione con fase corrente
+    this.narration.setSuppressed(this.isUiPopupPhase(curr));
     try {
       const line = narrate({ prev, curr, event });
       if (!line) return;
@@ -455,6 +461,25 @@ export class BattleScene extends Phaser.Scene {
       // Defensive: un crash del narratore non deve mai rompere il gameplay
       // eslint-disable-next-line no-console
       console.warn('[narrator] errore:', e);
+    }
+  }
+
+  /**
+   * True quando lo stato corrente ha un popup UI centrale attivo che occluderebbe
+   * l'overlay narrazione. Si basa sulla phase + sul controlMode (hot-seat = handoff
+   * tra umani può popparsi al cambio turno).
+   */
+  private isUiPopupPhase(s: GameState): boolean {
+    switch (s.phase) {
+      case 'turn-start': // DiceChoiceUI slancio (umano) o slider impeto-slancio
+      case 'declaring-attack': // DiceChoiceUI attacker dice
+      case 'awaiting-defense': // DiceChoiceUI defense
+      case 'awaiting-carica': // SliderChoiceUI carica
+      case 'awaiting-attacker-bid':
+      case 'awaiting-defender-bid':
+        return true;
+      default:
+        return false;
     }
   }
 
