@@ -25,6 +25,63 @@ Le modifiche su `feat/skirmish` NON impattano `design/codex-tacticus` finché no
 
 ---
 
+## 🆕 Skirmish (Phase 1 completata, 2026-05-14)
+
+**Branch `feat/skirmish` pushato + deployato live** — NvN da 2v2 fino a 10v10 (con limiti).
+
+### Funzionalità Phase 1 (live)
+- **Build-a-team con budget exp** (`SkirmishSetupScene`): 4000 exp/faction default,
+  preset selezionabili con costo (1750-2000 exp), min 1 / max 10 unit per faction.
+- **AI NvN-aware**: `pickTargetForAction` in basicAi sceglie main threat
+  (HP basso × pericolosità arma × prossimità). `studentMlpAi` + `studentMultiAi`
+  passano il main threat come `agentEnemyId` a `buildObsV2`.
+- **`teamAi.ts`** wrapper per logica team-level futura (Phase 3+).
+- **`TeamRosterHUD`**: pannello multi-unit con HP/slancio per ogni unit, header
+  faction, caret + bg oro per unit attiva. Visibile solo in skirmish (>1 unit per faction).
+- **Reducer core 100% NvN-ready** senza modifiche (`checkGameOver`, `computeTurnOrder`,
+  `doEndTurn` già generici).
+
+### Limiti noti Phase 1 → Phase 2
+- **3v3 e 10v10 vanno in timeout 100+ round su mappa 24×14**: troppe unit, manovre bloccate
+  da basette nemiche/alleate. Da risolvere con mappa scalabile in Phase 2.1.
+- **ActionMenu non ha scroll** verticale: con 5+ nemici × attack modes le voci escono
+  dalla viewport. Phase 2.2.
+- **AI hard "ignora alleati e nemici secondari"** nell'obs (training 1v1) →
+  no focus fire emergente, no copertura team. Richiede Phase 3 retrain.
+
+### Phase 2 (TODO)
+- 2.1 Mappa scalabile (es. 24+6×N hex/faction colonne)
+- 2.2 ActionMenu scrollabile
+- 2.3 Bilanciamento team composition (test pipeline simulazioni)
+
+### Phase 3 (retrain Deep CFR per skirmish, design doc)
+
+**Approccio scelto: 3.B Unit-centric con teammates-as-environment.**
+
+Idea: ogni unit decide indipendentemente (no comunicazione team), ma l'obs space
+si arricchisce di feature aggregate del proprio team e del team avversario:
+
+**Nuove feature obs (estensione `buildObsV2`)**:
+- `team_self`: # unit alive, HP medio team, slancio medio, distanza media al nemico
+- `team_opp`: # unit alive, HP medio team avversario, distanza media
+- `pos_in_team`: rank tactico (es. "sono il più ferito / il più sano / il più vicino al nemico")
+
+**Pipeline training**:
+1. Estendi `python/cfr/abstract_game.py` per gestire stato N unit per faction
+2. Riusa il MLP small distillato attuale come **base policy** (transfer learning)
+3. Fine-tune con curriculum: 1v1 (1k epoch) → 2v2 (5k epoch) → 3v3 (5k epoch) → 4v4+
+4. Distill nuovo `studentMlpWeights.ts` (forse con obs feature aggiuntive → file più grande)
+5. Sostituisci `aiDecideTeamHard` con il nuovo MLP centric-team-aware
+
+**Costo stimato**: 20-30h compute overnight su Mac M4 + ~10h codice. Pro:
+incrementale, riutilizza l'esistente, performance prevedibile. Contro: il MLP
+può non imparare focus fire emergente senza canale di comunicazione esplicito.
+
+**Da fare DOPO** che Phase 1 è giocata e validata, e Phase 2 (scaling + UI scroll
++ bilanciamento) chiuse.
+
+---
+
 ## File del progetto — leggere SEMPRE a inizio sessione
 
 | File | Cosa contiene | Quando aggiornare |
