@@ -59,6 +59,7 @@ import { paintVellum } from '@ui/Vellum';
 import { FONTS, PALETTE, factionTincture } from '@ui/theme';
 import { CombatNarrationOverlay } from '@ui/CombatNarrationOverlay';
 import { narrate } from '@ui/combatNarrator';
+import { TeamRosterHUD } from '@ui/TeamRosterHUD';
 
 /**
  * Scena principale di battaglia.
@@ -81,6 +82,7 @@ export class BattleScene extends Phaser.Scene {
   private handoff!: HandoffOverlay;
   private gameOverOverlay!: GameOverOverlay;
   private narration!: CombatNarrationOverlay;
+  private teamRoster!: TeamRosterHUD;
 
   /** Modalità di controllo per fazione (default: A umano vs B AI) */
   private controlMode: Record<FactionId, 'human' | 'ai'> = { A: 'human', B: 'ai' };
@@ -358,6 +360,9 @@ export class BattleScene extends Phaser.Scene {
     this.handoff = new HandoffOverlay(this);
     this.gameOverOverlay = new GameOverOverlay(this);
     this.narration = new CombatNarrationOverlay(this);
+    // Team roster: posizionato sotto l'HUD principale (HUD y=20 h=152 → roster a y=190).
+    // Visibile solo in skirmish (>1 unit per faction).
+    this.teamRoster = new TeamRosterHUD(this, 20, 190, 280);
     this.refreshUI();
 
     // Listener per resize del viewport: riposiziona overlay e UI
@@ -409,6 +414,14 @@ export class BattleScene extends Phaser.Scene {
       const u = this.state.units[id];
       if (u) sprite.update(u);
       sprite.setActive(this, id === activeId && u?.alive === true);
+    }
+    // Team roster: visibile solo in skirmish (>1 unit per faction).
+    if (this.teamRoster) {
+      const nA = Object.values(this.state.units).filter((u) => u.faction === 'A').length;
+      const nB = Object.values(this.state.units).filter((u) => u.faction === 'B').length;
+      const isSkirmish = nA > 1 || nB > 1;
+      this.teamRoster.setVisible(isSkirmish);
+      if (isSkirmish) this.teamRoster.update(this.state, activeId ?? null);
     }
   }
 
