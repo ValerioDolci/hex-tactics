@@ -23,6 +23,17 @@ export interface BattleSetup {
   aiLevelA?: 'easy' | 'hard' | 'expert';
   /** Difficoltà AI per fazione B. */
   aiLevelB?: 'easy' | 'hard' | 'expert';
+  /**
+   * Skirmish 2026-05-14: array di preset id per ciascuna faction. Se popolati,
+   * sovrascrivono `presetA`/`presetB` (1v1) e schierano N unit per faction.
+   * Max 10 per faction (Phase 2 target). Per 2v2 MVP: 2 entry per array.
+   */
+  skirmishA?: string[];
+  skirmishB?: string[];
+  /** Budget exp speso per faction A (informativo, per UI replay setup) */
+  budgetA?: number;
+  /** Budget exp speso per faction B (informativo) */
+  budgetB?: number;
 }
 
 export function saveSetup(setup: BattleSetup): void {

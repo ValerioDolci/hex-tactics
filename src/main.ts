@@ -6,6 +6,7 @@ import { BattleScene } from '@scenes/BattleScene';
 import { ManualScene } from '@scenes/ManualScene';
 import { TutorialMenuScene } from '@scenes/TutorialMenuScene';
 import { CharacterBuilderScene } from '@scenes/CharacterBuilderScene';
+import { SkirmishSetupScene } from '@scenes/SkirmishSetupScene';
 
 /**
  * Setup Phaser con scale FIT: canvas logica fissa a GAME_CONFIG.width/height,
@@ -44,6 +45,7 @@ const config: Phaser.Types.Core.GameConfig = {
     ManualScene,
     TutorialMenuScene,
     CharacterBuilderScene,
+    SkirmishSetupScene,
   ],
 };
 

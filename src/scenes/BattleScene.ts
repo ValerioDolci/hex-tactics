@@ -252,21 +252,66 @@ export class BattleScene extends Phaser.Scene {
       modeB: 'ai' as const,
     };
 
-    const presetA = getPreset(setup.presetA) ?? getPreset('spadaccino')!;
-    const presetB = getPreset(setup.presetB) ?? getPreset('arciere')!;
+    // 2026-05-14 (Phase 1.6 skirmish): se `skirmishA`/`skirmishB` popolati, schiera
+    // N unit per faction lungo una linea verticale alla colonna di deploy. Spacing
+    // verticale = 4 esagoni (basetta 7-hex non si sovrappone). Fallback 1v1
+    // standard se array assenti o vuoti.
+    const skA = setup.skirmishA && setup.skirmishA.length > 0 ? setup.skirmishA : null;
+    const skB = setup.skirmishB && setup.skirmishB.length > 0 ? setup.skirmishB : null;
 
-    // Custom build override (via setup): se presente, costruisce l'unità dalla build personalizzata.
-    const allBuilds = loadAllBuilds();
-    const customA = setup.customBuildIdA ? allBuilds.find((b) => b.id === setup.customBuildIdA) : undefined;
-    const customB = setup.customBuildIdB ? allBuilds.find((b) => b.id === setup.customBuildIdB) : undefined;
-
-    const posA = offsetToAxial({ col: 2, row: midRow });
-    const posB = offsetToAxial({ col: cols - 3, row: midRow });
-    const a: Unit = customA ? unitFromBuild(customA, 'A', posA) : unitFromPreset(presetA, 'A', posA);
-    const b: Unit = customB ? unitFromBuild(customB, 'B', posB) : unitFromPreset(presetB, 'B', posB);
+    let unitsList: Unit[];
+    if (skA && skB) {
+      // Skirmish multi-unit
+      const allBuilds = loadAllBuilds();
+      const deployLine = (count: number): number[] => {
+        // Genera N righe centrate su midRow, spacing 4
+        const spacing = 4;
+        const totalSpan = (count - 1) * spacing;
+        const startRow = Math.max(2, Math.floor(midRow - totalSpan / 2));
+        const out: number[] = [];
+        for (let i = 0; i < count; i++) out.push(Math.min(rows - 3, startRow + i * spacing));
+        return out;
+      };
+      const rowsA = deployLine(skA.length);
+      const rowsB = deployLine(skB.length);
+      const colA = 2;
+      const colB = cols - 3;
+      unitsList = [];
+      for (let i = 0; i < skA.length; i++) {
+        const presetId = skA[i];
+        const preset = getPreset(presetId) ?? getPreset('spadaccino')!;
+        const pos = offsetToAxial({ col: colA, row: rowsA[i] });
+        const u = unitFromPreset(preset, 'A', pos);
+        u.id = `A${i + 1}`;
+        u.name = `${preset.name} ${i + 1}`;
+        unitsList.push(u);
+      }
+      for (let i = 0; i < skB.length; i++) {
+        const presetId = skB[i];
+        const preset = getPreset(presetId) ?? getPreset('arciere')!;
+        const pos = offsetToAxial({ col: colB, row: rowsB[i] });
+        const u = unitFromPreset(preset, 'B', pos);
+        u.id = `B${i + 1}`;
+        u.name = `${preset.name} ${i + 1}`;
+        unitsList.push(u);
+      }
+      void allBuilds; // custom builds non supportate in skirmish MVP
+    } else {
+      // 1v1 standard
+      const presetA = getPreset(setup.presetA) ?? getPreset('spadaccino')!;
+      const presetB = getPreset(setup.presetB) ?? getPreset('arciere')!;
+      const allBuilds = loadAllBuilds();
+      const customA = setup.customBuildIdA ? allBuilds.find((b) => b.id === setup.customBuildIdA) : undefined;
+      const customB = setup.customBuildIdB ? allBuilds.find((b) => b.id === setup.customBuildIdB) : undefined;
+      const posA = offsetToAxial({ col: 2, row: midRow });
+      const posB = offsetToAxial({ col: cols - 3, row: midRow });
+      const a: Unit = customA ? unitFromBuild(customA, 'A', posA) : unitFromPreset(presetA, 'A', posA);
+      const b: Unit = customB ? unitFromBuild(customB, 'B', posB) : unitFromPreset(presetB, 'B', posB);
+      unitsList = [a, b];
+    }
 
     this.state = createInitialState({
-      units: [a, b],
+      units: unitsList,
       board: { cols, rows },
       rngSeed: Math.floor(Math.random() * 1_000_000),
     });

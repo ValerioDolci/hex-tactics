@@ -502,10 +502,30 @@ export class MainMenuScene extends Phaser.Scene {
     });
     this.addToContent(startBtn);
 
-    // Bottoni secondari Tutorial + Manuale (sotto al CTA)
+    // 2026-05-14 (Phase 1.7 skirmish): bottone "Skirmish" subito sotto il CTA primario,
+    // stesso stile primary ma più compatto. Apre SkirmishSetupScene (build-a-team con budget).
+    const skirmishY = y + btnH + 14;
+    const skirmishBtn = makeCodexButton({
+      scene: this,
+      x: w / 2 - btnW / 2,
+      y: skirmishY,
+      width: btnW,
+      height: 52,
+      label: 'Skirmish — banda contro banda',
+      variant: 'outline',
+      fontKind: 'display',
+      fontSize: 18,
+      onClick: () => {
+        this.scale.off('resize', this.onResize, this);
+        this.scene.start('SkirmishSetupScene');
+      },
+    });
+    this.addToContent(skirmishBtn);
+
+    // Bottoni secondari Tutorial + Manuale (sotto)
     const subBtnW = 150;
     const subBtnH = 46;
-    const subY = y + btnH + 18;
+    const subY = skirmishY + 52 + 18;
     const gap = 18;
 
     const tutBtn = makeCodexButton({

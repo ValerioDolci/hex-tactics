@@ -206,6 +206,14 @@ export const PRESETS: PresetSpec[] = [
   },
 ];
 
+/**
+ * Costo exp totale di un preset = somma di .cost di tutte le skill acquistate.
+ * Usato nello SkirmishSetupScene per il budget di team-building.
+ */
+export function presetCost(spec: PresetSpec): number {
+  return spec.skills.reduce((sum, s) => sum + (s.cost ?? 0), 0);
+}
+
 export function getPreset(id: string): PresetSpec | undefined {
   return PRESETS.find((p) => p.id === id);
 }
