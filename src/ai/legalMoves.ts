@@ -26,7 +26,7 @@ import {
   makeSlancioContext,
 } from '@core/stats';
 import { computeInitialImpeto } from '@core/turn';
-import { findClosestEnemy } from './basicAi';
+import { pickTargetForAction } from './basicAi';
 
 /**
  * Restituisce le mosse legali per l'unità attiva nello stato corrente.
@@ -115,7 +115,11 @@ function legalSlancioMoves(state: GameState, unitId: UnitId): GameEvent[] {
 /** Mosse legali per la fase choosing-action: muovi, attacca, ricarica, end turn */
 function legalActionMoves(state: GameState, unit: Unit): GameEvent[] {
   const moves: GameEvent[] = [];
-  const enemy = findClosestEnemy(state, unit);
+  // 2026-05-14 (Phase 1.2 skirmish): in NvN scegliamo il target "di valore" anziché
+  // il puramente più vicino. In 1v1 questo collassa al solo nemico → comportamento
+  // identico. Per il target-picker UI umano vedi `legalActionMovesAllTargets`
+  // (Step 1.4 — non ancora implementato).
+  const enemy = pickTargetForAction(state, unit);
   const weapon = unit.weapon ? getWeapon(unit.weapon) : undefined;
 
   // ATTACCO: se nemico in range mischia o ranged (V2 D-049)

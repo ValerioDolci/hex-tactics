@@ -39,6 +39,59 @@ function findClosestEnemy(state: GameState, me: Unit): Unit | null {
   return best;
 }
 
+/**
+ * Scoring "main threat" per skirmish (NvN, Phase 1.2 — 2026-05-14).
+ *
+ * Priorità di un nemico:
+ *   - basso HP residuo → più finishable (focus fire)
+ *   - alto danno potenziale arma → più pericoloso
+ *   - bassa distanza → più imminente
+ *
+ * Formula: (danger_arma / hp_left) × (1 / max(1, dist)).
+ *
+ * `danger_arma` = primo modo arma: fixedBonus + diceVariable × 3.5 (EV d6).
+ * Per disarmato → 1 (epsilon).
+ */
+function threatScore(me: Unit, enemy: Unit): number {
+  const dist = baseDistance(me.position, enemy.position);
+  const hpLeft = Math.max(1, enemy.hp);
+  const w = enemy.weapon ? getWeapon(enemy.weapon) : null;
+  let danger = 1;
+  if (w && w.attackModes.length > 0) {
+    const m = w.attackModes[0];
+    danger = (m.fixedBonus ?? 0) + (m.diceVariable ?? 0) * 3.5;
+    if (danger < 1) danger = 1;
+  }
+  return (danger / hpLeft) * (1 / Math.max(1, dist));
+}
+
+/**
+ * Sceglie il bersaglio "migliore" per un'azione in NvN.
+ *
+ * Strategia:
+ *   1. Se ci sono nemici in melee range (`reach` arma corrente), preferisci tra
+ *      quelli — già si possono colpire al volo, non vale la pena ignorarli.
+ *   2. Altrimenti scegli il main threat globale (scoring).
+ *
+ * Backward compatible col 1v1: se c'è UN solo nemico vivo restituisce quello.
+ */
+export function pickTargetForAction(state: GameState, me: Unit): Unit | null {
+  const enemies = Object.values(state.units).filter((u) => u.faction !== me.faction && u.alive);
+  if (enemies.length === 0) return null;
+  if (enemies.length === 1) return enemies[0];
+  // Prima fascia: in melee range della mia arma
+  const w = me.weapon ? getWeapon(me.weapon) : null;
+  const reach = w?.range?.reach ?? 0;
+  if (reach >= 1) {
+    const inMelee = enemies.filter((e) => baseDistance(me.position, e.position) <= reach);
+    if (inMelee.length > 0) {
+      return inMelee.reduce((best, u) => (threatScore(me, u) > threatScore(me, best) ? u : best));
+    }
+  }
+  // Fallback: main threat globale (peso anche al ranged shot più value)
+  return enemies.reduce((best, u) => (threatScore(me, u) > threatScore(me, best) ? u : best));
+}
+
 /** Quanti dadi tirare per lo slancio del turno corrente.
  *
  * Strategia:
@@ -117,7 +170,10 @@ function countImpReductionsForEquip(u: Unit, slot: 'weapon' | 'offhand' | 'armor
 export function aiDecideAction(state: GameState, unitId: UnitId): GameEvent {
   const me = state.units[unitId];
   if (!me) return { type: 'END_TURN' };
-  const enemy = findClosestEnemy(state, me);
+  // 2026-05-14 (Phase 1.2 skirmish): target = main threat (HP basso × pericolosità arma
+  // × prossimità), con preferenza per nemici già in melee range. In 1v1 ricade su
+  // l'unico nemico → comportamento identico al pre-skirmish.
+  const enemy = pickTargetForAction(state, me);
   if (!enemy) return { type: 'END_TURN' };
 
   const w = me.weapon ? getWeapon(me.weapon) : undefined;
