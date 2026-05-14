@@ -164,6 +164,44 @@ function legalActionMoves(state: GameState, unit: Unit): GameEvent[] {
     }
   }
 
+  // D-051 / 2026-05-14 fix (bug A): ATTACCO OFFHAND (arma o scudo) per il nemico più vicino.
+  // Senza questa generazione, il TS non aveva parità con `python/hex_tactics/ai/legal_moves.py`:
+  // il modello distillato (training su Python) si trova indici diversi a inference → l'arciere
+  // col pugnale offhand in mischia preferiva MOVE invece di pugnalare.
+  if (enemy && unit.offhand && !unit.actionTakenThisTurn && unit.dadiAzione >= 1) {
+    const offWeapon = getWeapon(unit.offhand);
+    const offShield = getShield(unit.offhand);
+    const dist = baseDistance(unit.position, enemy.position);
+    if (offWeapon && offWeapon.range?.reach != null) {
+      const offRange = offWeapon.range.reach;
+      if (dist <= offRange) {
+        for (let mi = 0; mi < offWeapon.attackModes.length; mi++) {
+          const mode = offWeapon.attackModes[mi];
+          moves.push({
+            type: 'DECLARE_ATTACK',
+            attackerId: unit.id,
+            targetId: enemy.id,
+            weaponId: offWeapon.id,
+            attackModeIdx: mi,
+            chosenStat: mode.stat === 'either' ? 'forza' : mode.stat,
+            isRanged: false,
+          });
+        }
+      }
+    } else if (offShield && dist <= 1 && !unit.defensiveStance) {
+      // Bludgeon con scudo: 1 modo, no dadi arma. NO se in stance.
+      moves.push({
+        type: 'DECLARE_ATTACK',
+        attackerId: unit.id,
+        targetId: enemy.id,
+        weaponId: offShield.id,
+        attackModeIdx: 0,
+        chosenStat: undefined,
+        isRanged: false,
+      });
+    }
+  }
+
   // RELOAD: se l'arma con reload (cost-slancio o legacy) è scarica.
   // 2026-05-04 fix: include reloadCostSlancio (nuovo path) accanto a reload legacy.
   if (

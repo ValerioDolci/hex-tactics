@@ -26,8 +26,9 @@ import {
 import { utilityDecideMove } from '@ai/utilityAi';
 import { qChoose } from '@ai/qLearningAi';
 import { mctsDecideMove, MctsConfig, DEFAULT_MCTS } from '@ai/mctsAi';
+import { aiDecideStudentMlp } from '@ai/studentMlpAi';
 
-export type AiMode = 'heuristic' | 'utility' | 'mcts' | 'qlearning';
+export type AiMode = 'heuristic' | 'utility' | 'mcts' | 'qlearning' | 'hard';
 
 export interface AiConfig {
   modeA: AiMode;
@@ -93,6 +94,21 @@ function decideMoveByMode(state: GameState, unitId: string, mode: AiMode, mctsCo
         const choice = qChoose(qctx.table, state, unitId, { epsilon: qctx.epsilon, rng: qctx.rng });
         if (qctx.onTransition) qctx.onTransition({ stateKey: choice.stateKey, actionIdx: choice.actionIdx, nActions: choice.nActions, unitId });
         return choice.event;
+      }
+      return decideMoveByMode(state, unitId, 'heuristic');
+    }
+    case 'hard': {
+      // Hard mode = MLP distillato (sync, inline weights, stesso modello usato dal
+      // gioco in singlefile / GH Pages). Copre tutte le fasi gestite da legalMoves
+      // (turn-start, choosing-action, declaring-attack, awaiting-defense, awaiting-carica,
+      // awaiting-attacker-bid, awaiting-defender-bid, resolving). Fallback heuristic
+      // per eventuali fasi non gestite.
+      const hardPhases: GameState['phase'][] = [
+        'turn-start', 'choosing-action', 'declaring-attack', 'awaiting-defense',
+        'awaiting-carica', 'awaiting-attacker-bid', 'awaiting-defender-bid', 'resolving',
+      ];
+      if (hardPhases.includes(state.phase)) {
+        return aiDecideStudentMlp(state, unitId);
       }
       return decideMoveByMode(state, unitId, 'heuristic');
     }
@@ -394,7 +410,19 @@ export function runBattle(
 
     if (phase === 'turn-start' || phase === 'choosing-action' || phase === 'declaring-attack') {
       const ev = decideMoveByMode(state, activeUnitId, modeForFaction(activeUnit.faction), aiConfig.mctsConfig, weightsForFaction(activeUnit.faction), qctxForFaction(activeUnit.faction));
+      // 2026-05-14 fix (bug D): se l'AI propone MOVE ma il reducer rifiuta (overlap
+      // basetta / slancio insufficiente / path bloccato → position invariata,
+      // phase ancora 'choosing-action'), forza END_TURN per evitare loop.
+      // Allinea il driver al comportamento di BattleScene.executeAiAction:809-818.
+      const prevPos = ev.type === 'MOVE' ? state.units[ev.unitId]?.position : undefined;
       dispatch(ev);
+      if (ev.type === 'MOVE' && prevPos) {
+        const after = state.units[ev.unitId];
+        const moved = !!after && (after.position.q !== prevPos.q || after.position.r !== prevPos.r);
+        if (!moved && state.phase === 'choosing-action') {
+          dispatch({ type: 'END_TURN' });
+        }
+      }
       continue;
     }
     if (phase === 'awaiting-defense') {

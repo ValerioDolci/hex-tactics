@@ -169,13 +169,18 @@ export function aiDecideAction(state: GameState, unitId: UnitId): GameEvent {
   }
   // Arma scarica con reload (cost-slancio o legacy) → ricarica anche in mischia.
   // 2026-05-04 fix: include reloadCostSlancio (nuovo path) accanto a reload legacy.
+  // 2026-05-14 fix (bug B): per il path reloadCostSlancio verifica anche che lo
+  // slancio sia sufficiente. Senza, l'heuristic ripropone RELOAD ad ogni turno e
+  // il reducer lo rifiuta → loop simulazione fino al safety cap (timeout 90%
+  // nel mirror arciere-vs-arciere).
   if (
     canAct &&
     w &&
     w.range &&
     (w.range.reload != null || w.range.reloadCostSlancio != null) &&
     !me.weaponLoaded &&
-    me.dadiAzione > 0
+    me.dadiAzione > 0 &&
+    (w.range.reloadCostSlancio == null || me.slancio >= w.range.reloadCostSlancio)
   ) {
     const dice = Math.min(2, me.dadiAzione);
     return { type: 'RELOAD', unitId: me.id, diceN: dice };

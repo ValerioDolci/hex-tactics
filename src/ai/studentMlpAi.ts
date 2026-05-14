@@ -16,6 +16,7 @@ import { buildObsV2, N_FEATURES_TOTAL_V2 } from '@ai/obsFeaturesV2';
 import { buildToFeatures, BUILD_FEATURES_DIM } from '@ai/buildFeatures';
 import { legalMoves } from '@ai/legalMoves';
 import { studentMlpForward, STUDENT_INPUT_DIM, STUDENT_OUTPUT_DIM } from '@ai/studentMlpWeights';
+import { getWeapon } from '@data/weapons';
 
 const MAX_ACTIONS = STUDENT_OUTPUT_DIM;
 
@@ -117,5 +118,38 @@ export function aiDecideStudentMlp(
     return moves[moves.length - 1];
   }
 
-  return moves[actionId];
+  // === Safety net per unità ranged-only ===
+  // Il MLP distillato (top-1 ~70% vs teacher) talvolta sceglie MOVE quando un'arma
+  // ranged-only (arco/balestra: solo .distance, no .reach) ha già linea di tiro al
+  // bersaglio. Per quelle armi, "stare e sparare" è quasi sempre meglio che avvicinarsi
+  // (riduce reach del nemico melee a contatto, mantiene il tempo). Se MLP dice MOVE
+  // ma esiste un DECLARE_ATTACK ranged legale, preferisci l'attacco.
+  //
+  // 2026-05-14 fix (bug C): esteso ai casi MOVE→RELOAD e MOVE→END.
+  //   - Se arco/balestra scarica + RELOAD legale, preferisci RELOAD (ricaricare > muoversi
+  //     a vuoto quando l'unica azione utile è ricaricare per sparare al prossimo turno).
+  //   - Se non c'è né ranged-attack né reload legale, END_TURN è meglio di MOVE-spreca-slancio
+  //     (specialmente vicino bordo mappa, dove MOVE tende a portare in ritirata inutile).
+  //
+  // Limitato alle ranged-only: armi mixed (giavellotto/ascia1h thrown, hanno reach)
+  // restano governate dal MLP — la decisione "lancio o tengo per melee" è cruciale lì.
+  const chosen = moves[actionId];
+  if (chosen.type === 'MOVE' && unit.weapon) {
+    const w = getWeapon(unit.weapon);
+    const isRangedOnly = !!(w && w.range && w.range.distance != null && w.range.reach == null);
+    if (isRangedOnly) {
+      const rangedAttack = moves.find(
+        (m) => m.type === 'DECLARE_ATTACK' && m.isRanged === true,
+      );
+      if (rangedAttack) return rangedAttack;
+      const reload = moves.find((m) => m.type === 'RELOAD');
+      if (reload) return reload;
+      // Niente attacco né reload: meglio END che muoversi a casaccio (di solito significa
+      // bow scarica + slancio sotto cost, oppure in melee threat senza offhand utile).
+      const end = moves.find((m) => m.type === 'END_TURN');
+      if (end) return end;
+    }
+  }
+
+  return chosen;
 }
