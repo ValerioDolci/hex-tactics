@@ -57,6 +57,8 @@ import { saveCompletion } from '@scenes/TutorialMenuScene';
 import { audio } from '@utils/audio';
 import { paintVellum } from '@ui/Vellum';
 import { FONTS, PALETTE, factionTincture } from '@ui/theme';
+import { CombatNarrationOverlay } from '@ui/CombatNarrationOverlay';
+import { narrate } from '@ui/combatNarrator';
 
 /**
  * Scena principale di battaglia.
@@ -78,6 +80,7 @@ export class BattleScene extends Phaser.Scene {
   private sliderUI!: SliderChoiceUI;
   private handoff!: HandoffOverlay;
   private gameOverOverlay!: GameOverOverlay;
+  private narration!: CombatNarrationOverlay;
 
   /** Modalità di controllo per fazione (default: A umano vs B AI) */
   private controlMode: Record<FactionId, 'human' | 'ai'> = { A: 'human', B: 'ai' };
@@ -354,6 +357,7 @@ export class BattleScene extends Phaser.Scene {
     this.sliderUI = new SliderChoiceUI(this);
     this.handoff = new HandoffOverlay(this);
     this.gameOverOverlay = new GameOverOverlay(this);
+    this.narration = new CombatNarrationOverlay(this);
     this.refreshUI();
 
     // Listener per resize del viewport: riposiziona overlay e UI
@@ -374,6 +378,8 @@ export class BattleScene extends Phaser.Scene {
     this.diceUI = new DiceChoiceUI(this);
     this.sliderUI = new SliderChoiceUI(this);
     this.gameOverOverlay = new GameOverOverlay(this);
+    this.narration?.destroy?.();
+    this.narration = new CombatNarrationOverlay(this);
 
     // Riposiziona log (rimane in basso-sinistra) e menu (in alto-destra)
     const logW = Math.min(420, this.scale.width * 0.45);
@@ -420,11 +426,35 @@ export class BattleScene extends Phaser.Scene {
     this.maybeShowSlancioChange(prev, this.state, event.type);
     // Animazione movimento: confronta posizioni prima/dopo
     this.maybeTweenMovement(prev, this.state);
+    // Narrazione: una linea asciutta-poetica per eventi rilevanti
+    // (RESOLVE_COMBAT, RELOAD, MOVE, START_ROUND). Pure function in @ui/combatNarrator.
+    this.maybeShowNarration(prev, this.state, event);
     this.refreshUI();
     // Tutorial: dopo ogni dispatch, verifica trigger step + obiettivo
     if (this.tutorialScenario && !this.tutorialCompleted) {
       this.checkTutorialTrigger();
       this.checkTutorialObjective();
+    }
+  }
+
+  /**
+   * Genera una linea di narrazione (overlay sopra la scena) per gli eventi
+   * che meritano commento (combat, reload, movement, init swap). Per eventi
+   * sub-step (CHOOSE_DEFENSE, BID_MOVEMENT, ...) il narratore ritorna null.
+   *
+   * Hold della linea: 4.5s per i combat (più letterari), 2.5s per movement/reload.
+   */
+  private maybeShowNarration(prev: GameState, curr: GameState, event: GameEvent): void {
+    if (!this.narration) return;
+    try {
+      const line = narrate({ prev, curr, event });
+      if (!line) return;
+      const hold = event.type === 'RESOLVE_COMBAT' ? 4500 : 2500;
+      this.narration.show(line, hold);
+    } catch (e) {
+      // Defensive: un crash del narratore non deve mai rompere il gameplay
+      // eslint-disable-next-line no-console
+      console.warn('[narrator] errore:', e);
     }
   }
 
