@@ -104,8 +104,7 @@ describe('Skirmish 2v2 — pickTargetForAction (main threat selector)', () => {
   it('1v1: ritorna l\'unico nemico vivo', () => {
     const s = setup2v2();
     const units = { ...s.units, B2: { ...s.units['B2'], hp: 0, alive: false } };
-    const me = units['A1'];
-    const target = pickTargetForAction({ ...s, units }, me);
+    const target = pickTargetForAction({ ...s, units }, s.units['A1']);
     expect(target?.id).toBe('B1');
   });
 
@@ -122,7 +121,7 @@ describe('Skirmish 2v2 — pickTargetForAction (main threat selector)', () => {
     const s = setup2v2();
     // Lascia B1 a 10,0, ferisci B2 (1 HP) — ora vale di più finirlo
     const units = { ...s.units, B2: { ...s.units['B2'], hp: 1 } };
-    const target = pickTargetForAction({ ...s, units }, units['A1']);
+    const target = pickTargetForAction({ ...s, units }, s.units['A1']);
     expect(target!.id).toBe('B2');
   });
 
@@ -134,7 +133,7 @@ describe('Skirmish 2v2 — pickTargetForAction (main threat selector)', () => {
       A1: { ...s.units['A1'], weapon: 'spada' }, // spada ha reach 1
       B2: { ...s.units['B2'], position: { q: 1, r: 0 } },
     };
-    const target = pickTargetForAction({ ...s, units }, units['A1']);
+    const target = pickTargetForAction({ ...s, units }, s.units['A1']);
     expect(target!.id).toBe('B2'); // adiacente prevale (in melee range)
   });
 
@@ -145,7 +144,46 @@ describe('Skirmish 2v2 — pickTargetForAction (main threat selector)', () => {
       B1: { ...s.units['B1'], hp: 0, alive: false },
       B2: { ...s.units['B2'], hp: 0, alive: false },
     };
-    const target = pickTargetForAction({ ...s, units }, units['A1']);
+    const target = pickTargetForAction({ ...s, units }, s.units['A1']);
     expect(target).toBeNull();
+  });
+});
+
+describe('Skirmish 2v2 — buildObsV2 con agentEnemyId', () => {
+  it('obs cambia in base al main threat scelto (agentEnemyId)', async () => {
+    const { buildObsV2 } = await import('@ai/obsFeaturesV2');
+    const s = setup2v2();
+    // Forzo HP diverso tra B1 e B2 per generare obs distinti (sezione enemyStats)
+    const units = { ...s.units, B1: { ...s.units['B1'], hp: 5 } };
+    const sB = { ...s, units };
+    const obsTargetB1 = buildObsV2(sB, { agentFaction: 'A', agentUnitId: 'A1', agentEnemyId: 'B1' });
+    const obsTargetB2 = buildObsV2(sB, { agentFaction: 'A', agentUnitId: 'A1', agentEnemyId: 'B2' });
+    // enemyStats inizia all'offset 5 (dopo selfStats) e il primo valore è hp/20.
+    // obsTargetB1[5] dovrebbe essere 5/20 = 0.25, obsTargetB2[5] = 20/20 = 1.0
+    expect(obsTargetB1[5]).toBeCloseTo(0.25);
+    expect(obsTargetB2[5]).toBeCloseTo(1.0);
+  });
+
+  it('obs senza agentEnemyId fallback al primo nemico vivo (back-compat 1v1)', async () => {
+    const { buildObsV2 } = await import('@ai/obsFeaturesV2');
+    const s = setup2v2();
+    const obsDefault = buildObsV2(s, { agentFaction: 'A', agentUnitId: 'A1' });
+    const obsExplicit = buildObsV2(s, { agentFaction: 'A', agentUnitId: 'A1', agentEnemyId: 'B1' });
+    // In setup2v2, B1 è il primo nemico iterato (insertion order) → obs identici
+    expect(Array.from(obsDefault)).toEqual(Array.from(obsExplicit));
+  });
+});
+
+describe('Skirmish 2v2 — aiDecideTeamHard (wrapper)', () => {
+  it('chiama il MLP e ritorna un GameEvent valido in 2v2', async () => {
+    const { aiDecideTeamHard } = await import('@ai/teamAi');
+    let s = setup2v2();
+    s = reduce(s, { type: 'START_ROUND' });
+    // Force A1 first
+    s = { ...s, turnOrder: ['A1', 'B1', 'A2', 'B2'], currentTurnIdx: 0, phase: 'turn-start' };
+    s = reduce(s, { type: 'START_TURN', slancioDice: 2 });
+    const ev = aiDecideTeamHard(s, 'A1');
+    expect(ev).toBeDefined();
+    expect(typeof ev.type).toBe('string');
   });
 });

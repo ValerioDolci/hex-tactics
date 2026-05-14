@@ -279,6 +279,13 @@ export interface BuildObsOptions {
   agentFaction: 'A' | 'B';
   agentUnitId?: string;
   enforceSimultaneousPrivacy?: boolean;
+  /**
+   * 2026-05-14 (Phase 1.3 skirmish): forza il "main threat" da considerare come
+   * enemy nell'observation. Necessario in NvN perché l'MLP è stato distillato
+   * 1v1 e si aspetta di vedere SOLO un nemico nel feed obs. Se omesso → fallback
+   * al primo nemico vivo (comportamento 1v1 originale).
+   */
+  agentEnemyId?: string;
 }
 
 /**
@@ -302,10 +309,18 @@ export function buildObsV2(state: GameState, opts: BuildObsOptions): Float32Arra
   }
   let enemy: Unit | undefined;
   const otherFac: 'A' | 'B' = agentFaction === 'A' ? 'B' : 'A';
-  for (const u of Object.values(state.units)) {
-    if (u.faction === otherFac) {
-      enemy = u;
-      break;
+  // 2026-05-14 (skirmish): se passato `agentEnemyId`, usa quel main threat come enemy.
+  // Altrimenti fallback al primo nemico vivo (comportamento 1v1 storico).
+  if (opts.agentEnemyId) {
+    const candidate = state.units[opts.agentEnemyId];
+    if (candidate && candidate.faction === otherFac) enemy = candidate;
+  }
+  if (!enemy) {
+    for (const u of Object.values(state.units)) {
+      if (u.faction === otherFac && u.alive) {
+        enemy = u;
+        break;
+      }
     }
   }
 

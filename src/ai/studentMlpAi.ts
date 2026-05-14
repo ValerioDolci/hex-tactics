@@ -15,6 +15,7 @@ import { GameEvent } from '@core/events';
 import { buildObsV2, N_FEATURES_TOTAL_V2 } from '@ai/obsFeaturesV2';
 import { buildToFeatures, BUILD_FEATURES_DIM } from '@ai/buildFeatures';
 import { legalMoves } from '@ai/legalMoves';
+import { pickTargetForAction } from '@ai/basicAi';
 import { studentMlpForward, STUDENT_INPUT_DIM, STUDENT_OUTPUT_DIM } from '@ai/studentMlpWeights';
 import { getWeapon } from '@data/weapons';
 
@@ -38,13 +39,19 @@ export function aiDecideStudentMlp(
   const moves = legalMoves(state, unitId);
   if (moves.length === 0) return { type: 'END_TURN' };
 
-  const enemy = Object.values(state.units).find(
-    (u) => u.faction !== unit.faction && u.alive,
-  );
+  // 2026-05-14 (Phase 1.3 skirmish): in NvN, scegli il "main threat" via euristica
+  // (pickTargetForAction) e passalo a buildObsV2 come `agentEnemyId`. Il modello MLP
+  // distillato 1v1 vede così SOLO il main threat — comportamento back-compat con 1v1
+  // (collassa al solo enemy) ma sensato in skirmish (non vede un nemico random).
+  const enemy = pickTargetForAction(state, unit);
   if (!enemy) return moves[0];
 
   // Build input vector: obs153 + build_self39 + build_opp39 = 231
-  const obs = buildObsV2(state, { agentFaction: unit.faction, agentUnitId: unitId });
+  const obs = buildObsV2(state, {
+    agentFaction: unit.faction,
+    agentUnitId: unitId,
+    agentEnemyId: enemy.id,
+  });
   if (obs.length !== N_FEATURES_TOTAL_V2) {
     console.warn(`[studentMlpAi] obs length mismatch: got ${obs.length} expected ${N_FEATURES_TOTAL_V2}, fallback`);
     return moves[0];

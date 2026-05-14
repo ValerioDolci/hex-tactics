@@ -20,6 +20,7 @@ import { GameEvent } from '@core/events';
 import { buildObsV2, N_FEATURES_TOTAL_V2 } from '@ai/obsFeaturesV2';
 import { buildToFeatures, BUILD_FEATURES_DIM } from '@ai/buildFeatures';
 import { legalMoves } from '@ai/legalMoves';
+import { pickTargetForAction } from '@ai/basicAi';
 import { getWeapon } from '@data/weapons';
 
 const MAX_ACTIONS = 24;
@@ -85,10 +86,9 @@ export async function aiDecideExpert(
   const moves = legalMoves(state, unitId);
   if (moves.length === 0) return { type: 'END_TURN' };
 
-  // Trova nemico per build features opponent
-  const enemy = Object.values(state.units).find(
-    (u) => u.faction !== unit.faction && u.alive,
-  );
+  // 2026-05-14 (Phase 1.3 skirmish): main threat selector NvN-aware. In 1v1 ricade
+  // sull'unico nemico → backward compat.
+  const enemy = pickTargetForAction(state, unit);
   if (!enemy) {
     // No enemy: fallback prima azione legale
     return moves[0];
@@ -98,9 +98,13 @@ export async function aiDecideExpert(
   try {
     const { ort, session } = (await getSession()) as { ort: any; session: any };
 
-    // Build inputs
+    // Build inputs (obs centrato sul main threat per skirmish)
     const obsArr = new Float32Array(
-      buildObsV2(state, { agentFaction: unit.faction, agentUnitId: unitId }),
+      buildObsV2(state, {
+        agentFaction: unit.faction,
+        agentUnitId: unitId,
+        agentEnemyId: enemy.id,
+      }),
     );
     if (obsArr.length !== N_FEATURES_TOTAL_V2) {
       throw new Error(
