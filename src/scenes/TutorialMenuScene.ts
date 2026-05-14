@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import { TUTORIAL_SCENARIOS, TutorialScenario, allCompleted } from '@data/tutorial';
+import { paintVellum } from '@/ui/Vellum';
+import { FONTS, PALETTE, makeCodexButton, makeCodexPanel } from '@/ui/theme';
 
 const COMPLETION_KEY = 'hexTactics.tutorialCompletion';
 
@@ -49,19 +51,31 @@ export class TutorialMenuScene extends Phaser.Scene {
     const w = this.scale.width;
     const h = this.scale.height;
 
-    this.add.rectangle(0, 0, w, h, 0x121821, 1).setOrigin(0, 0);
+    paintVellum(this, w, h);
 
     // Header
     const headerH = 60;
-    this.add.rectangle(0, 0, w, headerH, 0x1c2530, 1).setOrigin(0, 0);
     this.add
-      .text(w / 2, headerH / 2, 'Tutorial — Impara hex-tactics passo per passo', {
-        fontFamily: 'monospace',
-        fontSize: '20px',
-        color: '#fff',
-        fontStyle: 'bold',
+      .text(w / 2, headerH / 2 - 4, 'Tutorial', {
+        fontFamily: FONTS.display,
+        fontSize: '28px',
+        color: PALETTE.ink.css,
+        fontStyle: 'italic',
       })
       .setOrigin(0.5, 0.5);
+    this.add
+      .text(w / 2, headerH / 2 + 18, 'Esercizi di scherma esagonale, in ordine', {
+        fontFamily: FONTS.body,
+        fontSize: '14px',
+        color: PALETTE.inkSoft.css,
+        fontStyle: 'italic',
+      })
+      .setOrigin(0.5, 0.5);
+
+    // Filetto oro
+    const ornament = this.add.graphics();
+    ornament.lineStyle(1.2, PALETTE.gold.num, 0.85);
+    ornament.lineBetween(w / 2 - 200, headerH + 8, w / 2 + 200, headerH + 8);
 
     this.makeBackButton(20, 12);
 
@@ -70,8 +84,8 @@ export class TutorialMenuScene extends Phaser.Scene {
 
     // Layout scenari
     const startY = headerH + 30;
-    const itemW = Math.min(680, w - 80);
-    const itemH = 70;
+    const itemW = Math.min(720, w - 80);
+    const itemH = 78;
     const itemX = (w - itemW) / 2;
     const spacing = 14;
 
@@ -93,22 +107,22 @@ export class TutorialMenuScene extends Phaser.Scene {
       const bannerW = Math.min(680, w - 80);
       const bannerH = 60;
       const bx = (w - bannerW) / 2;
-      const banner = this.add.rectangle(bx, footerY, bannerW, bannerH, 0x2d6a2d, 1).setOrigin(0, 0);
-      banner.setStrokeStyle(3, 0x66dd66);
+      makeCodexPanel({ scene: this, x: bx, y: footerY, width: bannerW, height: bannerH, tone: 'vellum', alpha: 0.95 });
       this.add
-        .text(w / 2, footerY + bannerH / 2, '🎉 Tutti gli scenari completati! Sei pronto per la battaglia libera.', {
-          fontFamily: 'monospace',
-          fontSize: '14px',
-          color: '#fff',
-          fontStyle: 'bold',
+        .text(w / 2, footerY + bannerH / 2, '✦  Tutti gli esercizi completati. Si entra nel duello libero.', {
+          fontFamily: FONTS.display,
+          fontSize: '17px',
+          color: PALETTE.goldDeep.css,
+          fontStyle: 'italic bold',
         })
         .setOrigin(0.5, 0.5);
     } else {
       this.add
-        .text(w / 2, footerY, 'Completa tutti gli scenari per padroneggiare il gioco.', {
-          fontFamily: 'monospace',
-          fontSize: '13px',
-          color: '#888',
+        .text(w / 2, footerY, 'Completa gli esercizi per padroneggiare le armi del Codex.', {
+          fontFamily: FONTS.body,
+          fontSize: '15px',
+          color: PALETTE.inkSoft.css,
+          fontStyle: 'italic',
         })
         .setOrigin(0.5, 0);
     }
@@ -123,71 +137,76 @@ export class TutorialMenuScene extends Phaser.Scene {
     completed: boolean,
     unlocked: boolean,
   ): void {
-    const c = this.add.container(x, y);
-    const bgColor = !unlocked ? 0x222222 : completed ? 0x2a4a2a : 0x223344;
-    const strokeColor = !unlocked ? 0x444444 : completed ? 0x66aa66 : 0x6699bb;
-    const bg = this.add.rectangle(0, 0, w, h, bgColor, 1).setOrigin(0, 0);
-    bg.setStrokeStyle(2, strokeColor);
+    // Pannello item codex
+    const panel = makeCodexPanel({
+      scene: this,
+      x,
+      y,
+      width: w,
+      height: h,
+      tone: 'vellum',
+      alpha: unlocked ? 0.95 : 0.5,
+    });
 
-    const titleColor = unlocked ? '#fff' : '#666';
+    const titleColor = !unlocked ? PALETTE.inkFaded.css : completed ? PALETTE.verde.css : PALETTE.ink.css;
     const title = this.add
-      .text(20, 18, scenario.title, {
-        fontFamily: 'monospace',
-        fontSize: '16px',
+      .text(20, 16, scenario.title, {
+        fontFamily: FONTS.display,
+        fontSize: '19px',
         color: titleColor,
-        fontStyle: 'bold',
+        fontStyle: 'italic bold',
       })
       .setOrigin(0, 0);
 
-    const descColor = unlocked ? '#aac' : '#555';
+    const descColor = !unlocked ? PALETTE.inkFaded.css : PALETTE.ink.css;
     const desc = this.add
-      .text(20, 42, scenario.shortDescription, {
-        fontFamily: 'monospace',
-        fontSize: '12px',
+      .text(20, 44, scenario.shortDescription, {
+        fontFamily: FONTS.body,
+        fontSize: '14px',
         color: descColor,
+        fontStyle: 'italic',
       })
       .setOrigin(0, 0);
 
-    const statusText = !unlocked ? '🔒' : completed ? '✓ completato' : 'gioca →';
-    const statusColor = !unlocked ? '#666' : completed ? '#9c9' : '#fc6';
+    const statusText = !unlocked ? '⊘' : completed ? '✓ completato' : 'gioca  →';
+    const statusColor = !unlocked
+      ? PALETTE.inkFaded.css
+      : completed
+        ? PALETTE.verde.css
+        : PALETTE.goldDeep.css;
     const status = this.add
       .text(w - 20, h / 2, statusText, {
-        fontFamily: 'monospace',
-        fontSize: '14px',
+        fontFamily: FONTS.display,
+        fontSize: '17px',
         color: statusColor,
-        fontStyle: 'bold',
+        fontStyle: 'italic bold',
       })
       .setOrigin(1, 0.5);
 
-    c.add([bg, title, desc, status]);
+    panel.container.add([title, desc, status]);
 
     if (unlocked) {
-      bg.setInteractive({ useHandCursor: true });
-      bg.on('pointerover', () => bg.setFillStyle(completed ? 0x3a5a3a : 0x2c4458));
-      bg.on('pointerout', () => bg.setFillStyle(bgColor));
-      bg.on('pointerup', () => {
+      panel.bg.setInteractive({ useHandCursor: true });
+      panel.bg.on('pointerover', () => panel.bg.setFillStyle(PALETTE.vellumDeep.num, 0.95));
+      panel.bg.on('pointerout', () => panel.bg.setFillStyle(PALETTE.vellumDark.num, 0.95));
+      panel.bg.on('pointerup', () => {
         this.scene.start('BattleScene', { tutorialMode: scenario.id });
       });
     }
   }
 
   private makeBackButton(x: number, y: number): void {
-    const w = 100;
-    const h = 36;
-    const c = this.add.container(x, y);
-    const bg = this.add.rectangle(0, 0, w, h, 0x335577, 1).setOrigin(0, 0);
-    bg.setStrokeStyle(2, 0x6699bb);
-    const t = this.add
-      .text(w / 2, h / 2, '← Indietro', {
-        fontFamily: 'monospace',
-        fontSize: '13px',
-        color: '#fff',
-      })
-      .setOrigin(0.5, 0.5);
-    c.add([bg, t]);
-    bg.setInteractive({ useHandCursor: true });
-    bg.on('pointerover', () => bg.setFillStyle(0x447aaa));
-    bg.on('pointerout', () => bg.setFillStyle(0x335577));
-    bg.on('pointerup', () => this.scene.start('MainMenuScene'));
+    makeCodexButton({
+      scene: this,
+      x,
+      y,
+      width: 110,
+      height: 36,
+      label: '←  Frontespizio',
+      variant: 'outline',
+      fontKind: 'display',
+      fontSize: 13,
+      onClick: () => this.scene.start('MainMenuScene'),
+    });
   }
 }

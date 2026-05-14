@@ -55,6 +55,8 @@ import { getScenario, TutorialScenario, TutorialStep } from '@data/tutorial';
 import { TutorialOverlay } from '@ui/TutorialOverlay';
 import { saveCompletion } from '@scenes/TutorialMenuScene';
 import { audio } from '@utils/audio';
+import { paintVellum } from '@ui/Vellum';
+import { FONTS, PALETTE, factionTincture } from '@ui/theme';
 
 /**
  * Scena principale di battaglia.
@@ -149,6 +151,8 @@ export class BattleScene extends Phaser.Scene {
   }
 
   create(): void {
+    // Vellum + paper grain (Codex Tacticus): sotto tutto via depth -100.
+    paintVellum(this, this.scale.width, this.scale.height);
     this.setupGameState();
     this.setupBoard();
     this.setupUnits();
@@ -558,11 +562,11 @@ export class BattleScene extends Phaser.Scene {
     const p1 = a.getCenter();
     const p2 = b.getCenter();
     if (isRanged) {
-      // Proiettile: pallino giallo + alone
+      // Proiettile: pallino oro + alone
       const proj = this.add.graphics();
-      proj.fillStyle(0xffee66, 1);
+      proj.fillStyle(PALETTE.gold.num, 1);
       proj.fillCircle(0, 0, 5);
-      proj.lineStyle(2, 0xffee66, 0.5);
+      proj.lineStyle(2, PALETTE.gold.num, 0.5);
       proj.strokeCircle(0, 0, 9);
       proj.x = p1.x;
       proj.y = p1.y;
@@ -575,9 +579,9 @@ export class BattleScene extends Phaser.Scene {
         onComplete: () => proj.destroy(),
       });
     } else {
-      // Linea CaC: striscia gialla che lampeggia 400ms
+      // Linea CaC: striscia oro che lampeggia 400ms
       const line = this.add.graphics();
-      line.lineStyle(5, 0xffee66, 0.95);
+      line.lineStyle(5, PALETTE.gold.num, 0.95);
       line.lineBetween(p1.x, p1.y, p2.x, p2.y);
       this.tweens.add({
         targets: line,
@@ -659,15 +663,14 @@ export class BattleScene extends Phaser.Scene {
   private vfxTurnBanner(unit: Unit): void {
     const w = this.scale.width;
     const h = this.scale.height;
-    const factionLabel = unit.faction === 'A' ? '🟦' : '🟥';
-    const color = unit.faction === 'A' ? '#9ad6ff' : '#ffaaaa';
-    const t = this.add.text(w / 2, h * 0.18, `${factionLabel}  ${unit.name}`, {
-      fontFamily: 'monospace',
-      fontSize: '32px',
-      color,
-      stroke: '#000',
+    const tincture = factionTincture(unit.faction);
+    const t = this.add.text(w / 2, h * 0.18, `Round  —  ${unit.name}`, {
+      fontFamily: FONTS.display,
+      fontSize: '34px',
+      color: tincture.css,
+      stroke: PALETTE.vellum.css,
       strokeThickness: 5,
-      fontStyle: 'bold',
+      fontStyle: 'italic',
     });
     t.setOrigin(0.5, 0.5);
     t.setScrollFactor(0);

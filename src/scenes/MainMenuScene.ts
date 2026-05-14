@@ -2,15 +2,22 @@ import Phaser from 'phaser';
 import { PRESETS, PresetSpec } from '@data/presets';
 import { saveSetup, loadSetup, BattleSetup } from '@persistence/storage';
 import { loadAllBuilds } from '@data/builds';
+import { paintVellum } from '@/ui/Vellum';
+import { FONTS, PALETTE, makeCodexButton } from '@/ui/theme';
+import { uiScale } from '@/ui/uiScale';
 
 /**
- * Schermata di selezione setup battaglia.
+ * Schermata di selezione setup battaglia — Codex Tacticus.
+ *
  * Layout responsivo: si adatta al viewport (Phaser.Scale.RESIZE).
  *
  * Permette di:
  *  - Scegliere preset PG per fazione A e B
  *  - Scegliere modalità (umano vs AI) per ogni fazione
  *  - Avviare la battaglia
+ *
+ * Estetica: titolo display serif a colofone, vellum + grain, bottoni Codex,
+ * fazione A/B in tinture araldiche (azzurro/rosso), stagger reveal a page-load.
  */
 export class MainMenuScene extends Phaser.Scene {
   private setup: BattleSetup;
@@ -22,10 +29,14 @@ export class MainMenuScene extends Phaser.Scene {
   private scrollY = 0;
   /** True se l'init di sessione è già avvenuto (caricamento da localStorage) */
   private static sessionLoaded = false;
+  /** True se il primo reveal stagger è già stato eseguito (su layout iniziale). */
+  private static introPlayed = false;
   /** Touch drag-scroll state */
   private touchScrollStartY = 0;
   private touchScrollOriginY = 0;
   private touchScrollActive = false;
+  /** Riferimenti agli oggetti vellum per cleanup su resize. */
+  private vellumDestroy?: () => void;
 
   constructor() {
     super({ key: 'MainMenuScene' });
@@ -69,6 +80,7 @@ export class MainMenuScene extends Phaser.Scene {
     this.scale.on('resize', this.onResize, this);
     this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off('resize', this.onResize, this);
+      this.vellumDestroy?.();
     });
   }
 
@@ -104,8 +116,6 @@ export class MainMenuScene extends Phaser.Scene {
   private clampScroll(y: number): number {
     const overflow = this.contentBottomY - this.scale.height;
     if (overflow <= 0) return 0;
-    // y va da -overflow (full scrolled) a 0 (top). Con un piccolo extra in fondo per
-    // poter "rilassare" il dito senza tornare immediatamente in cima.
     return Math.max(-overflow, Math.min(0, y));
   }
 
@@ -115,7 +125,6 @@ export class MainMenuScene extends Phaser.Scene {
   }
 
   private onResize(): void {
-    // Re-renderizza con le nuove dimensioni (layout() pulisce internamente)
     this.scrollY = 0;
     this.layout();
   }
@@ -125,6 +134,9 @@ export class MainMenuScene extends Phaser.Scene {
       this.scrollContainer.removeAll(true);
       this.scrollContainer.destroy();
     }
+    this.vellumDestroy?.();
+    // Pulisci eventuali oggetti orfani (es. titolo non-scrollabile lasciato fuori)
+    this.children.removeAll();
     this.scrollContainer = this.add.container(0, this.scrollY);
   }
 
@@ -135,82 +147,137 @@ export class MainMenuScene extends Phaser.Scene {
 
   /** Layout responsivo: usa scale.width/height (viewport effettivo) */
   private layout(): void {
-    // Garantisce un container pulito (anche al primo create)
     this.clearAll();
+
+    // Vellum + paper grain
+    const vellum = paintVellum(this, this.scale.width, this.scale.height);
+    this.vellumDestroy = vellum.destroy;
+
     const w = this.scale.width;
     const h = this.scale.height;
 
-    // Titolo
-    const titleSize = w < 700 ? 28 : 40;
+    // ── Frontespizio: titolo display serif + sottotitolo + filetto oro
+    const titleSize = w < 700 ? 44 : 64;
     const title = this.add
-      .text(w / 2, h * 0.06, 'hex-tactics', {
-        fontFamily: 'monospace',
-        fontSize: `${titleSize}px`,
-        color: '#fff',
+      .text(w / 2, h * 0.05, 'Codex Tacticus', {
+        fontFamily: FONTS.display,
+        fontSize: `${Math.round(titleSize * uiScale())}px`,
+        color: PALETTE.ink.css,
+        fontStyle: 'italic',
       })
       .setOrigin(0.5, 0);
     this.addToContent(title);
 
+    // Filetto oro (ornament line)
+    const ornY = h * 0.05 + titleSize + 14;
+    const ornament = this.add.graphics();
+    ornament.lineStyle(1.4, PALETTE.gold.num, 0.85);
+    const ornW = Math.min(360, w * 0.5);
+    ornament.lineBetween(w / 2 - ornW / 2, ornY, w / 2 + ornW / 2, ornY);
+    // Rombi terminali
+    ornament.fillStyle(PALETTE.gold.num, 0.95);
+    [w / 2 - ornW / 2, w / 2, w / 2 + ornW / 2].forEach((cx) => {
+      ornament.fillTriangle(cx - 4, ornY, cx + 4, ornY, cx, ornY - 4);
+      ornament.fillTriangle(cx - 4, ornY, cx + 4, ornY, cx, ornY + 4);
+    });
+    this.addToContent(ornament);
+
     const subtitle = this.add
-      .text(w / 2, h * 0.06 + titleSize + 6, 'Tactical RPG a turni — MVP', {
-        fontFamily: 'monospace',
-        fontSize: '14px',
-        color: '#aaa',
+      .text(w / 2, ornY + 12, 'Trattato di scherma esagonale  ·  duello tattico 1v1', {
+        fontFamily: FONTS.body,
+        fontSize: `${Math.round(15 * uiScale())}px`,
+        color: PALETTE.inkSoft.css,
+        fontStyle: 'italic',
       })
       .setOrigin(0.5, 0);
     this.addToContent(subtitle);
 
-    // Posizionamento delle 2 colonne fazione (layout adattivo: side-by-side se larghezza
-    // sufficiente, altrimenti sotto se schermo piccolo).
+    // Posizionamento delle 2 colonne fazione (layout adattivo).
     const stackVertical = w < 800;
     const colY = h * 0.18;
 
     let bottomY: number;
     if (stackVertical) {
-      // Schermo stretto: A sopra, B sotto
       const cx = w / 2;
       this.renderFactionHeader(cx, colY, 'A');
-      const aBottom = this.renderFactionCol(cx, colY + 36, 'A');
-      const gap = 24;
+      const aBottom = this.renderFactionCol(cx, colY + 38, 'A');
+      const gap = 28;
       this.renderFactionHeader(cx, aBottom + gap, 'B');
-      bottomY = this.renderFactionCol(cx, aBottom + gap + 36, 'B');
+      bottomY = this.renderFactionCol(cx, aBottom + gap + 38, 'B');
     } else {
-      // Layout standard: 2 colonne affiancate
       const offsetX = Math.min(w * 0.25, 320);
       const cx = w / 2;
       this.renderFactionHeader(cx - offsetX, colY, 'A');
       this.renderFactionHeader(cx + offsetX, colY, 'B');
-      const aBottom = this.renderFactionCol(cx - offsetX, colY + 36, 'A');
-      const bBottom = this.renderFactionCol(cx + offsetX, colY + 36, 'B');
+      const aBottom = this.renderFactionCol(cx - offsetX, colY + 38, 'A');
+      const bBottom = this.renderFactionCol(cx + offsetX, colY + 38, 'B');
       bottomY = Math.max(aBottom, bBottom);
     }
 
-    // Bottone "Inizia battaglia": dopo il contenuto. Con scroll abilitato non c'è più
-    // bisogno di forzare il bottone nel viewport.
-    const btnY = bottomY + 30;
+    // Bottone "Inizia battaglia"
+    const btnY = bottomY + 38;
     this.renderStartButton(w, btnY);
 
-    // Aggiorna contentBottomY (per scroll clamp). Buffer 240 px sotto il bottone
-    // per assicurare visibilità completa anche su iPhone con notch/home indicator.
-    // Include anche i due bottoni secondari (Tutorial / Manuale) sotto.
+    // contentBottomY (per scroll clamp)
     const btnH = 64;
     const subBtnH = 48;
     this.contentBottomY = btnY + btnH + 16 + subBtnH + 240;
+
+    // Stagger reveal alla prima apertura della scena (Regola 11: motion intenzionale)
+    if (!MainMenuScene.introPlayed) {
+      this.playIntroStagger();
+      MainMenuScene.introPlayed = true;
+    }
+  }
+
+  /** Stagger reveal: titolo → ornament → sottotitolo → fazioni → bottoni. */
+  private playIntroStagger(): void {
+    const reduceMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) return;
+
+    const children = this.scrollContainer.list as Phaser.GameObjects.GameObject[];
+    children.forEach((obj, idx) => {
+      const o = obj as Phaser.GameObjects.GameObject & {
+        setAlpha?: (a: number) => unknown;
+        setY?: (y: number) => unknown;
+        y?: number;
+      };
+      if (typeof o.setAlpha !== 'function') return;
+      const targetY = (o as { y?: number }).y ?? 0;
+      o.setAlpha(0);
+      // shift verso il basso 8px iniziali
+      if ('y' in o && typeof o.y === 'number') {
+        (o as { y: number }).y = targetY - 8;
+      }
+      this.tweens.add({
+        targets: o,
+        alpha: 1,
+        y: targetY,
+        duration: 380,
+        delay: 60 + idx * 18,
+        ease: 'Sine.easeOut',
+      });
+    });
   }
 
   private renderFactionHeader(x: number, y: number, faction: 'A' | 'B'): void {
+    const tincture = faction === 'A' ? PALETTE.azure : PALETTE.gules;
+    const blason = faction === 'A' ? '⛨ Azzurra' : '⛨ Rossa';
     const txt = this.add
-      .text(x, y, faction === 'A' ? 'Fazione A (blu)' : 'Fazione B (rosso)', {
-        fontFamily: 'monospace',
-        fontSize: '20px',
-        color: faction === 'A' ? '#4ab0ff' : '#ff5050',
+      .text(x, y, blason, {
+        fontFamily: FONTS.display,
+        fontSize: `${Math.round(26 * uiScale())}px`,
+        color: tincture.css,
+        fontStyle: 'italic bold',
       })
       .setOrigin(0.5, 0);
     this.addToContent(txt);
   }
 
   /** Renderizza i selettori di una fazione, restituisce la y al termine */
-  /** Ritorna l'id della build custom selezionata per la fazione (undefined se preset). */
   private getCustomBuildId(faction: 'A' | 'B'): string | undefined {
     return faction === 'A' ? this.setup.customBuildIdA : this.setup.customBuildIdB;
   }
@@ -227,97 +294,148 @@ export class MainMenuScene extends Phaser.Scene {
       else this.setup.modeB = m;
     };
 
-    // Stack mode = compatto (riduce bottoni e spacing per non scrollare quando non serve)
     const compact = this.scale.width < 800;
-    const btnSpacing = compact ? 44 : 50;
-    const labelGap = compact ? 24 : 28;
+    const btnSpacing = compact ? 48 : 52;
+    const labelGap = compact ? 26 : 30;
+    const heraldicVariant = faction === 'A' ? 'heraldic-A' : 'heraldic-B';
+
+    const btnW = compact ? 280 : 260;
+    const btnH = compact ? 40 : 44;
 
     let yy = y;
     const presetLabel = this.add
-      .text(x, yy, 'Preset:', { fontFamily: 'monospace', fontSize: '14px', color: '#aaa' })
+      .text(x, yy, '— maestria —', {
+        fontFamily: FONTS.body,
+        fontSize: `${Math.round(14 * uiScale())}px`,
+        color: PALETTE.inkSoft.css,
+        fontStyle: 'italic',
+      })
       .setOrigin(0.5, 0);
     this.addToContent(presetLabel);
     yy += labelGap;
 
     for (const preset of PRESETS) {
       const isSelected = getPresetId() === preset.id && !this.getCustomBuildId(faction);
-      this.makeChoiceButton(x, yy, preset.name, isSelected, () => {
-        setPresetId(preset.id);
-        // Selezionare un preset disabilita la build custom per questa fazione
-        if (faction === 'A') this.setup.customBuildIdA = undefined;
-        else this.setup.customBuildIdB = undefined;
-        saveSetup(this.setup);
-        this.refresh();
+      const btn = makeCodexButton({
+        scene: this,
+        x: x - btnW / 2,
+        y: yy,
+        width: btnW,
+        height: btnH,
+        label: preset.name,
+        selected: isSelected,
+        variant: heraldicVariant,
+        fontSize: 17,
+        onClick: () => {
+          setPresetId(preset.id);
+          if (faction === 'A') this.setup.customBuildIdA = undefined;
+          else this.setup.customBuildIdB = undefined;
+          saveSetup(this.setup);
+          this.refresh();
+        },
       });
+      this.addToContent(btn);
       yy += btnSpacing;
     }
 
-    // Bottone "Build custom..." sempre presente
+    // Build custom
     const customBuildId = this.getCustomBuildId(faction);
     const customBuilds = loadAllBuilds();
     const customBuild = customBuilds.find((b) => b.id === customBuildId);
     const customLabel = customBuild
-      ? `★ ${customBuild.name || 'Custom'}`
-      : '＋ Crea personaggio…';
-    this.makeChoiceButton(x, yy, customLabel, !!customBuild, () => {
-      // Apre CharacterBuilder con la build esistente o una nuova
-      this.scale.off('resize', this.onResize, this);
-      this.scene.start('CharacterBuilderScene', {
-        faction,
-        build: customBuild,
-      });
+      ? `✦ ${customBuild.name || 'Custom'}`
+      : '✦  Forgia un carattere…';
+    const customBtn = makeCodexButton({
+      scene: this,
+      x: x - btnW / 2,
+      y: yy,
+      width: btnW,
+      height: btnH,
+      label: customLabel,
+      selected: !!customBuild,
+      variant: 'gold',
+      fontKind: 'display',
+      fontSize: 17,
+      onClick: () => {
+        this.scale.off('resize', this.onResize, this);
+        this.scene.start('CharacterBuilderScene', { faction, build: customBuild });
+      },
     });
+    this.addToContent(customBtn);
     yy += btnSpacing;
 
-    // Descrizione preset (oppure descrizione build custom)
+    // Descrizione
     const selPreset = PRESETS.find((p) => p.id === getPresetId()) as PresetSpec | undefined;
     let descContent: string;
     if (customBuild) {
       const skillCnt = customBuild.skills.length;
       const totExp = customBuild.skills.reduce((sum, s) => sum + s.cost, 0);
-      const equip = [
-        customBuild.weaponId,
-        customBuild.offhandId,
-        customBuild.armorId,
-      ].filter(Boolean).join(', ');
+      const equip = [customBuild.weaponId, customBuild.offhandId, customBuild.armorId]
+        .filter(Boolean)
+        .join(', ');
       descContent = `Custom: ${equip}. ${skillCnt} skill, ${totExp}/2000 exp.`;
     } else {
       descContent = selPreset?.description ?? '';
     }
-    yy += 6;
+    yy += 10;
     const descTxt = this.add
       .text(x, yy, descContent, {
-        fontFamily: 'monospace',
-        fontSize: compact ? 10 : 11,
-        color: '#999',
+        fontFamily: FONTS.body,
+        fontSize: `${Math.round((compact ? 13 : 14) * uiScale())}px`,
+        color: PALETTE.ink.css,
         align: 'center',
-        wordWrap: { width: compact ? 320 : 280 },
+        wordWrap: { width: compact ? 340 : 300 },
+        fontStyle: 'italic',
+        lineSpacing: 3,
       } as Phaser.Types.GameObjects.Text.TextStyle)
       .setOrigin(0.5, 0);
     this.addToContent(descTxt);
-    yy += descTxt.height + (compact ? 10 : 16);
+    yy += descTxt.height + (compact ? 14 : 20);
 
     // Modalità
     const modeLabel = this.add
-      .text(x, yy, 'Modalità:', { fontFamily: 'monospace', fontSize: '14px', color: '#aaa' })
+      .text(x, yy, '— mano —', {
+        fontFamily: FONTS.body,
+        fontSize: `${Math.round(14 * uiScale())}px`,
+        color: PALETTE.inkSoft.css,
+        fontStyle: 'italic',
+      })
       .setOrigin(0.5, 0);
     this.addToContent(modeLabel);
     yy += labelGap;
+
     for (const mode of ['human', 'ai'] as const) {
       const isSelected = getMode() === mode;
-      this.makeChoiceButton(x, yy, mode === 'human' ? 'Umano' : 'AI', isSelected, () => {
-        setMode(mode);
-        saveSetup(this.setup);
-        this.refresh();
+      const modeBtn = makeCodexButton({
+        scene: this,
+        x: x - btnW / 2,
+        y: yy,
+        width: btnW,
+        height: btnH,
+        label: mode === 'human' ? 'Mano umana' : 'Automa (CFR)',
+        selected: isSelected,
+        variant: heraldicVariant,
+        fontSize: 17,
+        onClick: () => {
+          setMode(mode);
+          saveSetup(this.setup);
+          this.refresh();
+        },
       });
+      this.addToContent(modeBtn);
       yy += btnSpacing;
     }
 
-    // Difficoltà AI: visibile solo se la fazione è AI
+    // Difficoltà AI
     if (getMode() === 'ai') {
-      yy += 4;
+      yy += 6;
       const aiLabel = this.add
-        .text(x, yy, 'Difficoltà AI:', { fontFamily: 'monospace', fontSize: '14px', color: '#aaa' })
+        .text(x, yy, '— grado dell\'automa —', {
+          fontFamily: FONTS.body,
+          fontSize: `${Math.round(14 * uiScale())}px`,
+          color: PALETTE.inkSoft.css,
+          fontStyle: 'italic',
+        })
         .setOrigin(0.5, 0);
       this.addToContent(aiLabel);
       yy += labelGap;
@@ -327,24 +445,37 @@ export class MainMenuScene extends Phaser.Scene {
         if (faction === 'A') this.setup.aiLevelA = lv;
         else this.setup.aiLevelB = lv;
       };
-      // Expert nascosto in build singlefile (onnxruntime-web non bundlato per
-      // evitare 25 MB di WASM inline → file singlefile esploderebbe).
       const levels: ReadonlyArray<'easy' | 'hard' | 'expert'> = __SINGLEFILE__
         ? ['easy', 'hard']
         : ['easy', 'hard', 'expert'];
-      // Se l'utente aveva salvato 'expert' su build full, in singlefile fallback a 'hard'
       if (__SINGLEFILE__ && getLevel() === 'expert') {
         setLevel('hard');
         saveSetup(this.setup);
       }
+      const levelLabel: Record<'easy' | 'hard' | 'expert', string> = {
+        easy: 'Iniziato',
+        hard: '✦ Maestro (CFR)',
+        expert: '✦✦ Gran Maestro (CFR full)',
+      };
       for (const lv of levels) {
         const isSelected = getLevel() === lv;
-        const labelText = lv === 'easy' ? 'Facile' : lv === 'hard' ? '★ Difficile (Deep CFR)' : '★★ Expert (Deep CFR full)';
-        this.makeChoiceButton(x, yy, labelText, isSelected, () => {
-          setLevel(lv);
-          saveSetup(this.setup);
-          this.refresh();
+        const levelBtn = makeCodexButton({
+          scene: this,
+          x: x - btnW / 2,
+          y: yy,
+          width: btnW,
+          height: btnH,
+          label: levelLabel[lv],
+          selected: isSelected,
+          variant: lv === 'easy' ? heraldicVariant : 'gold',
+          fontSize: 16,
+          onClick: () => {
+            setLevel(lv);
+            saveSetup(this.setup);
+            this.refresh();
+          },
         });
+        this.addToContent(levelBtn);
         yy += btnSpacing;
       }
     }
@@ -352,107 +483,64 @@ export class MainMenuScene extends Phaser.Scene {
     return yy;
   }
 
-  private makeChoiceButton(
-    x: number,
-    y: number,
-    label: string,
-    selected: boolean,
-    onClick: () => void,
-  ): Phaser.GameObjects.Container {
-    const compact = this.scale.width < 800;
-    const w = compact ? 260 : 240;
-    const h = compact ? 36 : 42; // h ridotta in stack mode
-    const c = this.add.container(x - w / 2, y);
-    const bg = this.add.rectangle(0, 0, w, h, selected ? 0x336688 : 0x222a33, 1);
-    bg.setOrigin(0, 0);
-    bg.setStrokeStyle(2, selected ? 0x77aacc : 0x444444);
-    const t = this.add.text(w / 2, h / 2, label, {
-      fontFamily: 'monospace',
-      fontSize: '14px',
-      color: '#fff',
-    });
-    t.setOrigin(0.5, 0.5);
-    c.add([bg, t]);
-    bg.setInteractive({ useHandCursor: true });
-    // pointerup per affidabilità touch
-    bg.on('pointerup', () => onClick());
-    bg.on('pointerover', () => {
-      if (!selected) bg.setFillStyle(0x2c3540);
-    });
-    bg.on('pointerout', () => {
-      bg.setFillStyle(selected ? 0x336688 : 0x222a33);
-    });
-    this.addToContent(c);
-    return c;
-  }
-
   private renderStartButton(w: number, y: number): void {
-    const btnW = 280;
+    const btnW = 300;
     const btnH = 64;
-    const c = this.add.container(w / 2 - btnW / 2, y);
-    const bg = this.add.rectangle(0, 0, btnW, btnH, 0x336633, 1);
-    bg.setOrigin(0, 0);
-    bg.setStrokeStyle(3, 0x66aa66);
-    const t = this.add.text(btnW / 2, btnH / 2, 'Inizia battaglia', {
-      fontFamily: 'monospace',
-      fontSize: '22px',
-      color: '#fff',
-    });
-    t.setOrigin(0.5, 0.5);
-    c.add([bg, t]);
-    bg.setInteractive({ useHandCursor: true });
-    bg.on('pointerover', () => bg.setFillStyle(0x448844));
-    bg.on('pointerout', () => bg.setFillStyle(0x336633));
-    bg.on('pointerup', () => this.startBattle());
-    this.addToContent(c);
 
-    // Bottoni secondari Tutorial + Manuale (sotto al bottone principale)
-    const subBtnW = 130;
-    const subBtnH = 48;
-    const subY = y + btnH + 16;
-    const gap = 20;
+    // Bottone "Apri il duello" — primary CTA
+    const startBtn = makeCodexButton({
+      scene: this,
+      x: w / 2 - btnW / 2,
+      y,
+      width: btnW,
+      height: btnH,
+      label: 'Apri il duello',
+      variant: 'primary',
+      fontKind: 'display',
+      fontSize: 22,
+      onClick: () => this.startBattle(),
+    });
+    this.addToContent(startBtn);
 
-    // Tutorial
-    const tutC = this.add.container(w / 2 - subBtnW - gap / 2, subY);
-    const tutBg = this.add.rectangle(0, 0, subBtnW, subBtnH, 0x444477, 1);
-    tutBg.setOrigin(0, 0);
-    tutBg.setStrokeStyle(2, 0x7777aa);
-    const tutT = this.add.text(subBtnW / 2, subBtnH / 2, '🎓 Tutorial', {
-      fontFamily: 'monospace',
-      fontSize: '15px',
-      color: '#fff',
-    });
-    tutT.setOrigin(0.5, 0.5);
-    tutC.add([tutBg, tutT]);
-    tutBg.setInteractive({ useHandCursor: true });
-    tutBg.on('pointerover', () => tutBg.setFillStyle(0x5555aa));
-    tutBg.on('pointerout', () => tutBg.setFillStyle(0x444477));
-    tutBg.on('pointerup', () => {
-      this.scale.off('resize', this.onResize, this);
-      this.scene.start('TutorialMenuScene');
-    });
-    this.addToContent(tutC);
+    // Bottoni secondari Tutorial + Manuale (sotto al CTA)
+    const subBtnW = 150;
+    const subBtnH = 46;
+    const subY = y + btnH + 18;
+    const gap = 18;
 
-    // Manuale
-    const manC = this.add.container(w / 2 + gap / 2, subY);
-    const manBg = this.add.rectangle(0, 0, subBtnW, subBtnH, 0x666633, 1);
-    manBg.setOrigin(0, 0);
-    manBg.setStrokeStyle(2, 0xaaaa55);
-    const manT = this.add.text(subBtnW / 2, subBtnH / 2, '📘 Manuale', {
-      fontFamily: 'monospace',
-      fontSize: '15px',
-      color: '#fff',
+    const tutBtn = makeCodexButton({
+      scene: this,
+      x: w / 2 - subBtnW - gap / 2,
+      y: subY,
+      width: subBtnW,
+      height: subBtnH,
+      label: 'Tutorial',
+      variant: 'outline',
+      fontKind: 'display',
+      fontSize: 17,
+      onClick: () => {
+        this.scale.off('resize', this.onResize, this);
+        this.scene.start('TutorialMenuScene');
+      },
     });
-    manT.setOrigin(0.5, 0.5);
-    manC.add([manBg, manT]);
-    manBg.setInteractive({ useHandCursor: true });
-    manBg.on('pointerover', () => manBg.setFillStyle(0x888844));
-    manBg.on('pointerout', () => manBg.setFillStyle(0x666633));
-    manBg.on('pointerup', () => {
-      this.scale.off('resize', this.onResize, this);
-      this.scene.start('ManualScene');
+    this.addToContent(tutBtn);
+
+    const manBtn = makeCodexButton({
+      scene: this,
+      x: w / 2 + gap / 2,
+      y: subY,
+      width: subBtnW,
+      height: subBtnH,
+      label: 'Codice & regole',
+      variant: 'outline',
+      fontKind: 'display',
+      fontSize: 17,
+      onClick: () => {
+        this.scale.off('resize', this.onResize, this);
+        this.scene.start('ManualScene');
+      },
     });
-    this.addToContent(manC);
+    this.addToContent(manBtn);
   }
 
   private refresh(): void {

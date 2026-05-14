@@ -25,6 +25,8 @@ import {
   countSpecializations,
 } from '@entities/Skill';
 import { Stat, EquipCategory } from '@entities/Equipment';
+import { paintVellum } from '@/ui/Vellum';
+import { FONTS, PALETTE } from '@/ui/theme';
 
 /**
  * Scena Character Builder.
@@ -71,6 +73,9 @@ export class CharacterBuilderScene extends Phaser.Scene {
 
   create(): void {
     if (!this.tooltip) this.tooltip = new Tooltip(this);
+    // Vellum + grain una tantum (sotto tutto, depth -100). Sopravvive ai renderAll
+    // perché this.elements gestisce solo gli elementi del builder.
+    paintVellum(this, this.scale.width, this.scale.height);
     // Restart on resize (orientation change su mobile): re-render tutto
     const onResize = () => this.scene.restart();
     this.scale.on('resize', onResize, this);
@@ -118,7 +123,6 @@ export class CharacterBuilderScene extends Phaser.Scene {
 
     const w = this.scale.width;
     const h = this.scale.height;
-    this.add.rectangle(0, 0, w, h, 0x121821, 1).setOrigin(0, 0).setDepth(-1);
 
     // Header
     this.renderHeader(w);
@@ -146,27 +150,27 @@ export class CharacterBuilderScene extends Phaser.Scene {
 
   private renderHeader(w: number): void {
     const headerH = 60;
-    const bg = this.add.rectangle(0, 0, w, headerH, 0x1c2530, 1).setOrigin(0, 0);
-    bg.setStrokeStyle(2, 0x445566);
+    const bg = this.add.rectangle(0, 0, w, headerH, PALETTE.vellumDark.num, 1).setOrigin(0, 0);
+    bg.setStrokeStyle(2, PALETTE.ink.num);
     this.elements.push(bg);
 
     const title = this.add
       .text(w / 2, headerH / 2, `Crea personaggio (Fazione ${this.targetFaction})`, {
-        fontFamily: 'monospace',
+        fontFamily: FONTS.body,
         fontSize: '20px',
-        color: '#fff',
+        color: PALETTE.ink.css,
         fontStyle: 'bold',
       })
       .setOrigin(0.5, 0.5);
     this.elements.push(title);
 
-    // ← Indietro
-    this.makeButton(20, 12, 100, 36, '← Indietro', 0x335577, () => {
+    // ← Frontespizio
+    this.makeButton(20, 12, 110, 36, '←  Frontespizio', PALETTE.vellumDark.num, () => {
       this.scene.start('MainMenuScene');
     });
 
-    // 📁 Carica
-    this.makeButton(w - 140, 12, 120, 36, '📁 Carica', 0x666633, () => {
+    // Carica
+    this.makeButton(w - 140, 12, 120, 36, 'Carica', PALETTE.gold.num, () => {
       this.openLoadDialog();
     });
   }
@@ -176,15 +180,15 @@ export class CharacterBuilderScene extends Phaser.Scene {
   // =======================================================================
 
   private renderEquipmentColumn(x: number, y: number, w: number, h: number): void {
-    const bg = this.add.rectangle(x, y, w, h, 0x1a222c, 1).setOrigin(0, 0);
-    bg.setStrokeStyle(1, 0x445566);
+    const bg = this.add.rectangle(x, y, w, h, PALETTE.vellumDark.num, 1).setOrigin(0, 0);
+    bg.setStrokeStyle(1, PALETTE.ink.num);
     this.elements.push(bg);
 
     const title = this.add
       .text(x + 16, y + 12, 'Equipaggiamento', {
-        fontFamily: 'monospace',
+        fontFamily: FONTS.body,
         fontSize: '17px',
-        color: '#9cf',
+        color: PALETTE.goldDeep.css,
         fontStyle: 'bold',
       })
       .setOrigin(0, 0);
@@ -261,9 +265,9 @@ export class CharacterBuilderScene extends Phaser.Scene {
   ): number {
     const lbl = this.add
       .text(x, y, label, {
-        fontFamily: 'monospace',
-        fontSize: '13px',
-        color: '#aac',
+        fontFamily: FONTS.body,
+        fontSize: '15px',
+        color: PALETTE.inkSoft.css,
       })
       .setOrigin(0, 0);
     this.elements.push(lbl);
@@ -271,8 +275,8 @@ export class CharacterBuilderScene extends Phaser.Scene {
     const btnY = y + 20;
     const btnH = 38;
     const c = this.add.container(x, btnY);
-    const bg = this.add.rectangle(0, 0, w, btnH, 0x2a3445, 1).setOrigin(0, 0);
-    bg.setStrokeStyle(2, 0x556677);
+    const bg = this.add.rectangle(0, 0, w, btnH, PALETTE.vellumDark.num, 1).setOrigin(0, 0);
+    bg.setStrokeStyle(2, PALETTE.ink.num);
     let displayText = '— Nessuno —';
     if (currentId) {
       if (type === 'weapon' || type === 'offhand') {
@@ -286,22 +290,22 @@ export class CharacterBuilderScene extends Phaser.Scene {
     }
     const t = this.add
       .text(10, btnH / 2, displayText, {
-        fontFamily: 'monospace',
-        fontSize: '14px',
-        color: '#fff',
+        fontFamily: FONTS.body,
+        fontSize: '15px',
+        color: PALETTE.ink.css,
       })
       .setOrigin(0, 0.5);
     const arrow = this.add
       .text(w - 14, btnH / 2, '▼', {
-        fontFamily: 'monospace',
-        fontSize: '12px',
-        color: '#aac',
+        fontFamily: FONTS.body,
+        fontSize: '15px',
+        color: PALETTE.inkSoft.css,
       })
       .setOrigin(1, 0.5);
     c.add([bg, t, arrow]);
     bg.setInteractive({ useHandCursor: true });
-    bg.on('pointerover', () => bg.setFillStyle(0x394858));
-    bg.on('pointerout', () => bg.setFillStyle(0x2a3445));
+    bg.on('pointerover', () => bg.setFillStyle(PALETTE.vellumDeep.num));
+    bg.on('pointerout', () => bg.setFillStyle(PALETTE.vellumDark.num));
     bg.on('pointerup', () => {
       const items: { id: string | null; label: string }[] = [];
       if (allowEmpty) items.push({ id: null, label: '— Nessuno —' });
@@ -350,9 +354,9 @@ export class CharacterBuilderScene extends Phaser.Scene {
       }
       const desc = this.add
         .text(x + 8, descCy, lines.join('\n'), {
-          fontFamily: 'monospace',
-          fontSize: '11px',
-          color: '#aac',
+          fontFamily: FONTS.body,
+          fontSize: '15px',
+          color: PALETTE.inkSoft.css,
           lineSpacing: 3,
         })
         .setOrigin(0, 0);
@@ -374,15 +378,15 @@ export class CharacterBuilderScene extends Phaser.Scene {
     const warningH = validation.warnings.length > 0 ? 22 + validation.warnings.length * 18 + 10 : 0;
     const summaryH = baseSummaryH + warningH;
 
-    const summaryBg = this.add.rectangle(x, y, w, summaryH, 0x1a222c, 1).setOrigin(0, 0);
-    summaryBg.setStrokeStyle(1, 0x445566);
+    const summaryBg = this.add.rectangle(x, y, w, summaryH, PALETTE.vellumDark.num, 1).setOrigin(0, 0);
+    summaryBg.setStrokeStyle(1, PALETTE.ink.num);
     this.elements.push(summaryBg);
 
     const summaryTitle = this.add
       .text(x + 16, y + 12, 'Riepilogo', {
-        fontFamily: 'monospace',
+        fontFamily: FONTS.body,
         fontSize: '17px',
-        color: '#9cf',
+        color: PALETTE.goldDeep.css,
         fontStyle: 'bold',
       })
       .setOrigin(0, 0);
@@ -391,9 +395,9 @@ export class CharacterBuilderScene extends Phaser.Scene {
     const summaryLines = this.computeSummaryLines(validation);
     const summaryText = this.add
       .text(x + 16, y + 42, summaryLines.join('\n'), {
-        fontFamily: 'monospace',
-        fontSize: '13px',
-        color: '#cdd',
+        fontFamily: FONTS.body,
+        fontSize: '15px',
+        color: PALETTE.ink.css,
         lineSpacing: 4,
       })
       .setOrigin(0, 0);
@@ -404,9 +408,9 @@ export class CharacterBuilderScene extends Phaser.Scene {
     const barX = x + 16;
     const barW = w - 32;
     const pct = Math.min(1, validation.totalCost / 2000);
-    const barColor = pct < 0.8 ? 0x44aa44 : pct <= 1 ? 0xddaa44 : 0xcc4444;
-    const barBg = this.add.rectangle(barX, barY, barW, 18, 0x222a35, 1).setOrigin(0, 0);
-    barBg.setStrokeStyle(1, 0x556677);
+    const barColor = pct < 0.8 ? PALETTE.verde.num : pct <= 1 ? PALETTE.gold.num : PALETTE.gules.num;
+    const barBg = this.add.rectangle(barX, barY, barW, 18, PALETTE.vellumDeep.num, 1).setOrigin(0, 0);
+    barBg.setStrokeStyle(1, PALETTE.ink.num);
     this.elements.push(barBg);
     if (pct > 0) {
       const fill = this.add.rectangle(barX, barY, barW * pct, 18, barColor, 1).setOrigin(0, 0);
@@ -418,9 +422,9 @@ export class CharacterBuilderScene extends Phaser.Scene {
       const warnY = y + baseSummaryH + 4;
       const warnTitle = this.add
         .text(x + 16, warnY, `⚠ Avvisi (${validation.warnings.length})`, {
-          fontFamily: 'monospace',
-          fontSize: '13px',
-          color: '#ffd966',
+          fontFamily: FONTS.body,
+          fontSize: '15px',
+          color: PALETTE.gold.css,
           fontStyle: 'bold',
         })
         .setOrigin(0, 0);
@@ -429,9 +433,9 @@ export class CharacterBuilderScene extends Phaser.Scene {
       for (const wmsg of validation.warnings) {
         const wt = this.add
           .text(x + 16, wcy, '• ' + wmsg, {
-            fontFamily: 'monospace',
-            fontSize: '11px',
-            color: '#e9c965',
+            fontFamily: FONTS.body,
+            fontSize: '15px',
+            color: PALETTE.goldDeep.css,
             wordWrap: { width: w - 32 },
           })
           .setOrigin(0, 0);
@@ -443,15 +447,15 @@ export class CharacterBuilderScene extends Phaser.Scene {
     // Skill section
     const skillTop = y + summaryH + 12;
     const skillH = h - summaryH - 12;
-    const skillBg = this.add.rectangle(x, skillTop, w, skillH, 0x1a222c, 1).setOrigin(0, 0);
-    skillBg.setStrokeStyle(1, 0x445566);
+    const skillBg = this.add.rectangle(x, skillTop, w, skillH, PALETTE.vellumDark.num, 1).setOrigin(0, 0);
+    skillBg.setStrokeStyle(1, PALETTE.ink.num);
     this.elements.push(skillBg);
 
     const skillTitle = this.add
       .text(x + 16, skillTop + 12, 'Skill acquistate', {
-        fontFamily: 'monospace',
+        fontFamily: FONTS.body,
         fontSize: '17px',
-        color: '#9cf',
+        color: PALETTE.goldDeep.css,
         fontStyle: 'bold',
       })
       .setOrigin(0, 0);
@@ -461,9 +465,9 @@ export class CharacterBuilderScene extends Phaser.Scene {
     if (this.build.skills.length === 0) {
       const emptyT = this.add
         .text(x + 16, cy, 'Nessuna skill. Aggiungine una qui sotto.', {
-          fontFamily: 'monospace',
-          fontSize: '13px',
-          color: '#778',
+          fontFamily: FONTS.body,
+          fontSize: '15px',
+          color: PALETTE.inkFaded.css,
           fontStyle: 'italic',
         })
         .setOrigin(0, 0);
@@ -475,28 +479,28 @@ export class CharacterBuilderScene extends Phaser.Scene {
       const desc = describeSkill(s);
       const t = this.add
         .text(x + 16, cy, '• ' + desc, {
-          fontFamily: 'monospace',
-          fontSize: '12px',
-          color: '#cdd',
+          fontFamily: FONTS.body,
+          fontSize: '15px',
+          color: PALETTE.ink.css,
         })
         .setOrigin(0, 0);
       this.elements.push(t);
       // Bottone × per rimuovere
       const removeC = this.add.container(x + w - 36, cy - 2);
-      const removeBg = this.add.rectangle(0, 0, 24, 22, 0x553333, 1).setOrigin(0, 0);
-      removeBg.setStrokeStyle(1, 0xaa5555);
+      const removeBg = this.add.rectangle(0, 0, 24, 22, PALETTE.gulesWash.num, 1).setOrigin(0, 0);
+      removeBg.setStrokeStyle(1, PALETTE.gulesDeep.num);
       const removeT = this.add
         .text(12, 11, '×', {
-          fontFamily: 'monospace',
-          fontSize: '14px',
-          color: '#fff',
+          fontFamily: FONTS.body,
+          fontSize: '15px',
+          color: PALETTE.ink.css,
           fontStyle: 'bold',
         })
         .setOrigin(0.5, 0.5);
       removeC.add([removeBg, removeT]);
       removeBg.setInteractive({ useHandCursor: true });
-      removeBg.on('pointerover', () => removeBg.setFillStyle(0x884444));
-      removeBg.on('pointerout', () => removeBg.setFillStyle(0x553333));
+      removeBg.on('pointerover', () => removeBg.setFillStyle(PALETTE.gules.num));
+      removeBg.on('pointerout', () => removeBg.setFillStyle(PALETTE.gulesWash.num));
       const idx = i;
       removeBg.on('pointerup', () => {
         this.build.skills.splice(idx, 1);
@@ -508,7 +512,7 @@ export class CharacterBuilderScene extends Phaser.Scene {
 
     cy += 12;
     // Bottone aggiungi skill (reset state per nuova skill)
-    this.makeButton(x + 16, cy, w - 32, 40, '＋ Aggiungi skill', 0x3a5577, () => {
+    this.makeButton(x + 16, cy, w - 32, 40, '+  Aggiungi skill', PALETTE.azureWash.num, () => {
       this.openSkillEditor(true);
     });
   }
@@ -563,9 +567,9 @@ export class CharacterBuilderScene extends Phaser.Scene {
     // Input nome (sostituito con un placeholder cliccabile che apre prompt browser)
     const nameLbl = this.add
       .text(padding, y + 4, 'Nome build:', {
-        fontFamily: 'monospace',
-        fontSize: '13px',
-        color: '#aac',
+        fontFamily: FONTS.body,
+        fontSize: '15px',
+        color: PALETTE.inkSoft.css,
       })
       .setOrigin(0, 0);
     this.elements.push(nameLbl);
@@ -574,12 +578,12 @@ export class CharacterBuilderScene extends Phaser.Scene {
     const inputH = 32;
     const inputY = y + 24;
     const inputC = this.add.container(padding, inputY);
-    const inputBg = this.add.rectangle(0, 0, inputW, inputH, 0x222a35, 1).setOrigin(0, 0);
-    inputBg.setStrokeStyle(2, 0x556677);
+    const inputBg = this.add.rectangle(0, 0, inputW, inputH, PALETTE.vellumDeep.num, 1).setOrigin(0, 0);
+    inputBg.setStrokeStyle(2, PALETTE.ink.num);
     const inputT = this.add
       .text(10, inputH / 2, this.build.name || '(clicca per inserire un nome)', {
-        fontFamily: 'monospace',
-        fontSize: '13px',
+        fontFamily: FONTS.body,
+        fontSize: '15px',
         color: this.build.name ? '#fff' : '#778',
       })
       .setOrigin(0, 0.5);
@@ -600,7 +604,7 @@ export class CharacterBuilderScene extends Phaser.Scene {
     this.elements.push(inputC);
 
     // Bottone Salva
-    this.makeButton(padding + inputW + 16, inputY, 130, inputH, '💾 Salva', 0x336633, async () => {
+    this.makeButton(padding + inputW + 16, inputY, 130, inputH, 'Salva', PALETTE.verde.num, async () => {
       if (!this.build.name) {
         const v = await htmlPrompt({
           title: 'Inserisci un nome per salvare',
@@ -616,7 +620,7 @@ export class CharacterBuilderScene extends Phaser.Scene {
     });
 
     // Bottone Usa per battaglia
-    this.makeButton(w - padding - 240, inputY, 240, inputH, '🎮 Usa per battaglia', 0xaa6633, async () => {
+    this.makeButton(w - padding - 240, inputY, 240, inputH, 'Apri il duello con questa build', PALETTE.gold.num, async () => {
       const val = validateBuild(this.build);
       if (!val.valid) {
         await htmlAlert({
@@ -652,9 +656,9 @@ export class CharacterBuilderScene extends Phaser.Scene {
     bg.setStrokeStyle(2, this.lighten(color));
     const t = this.add
       .text(w / 2, h / 2, text, {
-        fontFamily: 'monospace',
-        fontSize: '13px',
-        color: '#fff',
+        fontFamily: FONTS.body,
+        fontSize: '15px',
+        color: PALETTE.ink.css,
       })
       .setOrigin(0.5, 0.5);
     c.add([bg, t]);
@@ -700,15 +704,15 @@ export class CharacterBuilderScene extends Phaser.Scene {
     this.overlay = this.add.container(0, 0);
     this.overlay.setDepth(501);
 
-    const box = this.add.rectangle(bx, by, boxW, boxH, 0x1a2530, 1).setOrigin(0, 0);
-    box.setStrokeStyle(3, 0x6699bb);
+    const box = this.add.rectangle(bx, by, boxW, boxH, PALETTE.vellumDark.num, 1).setOrigin(0, 0);
+    box.setStrokeStyle(3, PALETTE.ink.num);
     this.overlay.add([overlayBg, box]);
 
     const headerT = this.add
       .text(bx + boxW / 2, by + headerH / 2, title, {
-        fontFamily: 'monospace',
+        fontFamily: FONTS.body,
         fontSize: '16px',
-        color: '#fff',
+        color: PALETTE.ink.css,
         fontStyle: 'bold',
       })
       .setOrigin(0.5, 0.5);
@@ -717,20 +721,20 @@ export class CharacterBuilderScene extends Phaser.Scene {
     let cy = by + headerH;
     for (const item of items.slice(0, maxItems)) {
       const c = this.add.container(bx + 10, cy);
-      const ibg = this.add.rectangle(0, 0, boxW - 20, itemH - 2, 0x2c3a48, 1).setOrigin(0, 0);
-      ibg.setStrokeStyle(1, 0x556677);
+      const ibg = this.add.rectangle(0, 0, boxW - 20, itemH - 2, PALETTE.vellumDeep.num, 1).setOrigin(0, 0);
+      ibg.setStrokeStyle(1, PALETTE.ink.num);
       const it = this.add
         .text(12, itemH / 2 - 1, item.label, {
-          fontFamily: 'monospace',
-          fontSize: '13px',
-          color: '#fff',
+          fontFamily: FONTS.body,
+          fontSize: '15px',
+          color: PALETTE.ink.css,
           wordWrap: { width: boxW - 50 },
         })
         .setOrigin(0, 0.5);
       c.add([ibg, it]);
       ibg.setInteractive({ useHandCursor: true });
       ibg.on('pointerover', (p: Phaser.Input.Pointer) => {
-        ibg.setFillStyle(0x3c4a58);
+        ibg.setFillStyle(PALETTE.vellumDeep.num);
         // Tooltip dinamico se l'item è un equip riconoscibile
         if (item.id && this.tooltip) {
           const desc = this.describeItemForTooltip(item.id);
@@ -741,7 +745,7 @@ export class CharacterBuilderScene extends Phaser.Scene {
         if (this.tooltip) this.tooltip.move(p.x, p.y);
       });
       ibg.on('pointerout', () => {
-        ibg.setFillStyle(0x2c3a48);
+        ibg.setFillStyle(PALETTE.vellumDeep.num);
         if (this.tooltip) this.tooltip.hide();
       });
       ibg.on('pointerup', () => {
@@ -789,15 +793,15 @@ export class CharacterBuilderScene extends Phaser.Scene {
     const boxH = 480;
     const bx = w / 2 - boxW / 2;
     const by = h / 2 - boxH / 2;
-    const box = this.add.rectangle(bx, by, boxW, boxH, 0x1a2530, 1).setOrigin(0, 0);
-    box.setStrokeStyle(3, 0x6699bb);
+    const box = this.add.rectangle(bx, by, boxW, boxH, PALETTE.vellumDark.num, 1).setOrigin(0, 0);
+    box.setStrokeStyle(3, PALETTE.ink.num);
     this.overlay.add([overlayBg, box]);
 
     const title = this.add
       .text(bx + boxW / 2, by + 20, 'Aggiungi skill', {
-        fontFamily: 'monospace',
+        fontFamily: FONTS.body,
         fontSize: '18px',
-        color: '#fff',
+        color: PALETTE.ink.css,
         fontStyle: 'bold',
       })
       .setOrigin(0.5, 0);
@@ -827,9 +831,9 @@ export class CharacterBuilderScene extends Phaser.Scene {
     // 1. Modificatore
     const labelMod = this.add
       .text(innerX, cy, '1. Modificatore', {
-        fontFamily: 'monospace',
-        fontSize: '13px',
-        color: '#9cf',
+        fontFamily: FONTS.body,
+        fontSize: '15px',
+        color: PALETTE.goldDeep.css,
         fontStyle: 'bold',
       })
       .setOrigin(0, 0);
@@ -846,14 +850,14 @@ export class CharacterBuilderScene extends Phaser.Scene {
     const modBtnW = (innerW - 12) / 4;
     for (const opt of modOptions) {
       const btnBg = this.add
-        .rectangle(mx, cy, modBtnW - 4, 32, opt.id === modifier ? 0x336699 : 0x2c3a48, 1)
+        .rectangle(mx, cy, modBtnW - 4, 32, opt.id === modifier ? PALETTE.gold.num : PALETTE.vellumDeep.num, 1)
         .setOrigin(0, 0);
-      btnBg.setStrokeStyle(2, opt.id === modifier ? 0x66aaee : 0x556677);
+      btnBg.setStrokeStyle(2, opt.id === modifier ? PALETTE.gold.num : PALETTE.ink.num);
       const btnT = this.add
         .text(mx + (modBtnW - 4) / 2, cy + 16, opt.label, {
-          fontFamily: 'monospace',
-          fontSize: '10px',
-          color: '#fff',
+          fontFamily: FONTS.body,
+          fontSize: '15px',
+          color: PALETTE.ink.css,
           align: 'center',
         })
         .setOrigin(0.5, 0.5);
@@ -863,8 +867,8 @@ export class CharacterBuilderScene extends Phaser.Scene {
         modifier = opt.id;
         if (this.editingSkill) this.editingSkill.modifier = modifier;
         for (const mb of modButtons) {
-          mb.btn.setFillStyle(mb.id === modifier ? 0x336699 : 0x2c3a48);
-          mb.btn.setStrokeStyle(2, mb.id === modifier ? 0x66aaee : 0x556677);
+          mb.btn.setFillStyle(mb.id === modifier ? PALETTE.gold.num : PALETTE.vellumDeep.num);
+          mb.btn.setStrokeStyle(2, mb.id === modifier ? PALETTE.gold.num : PALETTE.ink.num);
         }
         refreshCost();
       });
@@ -876,9 +880,9 @@ export class CharacterBuilderScene extends Phaser.Scene {
     // 2. Livello
     const labelLv = this.add
       .text(innerX, cy, '2. Livello', {
-        fontFamily: 'monospace',
-        fontSize: '13px',
-        color: '#9cf',
+        fontFamily: FONTS.body,
+        fontSize: '15px',
+        color: PALETTE.goldDeep.css,
         fontStyle: 'bold',
       })
       .setOrigin(0, 0);
@@ -889,14 +893,14 @@ export class CharacterBuilderScene extends Phaser.Scene {
     let lx = innerX;
     for (let lv = 1; lv <= 6; lv++) {
       const btnBg = this.add
-        .rectangle(lx, cy, lvBtnW - 4, 32, lv === level ? 0x336699 : 0x2c3a48, 1)
+        .rectangle(lx, cy, lvBtnW - 4, 32, lv === level ? PALETTE.gold.num : PALETTE.vellumDeep.num, 1)
         .setOrigin(0, 0);
-      btnBg.setStrokeStyle(2, lv === level ? 0x66aaee : 0x556677);
+      btnBg.setStrokeStyle(2, lv === level ? PALETTE.gold.num : PALETTE.ink.num);
       const btnT = this.add
         .text(lx + (lvBtnW - 4) / 2, cy + 16, `${lv}`, {
-          fontFamily: 'monospace',
-          fontSize: '14px',
-          color: '#fff',
+          fontFamily: FONTS.body,
+          fontSize: '15px',
+          color: PALETTE.ink.css,
           fontStyle: 'bold',
         })
         .setOrigin(0.5, 0.5);
@@ -906,8 +910,8 @@ export class CharacterBuilderScene extends Phaser.Scene {
         level = lv;
         if (this.editingSkill) this.editingSkill.level = level;
         for (const lb of lvBtns) {
-          lb.btn.setFillStyle(lb.lv === level ? 0x336699 : 0x2c3a48);
-          lb.btn.setStrokeStyle(2, lb.lv === level ? 0x66aaee : 0x556677);
+          lb.btn.setFillStyle(lb.lv === level ? PALETTE.gold.num : PALETTE.vellumDeep.num);
+          lb.btn.setStrokeStyle(2, lb.lv === level ? PALETTE.gold.num : PALETTE.ink.num);
         }
         refreshCost();
       });
@@ -919,9 +923,9 @@ export class CharacterBuilderScene extends Phaser.Scene {
     // 3. Specializzazioni
     const labelSpec = this.add
       .text(innerX, cy, '3. Specializzazioni (max 1 per lista, dimezzano il costo)', {
-        fontFamily: 'monospace',
-        fontSize: '13px',
-        color: '#9cf',
+        fontFamily: FONTS.body,
+        fontSize: '15px',
+        color: PALETTE.goldDeep.css,
         fontStyle: 'bold',
       })
       .setOrigin(0, 0);
@@ -940,25 +944,25 @@ export class CharacterBuilderScene extends Phaser.Scene {
       const c = this.add.container(innerX, cy);
       const lbl = this.add
         .text(0, specRowH / 2, labelText, {
-          fontFamily: 'monospace',
-          fontSize: '12px',
-          color: '#aac',
+          fontFamily: FONTS.body,
+          fontSize: '15px',
+          color: PALETTE.inkSoft.css,
         })
         .setOrigin(0, 0.5);
-      const ddBg = this.add.rectangle(labelW, 0, dropdownW, specRowH, 0x2c3a48, 1).setOrigin(0, 0);
-      ddBg.setStrokeStyle(1, 0x556677);
+      const ddBg = this.add.rectangle(labelW, 0, dropdownW, specRowH, PALETTE.vellumDeep.num, 1).setOrigin(0, 0);
+      ddBg.setStrokeStyle(1, PALETTE.ink.num);
       const ddT = this.add
         .text(labelW + 8, specRowH / 2, currentLabel, {
-          fontFamily: 'monospace',
-          fontSize: '12px',
-          color: '#fff',
+          fontFamily: FONTS.body,
+          fontSize: '15px',
+          color: PALETTE.ink.css,
         })
         .setOrigin(0, 0.5);
       const arr = this.add
         .text(labelW + dropdownW - 8, specRowH / 2, '▼', {
-          fontFamily: 'monospace',
-          fontSize: '10px',
-          color: '#aac',
+          fontFamily: FONTS.body,
+          fontSize: '15px',
+          color: PALETTE.inkSoft.css,
         })
         .setOrigin(1, 0.5);
       c.add([lbl, ddBg, ddT, arr]);
@@ -1052,9 +1056,9 @@ export class CharacterBuilderScene extends Phaser.Scene {
     // Costo
     const costText = this.add
       .text(innerX, cy, 'Costo: 100 exp', {
-        fontFamily: 'monospace',
+        fontFamily: FONTS.body,
         fontSize: '15px',
-        color: '#ffd966',
+        color: PALETTE.gold.css,
         fontStyle: 'bold',
       })
       .setOrigin(0, 0);
@@ -1068,9 +1072,9 @@ export class CharacterBuilderScene extends Phaser.Scene {
     cancelBg.setStrokeStyle(2, 0x886633);
     const cancelT = this.add
       .text(innerX + 55, cy + 18, 'Annulla', {
-        fontFamily: 'monospace',
-        fontSize: '13px',
-        color: '#fff',
+        fontFamily: FONTS.body,
+        fontSize: '15px',
+        color: PALETTE.ink.css,
       })
       .setOrigin(0.5, 0.5);
     this.overlay.add([cancelBg, cancelT]);
@@ -1085,9 +1089,9 @@ export class CharacterBuilderScene extends Phaser.Scene {
     confirmBg.setStrokeStyle(2, 0x66aa66);
     const confirmT = this.add
       .text(confirmX + 65, cy + 18, 'Conferma', {
-        fontFamily: 'monospace',
-        fontSize: '13px',
-        color: '#fff',
+        fontFamily: FONTS.body,
+        fontSize: '15px',
+        color: PALETTE.ink.css,
         fontStyle: 'bold',
       })
       .setOrigin(0.5, 0.5);

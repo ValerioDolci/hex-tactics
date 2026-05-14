@@ -1,4 +1,9 @@
 import Phaser from 'phaser';
+import { FONTS, PALETTE } from './theme';
+
+/** Colori delle facce dei dadi nel Codex Tacticus. */
+const DIE_COLOR_ATK = PALETTE.gold.num; // dadi attaccante: oro
+const DIE_COLOR_DEF = PALETTE.azureWash.num; // dadi difensore: azure desaturato (chiaro)
 
 /**
  * Animazione lancio dadi: mostra N dadi D6 stilizzati che ruotano e atterrano
@@ -13,7 +18,7 @@ import Phaser from 'phaser';
  *     dice: [3, 5, 2],
  *     centerX: 640, centerY: 200,
  *     label: 'Bravo attacca',
- *     color: 0xffee66,
+ *     color: DIE_COLOR_ATK,
  *     onComplete: () => { ... },
  *   });
  */
@@ -85,7 +90,7 @@ function drawDicePips(g: Phaser.GameObjects.Graphics, value: number, size: numbe
   const c = size / 2;
   const r = size * 0.08; // raggio pip
   const off = size * 0.27; // offset dal centro
-  g.fillStyle(0x111111, 1);
+  g.fillStyle(PALETTE.ink.num, 1);
   // Pip pattern per D6 (1-6) — coordinate relative a (cx, cy)
   const patterns: Record<number, [number, number][]> = {
     1: [[0, 0]],
@@ -108,11 +113,11 @@ function drawDicePips(g: Phaser.GameObjects.Graphics, value: number, size: numbe
 function makeDie(scene: Phaser.Scene, value: number, color: number): Phaser.GameObjects.Container {
   const cont = scene.add.container(0, 0);
   const g = scene.add.graphics();
-  // Sfondo dado
+  // Sfondo dado: codex style — corner radius piccolo (3px), bordo ink, vellum-cream tincture
   g.fillStyle(color, 1);
-  g.fillRoundedRect(0, 0, DICE_SIZE, DICE_SIZE, 6);
-  g.lineStyle(2, 0x333333, 1);
-  g.strokeRoundedRect(0, 0, DICE_SIZE, DICE_SIZE, 6);
+  g.fillRoundedRect(0, 0, DICE_SIZE, DICE_SIZE, 3);
+  g.lineStyle(1.5, PALETTE.ink.num, 1);
+  g.strokeRoundedRect(0, 0, DICE_SIZE, DICE_SIZE, 3);
   drawDicePips(g, value, DICE_SIZE);
   // Origine al centro per ruotare
   cont.add(g);
@@ -132,9 +137,9 @@ function updateDieValue(cont: Phaser.GameObjects.Container, value: number, color
   }
   const g = cont.scene.add.graphics();
   g.fillStyle(color, 1);
-  g.fillRoundedRect(0, 0, DICE_SIZE, DICE_SIZE, 6);
-  g.lineStyle(2, 0x333333, 1);
-  g.strokeRoundedRect(0, 0, DICE_SIZE, DICE_SIZE, 6);
+  g.fillRoundedRect(0, 0, DICE_SIZE, DICE_SIZE, 3);
+  g.lineStyle(1.5, PALETTE.ink.num, 1);
+  g.strokeRoundedRect(0, 0, DICE_SIZE, DICE_SIZE, 3);
   drawDicePips(g, value, DICE_SIZE);
   g.x = -DICE_SIZE / 2;
   g.y = -DICE_SIZE / 2;
@@ -156,7 +161,7 @@ export function playDiceRoll(
       resolve();
       return;
     }
-    const color = opts.color ?? 0xffee66;
+    const color = opts.color ?? DIE_COLOR_ATK;
     const durRoll = opts.durationRollMs ?? 700;
     const durHold = opts.durationHoldMs ?? 600;
     const durFade = opts.durationFadeMs ?? 400;
@@ -174,12 +179,12 @@ export function playDiceRoll(
     let labelText: Phaser.GameObjects.Text | null = null;
     if (opts.label) {
       labelText = scene.add.text(opts.centerX, cy - DICE_SIZE * 1.2, opts.label, {
-        fontFamily: 'monospace',
+        fontFamily: FONTS.display,
         fontSize: '16px',
-        color: '#ffffff',
-        stroke: '#000000',
+        color: PALETTE.ink.css,
+        stroke: PALETTE.vellum.css,
         strokeThickness: 3,
-        fontStyle: 'bold',
+        fontStyle: 'italic',
       });
       labelText.setOrigin(0.5, 1);
       labelText.setScrollFactor(0);
@@ -289,24 +294,31 @@ export function playCombatRoll(
     group.setScrollFactor(0);
     group.setAlpha(0);
 
-    // Sfondo box
-    const bg = scene.add.rectangle(bx, by, W, H, 0x0c1218, 0.94);
+    // Sfondo box vellum + bordo doppio inchiostro (codex style)
+    const bg = scene.add.rectangle(bx, by, W, H, PALETTE.vellumDark.num, 0.97);
     bg.setOrigin(0, 0);
-    bg.setStrokeStyle(2, 0x6699bb);
     group.add(bg);
+    const outerStroke = scene.add.graphics();
+    outerStroke.lineStyle(1.4, PALETTE.ink.num, 1);
+    outerStroke.strokeRect(bx + 0.5, by + 0.5, W - 1, H - 1);
+    const innerStroke = scene.add.graphics();
+    innerStroke.lineStyle(1, PALETTE.inkSoft.num, 0.55);
+    innerStroke.strokeRect(bx + 4, by + 4, W - 8, H - 8);
+    group.add([outerStroke, innerStroke]);
 
-    // Titolo
-    const titleColor = opts.outcome.hit ? '#ffaaaa' : '#88ccff';
+    // Titolo: gules per HIT, verde per parry/dodge (esito difensivo)
+    const titleColor = opts.outcome.hit ? PALETTE.gules.css : PALETTE.verde.css;
     const title = scene.add.text(opts.centerX, by + 14, opts.title, {
-      fontFamily: 'monospace', fontSize: '22px', color: titleColor,
-      fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
+      fontFamily: FONTS.display, fontSize: '24px', color: titleColor,
+      fontStyle: 'italic', stroke: PALETTE.vellum.css, strokeThickness: 3,
     });
     title.setOrigin(0.5, 0);
     group.add(title);
 
     if (opts.subtitle) {
-      const sub = scene.add.text(opts.centerX, by + 46, opts.subtitle, {
-        fontFamily: 'monospace', fontSize: '13px', color: '#aab',
+      const sub = scene.add.text(opts.centerX, by + 50, opts.subtitle, {
+        fontFamily: FONTS.body, fontSize: '13px', color: PALETTE.inkSoft.css,
+        fontStyle: 'italic',
       });
       sub.setOrigin(0.5, 0);
       group.add(sub);
@@ -322,25 +334,27 @@ export function playCombatRoll(
     const ySepLine = by + 215;
     const yTotale = by + 230;
 
-    // Header colonna ATK (giallo)
+    // Header colonna ATK (gold/ink, display)
     const atkHeader = scene.add.text(colAtkX, yHeader, `⚔ ${opts.attacker.name}`, {
-      fontFamily: 'monospace', fontSize: '15px', color: '#ffee66', fontStyle: 'bold',
+      fontFamily: FONTS.display, fontSize: '18px', color: PALETTE.goldDeep.css,
+      fontStyle: 'italic bold',
     });
     atkHeader.setOrigin(0.5, 0);
     group.add(atkHeader);
 
-    // Header colonna DEF (azzurro) — anche se no defense, mostra il nome
-    const defLabel = opts.defender.dice.length > 0 ? `🛡 ${opts.defender.name}` : `🎯 ${opts.defender.name}`;
+    // Header colonna DEF (azure deep, display)
+    const defLabel = opts.defender.dice.length > 0 ? `◇ ${opts.defender.name}` : `◎ ${opts.defender.name}`;
     const defHeader = scene.add.text(colDefX, yHeader, defLabel, {
-      fontFamily: 'monospace', fontSize: '15px', color: '#88ccff', fontStyle: 'bold',
+      fontFamily: FONTS.display, fontSize: '18px', color: PALETTE.azureDeep.css,
+      fontStyle: 'italic bold',
     });
     defHeader.setOrigin(0.5, 0);
     group.add(defHeader);
 
-    // Etichetta VS centrale grande
-    const vsLabel = scene.add.text(opts.centerX, yDice + DICE_SIZE / 2, 'VS', {
-      fontFamily: 'monospace', fontSize: '24px', color: '#ddd',
-      fontStyle: 'bold', stroke: '#000', strokeThickness: 4,
+    // Etichetta VS centrale (display serif italic, gold)
+    const vsLabel = scene.add.text(opts.centerX, yDice + DICE_SIZE / 2, 'vs', {
+      fontFamily: FONTS.display, fontSize: '26px', color: PALETTE.gold.css,
+      fontStyle: 'italic',
     });
     vsLabel.setOrigin(0.5, 0.5);
     group.add(vsLabel);
@@ -351,7 +365,7 @@ export function playCombatRoll(
     const atkRowW = atkN * DICE_SIZE + (atkN - 1) * DICE_GAP;
     const atkRowStartX = colAtkX - atkRowW / 2 + DICE_SIZE / 2;
     for (let i = 0; i < atkN; i++) {
-      const die = makeDie(scene, 1 + Math.floor(Math.random() * 6), 0xffee66);
+      const die = makeDie(scene, 1 + Math.floor(Math.random() * 6), DIE_COLOR_ATK);
       die.x = atkRowStartX + i * (DICE_SIZE + DICE_GAP);
       die.y = yDice + DICE_SIZE / 2;
       die.setScale(0.2);
@@ -365,7 +379,7 @@ export function playCombatRoll(
       const defRowW = defN * DICE_SIZE + (defN - 1) * DICE_GAP;
       const defRowStartX = colDefX - defRowW / 2 + DICE_SIZE / 2;
       for (let i = 0; i < defN; i++) {
-        const die = makeDie(scene, 1 + Math.floor(Math.random() * 6), 0x88ccff);
+        const die = makeDie(scene, 1 + Math.floor(Math.random() * 6), DIE_COLOR_DEF);
         die.x = defRowStartX + i * (DICE_SIZE + DICE_GAP);
         die.y = yDice + DICE_SIZE / 2;
         die.setScale(0.2);
@@ -374,9 +388,10 @@ export function playCombatRoll(
       }
     }
 
-    // Breakdown ATK: somma dadi (es. "3+5+2 = 10" o "10 → 6" se imp)
+    // Breakdown ATK: somma dadi (mono ink — sono numeri)
     const atkBreakdown = scene.add.text(colAtkX, yBreakdown, '', {
-      fontFamily: 'monospace', fontSize: '13px', color: '#ffee66',
+      fontFamily: FONTS.mono, fontSize: '15px', color: PALETTE.goldDeep.css,
+      fontStyle: 'bold',
     });
     atkBreakdown.setOrigin(0.5, 0.5);
     atkBreakdown.setAlpha(0);
@@ -384,64 +399,65 @@ export function playCombatRoll(
 
     // Fissa ATK
     const atkFissa = scene.add.text(colAtkX, yFissa, '', {
-      fontFamily: 'monospace', fontSize: '13px', color: '#ddd',
+      fontFamily: FONTS.mono, fontSize: '15px', color: PALETTE.ink.css,
     });
     atkFissa.setOrigin(0.5, 0.5);
     atkFissa.setAlpha(0);
     group.add(atkFissa);
 
     // Linea separatrice ATK
-    const atkSep = scene.add.rectangle(colAtkX, ySepLine, 100, 1, 0x666, 0.6);
+    const atkSep = scene.add.rectangle(colAtkX, ySepLine, 100, 1, PALETTE.inkSoft.num, 0.6);
     atkSep.setAlpha(0);
     group.add(atkSep);
 
-    // Totale ATK (grosso, evidenziato)
+    // Totale ATK (grosso, display serif)
     const atkTotale = scene.add.text(colAtkX, yTotale, '', {
-      fontFamily: 'monospace', fontSize: '20px', color: '#ffee66',
-      fontStyle: 'bold',
+      fontFamily: FONTS.display, fontSize: '26px', color: PALETTE.goldDeep.css,
+      fontStyle: 'italic bold',
     });
     atkTotale.setOrigin(0.5, 0.5);
     atkTotale.setAlpha(0);
     group.add(atkTotale);
 
-    // Breakdown DEF (se presente)
+    // Breakdown DEF
     const defBreakdown = scene.add.text(colDefX, yBreakdown, '', {
-      fontFamily: 'monospace', fontSize: '13px', color: '#88ccff',
+      fontFamily: FONTS.mono, fontSize: '15px', color: PALETTE.azureDeep.css,
+      fontStyle: 'bold',
     });
     defBreakdown.setOrigin(0.5, 0.5);
     defBreakdown.setAlpha(0);
     group.add(defBreakdown);
 
     const defFissa = scene.add.text(colDefX, yFissa, '', {
-      fontFamily: 'monospace', fontSize: '13px', color: '#ddd',
+      fontFamily: FONTS.mono, fontSize: '15px', color: PALETTE.ink.css,
     });
     defFissa.setOrigin(0.5, 0.5);
     defFissa.setAlpha(0);
     group.add(defFissa);
 
-    const defSep = scene.add.rectangle(colDefX, ySepLine, 100, 1, 0x666, 0.6);
+    const defSep = scene.add.rectangle(colDefX, ySepLine, 100, 1, PALETTE.inkSoft.num, 0.6);
     defSep.setAlpha(0);
     group.add(defSep);
 
     const defTotale = scene.add.text(colDefX, yTotale, '', {
-      fontFamily: 'monospace', fontSize: '20px', color: '#88ccff',
-      fontStyle: 'bold',
+      fontFamily: FONTS.display, fontSize: '26px', color: PALETTE.azureDeep.css,
+      fontStyle: 'italic bold',
     });
     defTotale.setOrigin(0.5, 0.5);
     defTotale.setAlpha(0);
     group.add(defTotale);
 
-    // Box esito (in basso)
+    // Box esito: hit = wash gules, parry/dodge = wash verde
     const yOutcome = by + H - 36;
     const outcomeBg = scene.add.rectangle(opts.centerX, yOutcome, W - 32, 44,
-      opts.outcome.hit ? 0x4a2222 : 0x224a4a, 0.95);
-    outcomeBg.setStrokeStyle(2, opts.outcome.hit ? 0xff6666 : 0x66ccff);
+      opts.outcome.hit ? PALETTE.gulesWash.num : PALETTE.verdeWash.num, 0.55);
+    outcomeBg.setStrokeStyle(1, opts.outcome.hit ? PALETTE.gulesDeep.num : PALETTE.verde.num);
     outcomeBg.setAlpha(0);
     group.add(outcomeBg);
     const outcomeText = scene.add.text(opts.centerX, yOutcome, '', {
-      fontFamily: 'monospace', fontSize: '15px',
-      color: opts.outcome.hit ? '#ffdddd' : '#ddffff',
-      fontStyle: 'bold', stroke: '#000', strokeThickness: 2,
+      fontFamily: FONTS.body, fontSize: '16px',
+      color: opts.outcome.hit ? PALETTE.gulesDeep.css : PALETTE.verde.css,
+      fontStyle: 'italic bold', stroke: PALETTE.vellum.css, strokeThickness: 2,
       align: 'center', wordWrap: { width: W - 60 },
     });
     outcomeText.setOrigin(0.5, 0.5);
@@ -461,11 +477,11 @@ export function playCombatRoll(
       scene.time.delayedCall(k * faceChangeInterval, () => {
         for (const die of atkDies) {
           if (!die.scene) return;
-          updateDieValue(die, 1 + Math.floor(Math.random() * 6), 0xffee66);
+          updateDieValue(die, 1 + Math.floor(Math.random() * 6), DIE_COLOR_ATK);
         }
         for (const die of defDies) {
           if (!die.scene) return;
-          updateDieValue(die, 1 + Math.floor(Math.random() * 6), 0x88ccff);
+          updateDieValue(die, 1 + Math.floor(Math.random() * 6), DIE_COLOR_DEF);
         }
       });
     }
@@ -477,13 +493,13 @@ export function playCombatRoll(
       for (let i = 0; i < atkDies.length; i++) {
         const die = atkDies[i];
         if (!die.scene) continue;
-        updateDieValue(die, opts.attacker.dice[i], 0xffee66);
+        updateDieValue(die, opts.attacker.dice[i], DIE_COLOR_ATK);
         die.setAngle(0);
       }
       for (let i = 0; i < defDies.length; i++) {
         const die = defDies[i];
         if (!die.scene) continue;
-        updateDieValue(die, opts.defender.dice[i], 0x88ccff);
+        updateDieValue(die, opts.defender.dice[i], DIE_COLOR_DEF);
         die.setAngle(0);
       }
       // Bounce

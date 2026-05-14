@@ -20,6 +20,7 @@ import { GameEvent } from '@core/events';
 import { buildObsV2, N_FEATURES_TOTAL_V2 } from '@ai/obsFeaturesV2';
 import { buildToFeatures, BUILD_FEATURES_DIM } from '@ai/buildFeatures';
 import { legalMoves } from '@ai/legalMoves';
+import { getWeapon } from '@data/weapons';
 
 const MAX_ACTIONS = 24;
 const ONNX_PATH = '/student_multi.onnx';
@@ -191,5 +192,20 @@ export async function aiDecideExpert(
     return moves[moves.length - 1];
   }
 
-  return moves[actionId];
+  // Safety net per ranged-only: se MOVE selezionato MA esiste un attacco ranged legale,
+  // preferisci sparare. Vedi commenti analoghi in studentMlpAi.ts.
+  const unitForGuard = state.units[unitId];
+  const chosen = moves[actionId];
+  if (chosen.type === 'MOVE' && unitForGuard?.weapon) {
+    const w = getWeapon(unitForGuard.weapon);
+    const isRangedOnly = !!(w && w.range && w.range.distance != null && w.range.reach == null);
+    if (isRangedOnly) {
+      const rangedAttack = moves.find(
+        (m) => m.type === 'DECLARE_ATTACK' && m.isRanged === true,
+      );
+      if (rangedAttack) return rangedAttack;
+    }
+  }
+
+  return chosen;
 }

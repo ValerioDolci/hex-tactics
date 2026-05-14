@@ -8,8 +8,8 @@ export const GAME_CONFIG = {
   width: 1280,
   height: 800,
 
-  /** Sfondo */
-  backgroundColor: 0x1a1a1a,
+  /** Sfondo Phaser game (vellum/pergamena — Codex Tacticus). */
+  backgroundColor: 0xefe5d0,
 
   /** Geometria mappa: dimensionata per stare in viewport 1280×720 ÷ 1528×800
    *  senza pan/zoom camera (camera fissa per stabilità input click).
@@ -32,17 +32,21 @@ export const GAME_CONFIG = {
     zoomStep: 0.1,
   },
 
-  /** Colori */
+  /** Colori (Codex Tacticus — vedi src/ui/theme.ts per la palette completa). */
   colors: {
-    hexFill: 0x2a3a4a,
-    hexStroke: 0x4a5a6a,
-    hexHover: 0x4a6a8a,
-    hexSelected: 0x8aaa4a,
-    /** Deploy zone fazione 1 (sinistra/blu) */
-    deployZoneA: 0x2a4a8a,
-    /** Deploy zone fazione 2 (destra/rosso) */
-    deployZoneB: 0x8a3a3a,
-    /** Etichette coordinate (debug) */
-    labelText: 0x668899,
+    /** Pergamena del campo (vellum dark, leggermente più calda del fondo). */
+    hexFill: 0xe2d5b8,
+    /** Inchiostro caldo per il bordo dell'esagono. */
+    hexStroke: 0x3a2e22,
+    /** Hover: shift verso vellum deep + leggera luce gold. */
+    hexHover: 0xd4c39a,
+    /** Selezione attiva: wash oro foglia. */
+    hexSelected: 0xb8862a,
+    /** Deploy zone fazione A (azure wash). */
+    deployZoneA: 0x4a78a0,
+    /** Deploy zone fazione B (gules wash). */
+    deployZoneB: 0xa75a5d,
+    /** Etichette coordinate (debug, ink faded). */
+    labelText: 0x7a6a55,
   },
 } as const;

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { FONTS, PALETTE, makeCodexButton, makeCodexPanel } from './theme';
 
 /**
  * Overlay didattico mostrato durante i tutorial.
@@ -10,7 +11,6 @@ import Phaser from 'phaser';
 export class TutorialOverlay {
   private scene: Phaser.Scene;
   private container: Phaser.GameObjects.Container;
-  private bg!: Phaser.GameObjects.Rectangle;
   private text!: Phaser.GameObjects.Text;
   private button!: Phaser.GameObjects.Container;
   private arrow?: Phaser.GameObjects.Triangle;
@@ -33,44 +33,49 @@ export class TutorialOverlay {
     const bx = w / 2 - boxW / 2;
     const by = h - boxH - 20;
 
-    this.bg = this.scene.add.rectangle(bx, by, boxW, boxH, 0x1a2530, 0.96).setOrigin(0, 0);
-    this.bg.setStrokeStyle(2, 0xffd966);
-
-    this.text = this.scene.add
-      .text(bx + 16, by + 14, '', {
-        fontFamily: 'monospace',
-        fontSize: '14px',
-        color: '#fff',
-        wordWrap: { width: boxW - 140 },
-        lineSpacing: 4,
-      })
-      .setOrigin(0, 0);
-
-    // Bottone Avanti
-    const btnW = 100;
-    const btnH = 36;
-    const btnX = bx + boxW - btnW - 16;
-    const btnY = by + boxH - btnH - 14;
-    this.button = this.scene.add.container(btnX, btnY);
-    const btnBg = this.scene.add.rectangle(0, 0, btnW, btnH, 0xffd966, 1).setOrigin(0, 0);
-    btnBg.setStrokeStyle(2, 0xeeb944);
-    const btnT = this.scene.add
-      .text(btnW / 2, btnH / 2, 'Avanti →', {
-        fontFamily: 'monospace',
-        fontSize: '14px',
-        color: '#1a2530',
-        fontStyle: 'bold',
-      })
-      .setOrigin(0.5, 0.5);
-    this.button.add([btnBg, btnT]);
-    btnBg.setInteractive({ useHandCursor: true });
-    btnBg.on('pointerover', () => btnBg.setFillStyle(0xffe999));
-    btnBg.on('pointerout', () => btnBg.setFillStyle(0xffd966));
-    btnBg.on('pointerup', () => {
-      if (this.onAdvance) this.onAdvance();
+    const panel = makeCodexPanel({
+      scene: this.scene,
+      x: bx,
+      y: by,
+      width: boxW,
+      height: boxH,
+      tone: 'vellum',
+      alpha: 0.97,
     });
 
-    this.container.add([this.bg, this.text, this.button]);
+    this.text = this.scene.add
+      .text(16, 14, '', {
+        fontFamily: FONTS.body,
+        fontSize: '16px',
+        color: PALETTE.ink.css,
+        wordWrap: { width: boxW - 140 },
+        lineSpacing: 5,
+        fontStyle: 'italic',
+      })
+      .setOrigin(0, 0);
+    panel.container.add(this.text);
+
+    // Bottone Avanti — gold variant codex
+    const btnW = 100;
+    const btnH = 36;
+    const btnX = boxW - btnW - 16;
+    const btnY = boxH - btnH - 14;
+    this.button = makeCodexButton({
+      scene: this.scene,
+      x: btnX,
+      y: btnY,
+      width: btnW,
+      height: btnH,
+      label: 'Avanti  →',
+      variant: 'gold',
+      fontKind: 'display',
+      fontSize: 14,
+      onClick: () => {
+        if (this.onAdvance) this.onAdvance();
+      },
+    });
+    panel.container.add(this.button);
+    this.container.add(panel.container);
   }
 
   /**
@@ -140,7 +145,7 @@ export class TutorialOverlay {
         arrowSize,
         arrowSize / 2,
         0,
-        0xffd966,
+        PALETTE.gold.num,
       );
     } else {
       this.arrow = this.scene.add.triangle(
@@ -152,10 +157,10 @@ export class TutorialOverlay {
         0,
         arrowSize / 2,
         arrowSize,
-        0xffd966,
+        PALETTE.gold.num,
       );
     }
-    this.arrow.setStrokeStyle(2, 0xeeb944);
+    this.arrow.setStrokeStyle(2, PALETTE.goldDeep.num);
     this.arrow.setScrollFactor(0);
     this.arrow.setDepth(1001);
 

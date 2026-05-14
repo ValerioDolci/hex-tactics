@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { FONTS, PALETTE } from './theme';
 
 /**
  * Tooltip helper: mostra una piccola box di testo che segue il cursore
@@ -24,15 +25,16 @@ export class Tooltip {
     this.container.setDepth(2000);
     this.container.setVisible(false);
 
-    this.bg = scene.add.rectangle(0, 0, 100, 40, 0x000000, 0.92).setOrigin(0, 0);
-    this.bg.setStrokeStyle(1, 0xffd966);
+    // Tooltip Codex: vellum cream con bordo gold (informazione preziosa, ink leggibile)
+    this.bg = scene.add.rectangle(0, 0, 100, 40, PALETTE.vellum.num, 0.97).setOrigin(0, 0);
+    this.bg.setStrokeStyle(1, PALETTE.gold.num);
     this.text = scene.add
       .text(this.padding, this.padding, '', {
-        fontFamily: 'monospace',
-        fontSize: '12px',
-        color: '#fff',
-        wordWrap: { width: 280 },
-        lineSpacing: 3,
+        fontFamily: FONTS.body,
+        fontSize: '14px',
+        color: PALETTE.ink.css,
+        wordWrap: { width: 320 },
+        lineSpacing: 4,
       })
       .setOrigin(0, 0);
     this.container.add([this.bg, this.text]);

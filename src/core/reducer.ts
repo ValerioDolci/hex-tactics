@@ -763,7 +763,9 @@ function doReload(state: GameState, unitId: string, diceN: number): GameState {
     newState,
     `${unit.name}: ricarica ${weapon.name} (var=[${roll.variable.join(',')}] sum ${variableSum(roll)} + fix ${roll.fixed} = ${total} vs diff ${difficulty}) → ${success ? 'CARICA ✓' : 'fallita, ritenta'}`,
   );
-  return newState;
+  // FIX: salva lo state RNG progressato (era omesso → la sequenza dei tiri si "ripeteva"
+  // dopo ogni RELOAD perché il seed non avanzava nello stato globale).
+  return { ...newState, rngSeed: rng.getState() };
 }
 
 function doEndTurn(state: GameState): GameState {

@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import { MANUAL, ManualBlock } from '@data/manual';
+import { paintVellum } from '@/ui/Vellum';
+import { FONTS, PALETTE, makeCodexButton, makeCodexPanel } from '@/ui/theme';
 
 /**
  * Scena Manuale: viewer del contenuto del manuale.
@@ -37,22 +39,24 @@ export class ManualScene extends Phaser.Scene {
     const w = this.scale.width;
     const h = this.scale.height;
 
-    // Sfondo
-    this.add.rectangle(0, 0, w, h, 0x121821, 1).setOrigin(0, 0);
+    // Sfondo vellum + paper grain
+    paintVellum(this, w, h);
 
     // Header
     const headerH = 60;
-    const header = this.add.rectangle(0, 0, w, headerH, 0x1c2530, 1).setOrigin(0, 0);
-    header.setStrokeStyle(2, 0x445566);
-    void header;
     this.add
-      .text(w / 2, headerH / 2, 'Manuale di hex-tactics', {
-        fontFamily: 'monospace',
-        fontSize: '20px',
-        color: '#fff',
-        fontStyle: 'bold',
+      .text(w / 2, headerH / 2, 'Codice & regole', {
+        fontFamily: FONTS.display,
+        fontSize: '24px',
+        color: PALETTE.ink.css,
+        fontStyle: 'italic',
       })
       .setOrigin(0.5, 0.5);
+
+    // Filetto oro sotto header
+    const ornament = this.add.graphics();
+    ornament.lineStyle(1.2, PALETTE.gold.num, 0.9);
+    ornament.lineBetween(w / 2 - 200, headerH - 8, w / 2 + 200, headerH - 8);
 
     // Bottone indietro
     this.makeBackButton(20, 12);
@@ -67,12 +71,12 @@ export class ManualScene extends Phaser.Scene {
     const contentW = w - contentLeft - padding;
     const contentH = h - contentTop - padding;
 
-    // Sidebar
-    this.add.rectangle(padding, sidebarTop, sidebarW, sidebarH, 0x1a222c, 1).setOrigin(0, 0);
+    // Sidebar (panel codex)
+    makeCodexPanel({ scene: this, x: padding, y: sidebarTop, width: sidebarW, height: sidebarH, tone: 'vellum', alpha: 0.92 });
     this.renderSidebar(padding, sidebarTop, sidebarW, sidebarH);
 
-    // Content panel
-    this.add.rectangle(contentLeft, contentTop, contentW, contentH, 0x1a222c, 1).setOrigin(0, 0);
+    // Content panel (codex)
+    makeCodexPanel({ scene: this, x: contentLeft, y: contentTop, width: contentW, height: contentH, tone: 'vellum', alpha: 0.92 });
 
     // Container per contenuto + maschera per scroll
     this.contentContainer = this.add.container(contentLeft + 20, contentTop + 20);
@@ -133,25 +137,22 @@ export class ManualScene extends Phaser.Scene {
     void _h;
     let yy = y + 12;
     for (const ch of MANUAL) {
-      const item = this.add.container(x + 8, yy);
       const isCurrent = ch.id === this.currentChapterId;
-      const bg = this.add.rectangle(0, 0, w - 16, 38, isCurrent ? 0x335577 : 0x222a35, 1).setOrigin(0, 0);
-      bg.setStrokeStyle(1, isCurrent ? 0x6699bb : 0x445566);
-      const t = this.add
-        .text(10, 19, ch.title, {
-          fontFamily: 'monospace',
-          fontSize: '13px',
-          color: '#ddd',
-          wordWrap: { width: w - 36 },
-        })
-        .setOrigin(0, 0.5);
-      item.add([bg, t]);
-      bg.setInteractive({ useHandCursor: true });
-      bg.on('pointerover', () => bg.setFillStyle(0x3a4a5e));
-      bg.on('pointerout', () => bg.setFillStyle(ch.id === this.currentChapterId ? 0x335577 : 0x222a35));
-      bg.on('pointerup', () => this.selectChapter(ch.id));
+      const item = makeCodexButton({
+        scene: this,
+        x: x + 8,
+        y: yy,
+        width: w - 16,
+        height: 42,
+        label: ch.title,
+        selected: isCurrent,
+        variant: 'gold',
+        fontKind: 'body',
+        fontSize: 15,
+        onClick: () => this.selectChapter(ch.id),
+      });
       this.sidebarItems.push(item);
-      yy += 44;
+      yy += 48;
     }
   }
 
@@ -182,18 +183,24 @@ export class ManualScene extends Phaser.Scene {
     const innerW = this.contentViewportW - 40;
     let cy = 0;
 
-    // Title
+    // Title (display serif italic, ink)
     const titleText = this.add
       .text(0, cy, ch.title, {
-        fontFamily: 'monospace',
-        fontSize: '22px',
-        color: '#fff',
-        fontStyle: 'bold',
+        fontFamily: FONTS.display,
+        fontSize: '24px',
+        color: PALETTE.ink.css,
+        fontStyle: 'italic',
         wordWrap: { width: innerW },
       })
       .setOrigin(0, 0);
     this.contentContainer.add(titleText);
-    cy += titleText.height + 18;
+    cy += titleText.height + 8;
+    // Filetto oro sotto il titolo capitolo
+    const sep = this.add.graphics();
+    sep.lineStyle(1, PALETTE.gold.num, 0.8);
+    sep.lineBetween(0, cy, Math.min(220, innerW), cy);
+    this.contentContainer.add(sep);
+    cy += 14;
 
     for (const block of ch.blocks) {
       cy = this.renderBlock(block, cy, innerW);
@@ -207,11 +214,11 @@ export class ManualScene extends Phaser.Scene {
     if (block.type === 'p') {
       const t = this.add
         .text(0, cy, block.text, {
-          fontFamily: 'monospace',
-          fontSize: '14px',
-          color: '#cdd',
+          fontFamily: FONTS.body,
+          fontSize: '16px',
+          color: PALETTE.ink.css,
           wordWrap: { width: innerW },
-          lineSpacing: 4,
+          lineSpacing: 5,
         })
         .setOrigin(0, 0);
       this.contentContainer.add(t);
@@ -220,102 +227,102 @@ export class ManualScene extends Phaser.Scene {
     if (block.type === 'subheading') {
       const t = this.add
         .text(0, cy, block.text, {
-          fontFamily: 'monospace',
-          fontSize: '17px',
-          color: '#9cf',
-          fontStyle: 'bold',
+          fontFamily: FONTS.display,
+          fontSize: '20px',
+          color: PALETTE.goldDeep.css,
+          fontStyle: 'italic bold',
           wordWrap: { width: innerW },
         })
         .setOrigin(0, 0);
       this.contentContainer.add(t);
-      return cy + t.height + 4;
+      return cy + t.height + 6;
     }
     if (block.type === 'list') {
       let y2 = cy;
       for (const item of block.items) {
         const t = this.add
-          .text(16, y2, '• ' + item, {
-            fontFamily: 'monospace',
-            fontSize: '14px',
-            color: '#cdd',
+          .text(16, y2, '·  ' + item, {
+            fontFamily: FONTS.body,
+            fontSize: '16px',
+            color: PALETTE.ink.css,
             wordWrap: { width: innerW - 16 },
-            lineSpacing: 4,
+            lineSpacing: 5,
           })
           .setOrigin(0, 0);
         this.contentContainer.add(t);
-        y2 += t.height + 6;
+        y2 += t.height + 7;
       }
       return y2;
     }
     if (block.type === 'example') {
-      // Box bordato con titolo
+      // Box "esempio" stile codex: vellum dark + bordo gold
       const boxX = 0;
-      const boxPad = 10;
+      const boxPad = 14;
       const lines = (block.title ? [block.title, ''] : []).concat(block.lines);
       const fullText = lines.join('\n');
       const tmp = this.add
         .text(boxX + boxPad, cy + boxPad, fullText, {
-          fontFamily: 'monospace',
-          fontSize: '13px',
-          color: '#ffd',
+          fontFamily: FONTS.mono,
+          fontSize: '14px',
+          color: PALETTE.ink.css,
           wordWrap: { width: innerW - boxPad * 2 },
-          lineSpacing: 4,
+          lineSpacing: 5,
         })
         .setOrigin(0, 0);
       const boxH = tmp.height + boxPad * 2;
-      const bg = this.add.rectangle(boxX, cy, innerW, boxH, 0x2a2a18, 0.85).setOrigin(0, 0);
-      bg.setStrokeStyle(2, 0x999933);
+      const bg = this.add.rectangle(boxX, cy, innerW, boxH, PALETTE.vellumDeep.num, 0.6).setOrigin(0, 0);
+      bg.setStrokeStyle(1, PALETTE.gold.num);
       this.contentContainer.add(bg);
       this.contentContainer.add(tmp);
       tmp.setDepth(1);
       return cy + boxH;
     }
     if (block.type === 'table') {
-      // Tabella semplice: header riga in bold + righe alternate
       const cellPad = 6;
       const colCount = block.headers.length;
       const colW = (innerW - cellPad * (colCount + 1)) / colCount;
-      const rowH = 22;
-
-      // Header
-      const headerBg = this.add.rectangle(0, cy, innerW, rowH, 0x2c3a48, 1).setOrigin(0, 0);
+      // Header (vellum dark + bordo ink)
+      const headerRowH = 26;
+      const headerBg = this.add.rectangle(0, cy, innerW, headerRowH, PALETTE.vellumDeep.num, 1).setOrigin(0, 0);
+      headerBg.setStrokeStyle(1, PALETTE.ink.num);
       this.contentContainer.add(headerBg);
       let cx = cellPad;
       for (const h of block.headers) {
         const t = this.add
-          .text(cx, cy + rowH / 2, h, {
-            fontFamily: 'monospace',
-            fontSize: '12px',
-            color: '#fff',
-            fontStyle: 'bold',
+          .text(cx, cy + headerRowH / 2, h, {
+            fontFamily: FONTS.display,
+            fontSize: '14px',
+            color: PALETTE.ink.css,
+            fontStyle: 'italic bold',
             wordWrap: { width: colW },
           })
           .setOrigin(0, 0.5);
         this.contentContainer.add(t);
         cx += colW + cellPad;
       }
-      let yy = cy + rowH;
+      let yy = cy + headerRowH;
 
+      const dataRowH = 26;
       for (let i = 0; i < block.rows.length; i++) {
         const row = block.rows[i];
         const rowBg = this.add
-          .rectangle(0, yy, innerW, rowH, i % 2 === 0 ? 0x1a232f : 0x202a36, 1)
+          .rectangle(0, yy, innerW, dataRowH, i % 2 === 0 ? PALETTE.vellumDark.num : PALETTE.vellum.num, 0.6)
           .setOrigin(0, 0);
         this.contentContainer.add(rowBg);
         cx = cellPad;
         for (const cell of row) {
           const t = this.add
-            .text(cx, yy + rowH / 2, cell, {
-              fontFamily: 'monospace',
-              fontSize: '12px',
-              color: '#cdd',
+            .text(cx, yy + dataRowH / 2, cell, {
+              fontFamily: FONTS.mono,
+              fontSize: '13px',
+              color: PALETTE.ink.css,
               wordWrap: { width: colW },
             })
             .setOrigin(0, 0.5);
           this.contentContainer.add(t);
           cx += colW + cellPad;
         }
-        yy += rowH;
+        yy += dataRowH;
       }
       return yy + 4;
     }
@@ -323,22 +330,17 @@ export class ManualScene extends Phaser.Scene {
   }
 
   private makeBackButton(x: number, y: number): void {
-    const w = 100;
-    const h = 36;
-    const c = this.add.container(x, y);
-    const bg = this.add.rectangle(0, 0, w, h, 0x335577, 1).setOrigin(0, 0);
-    bg.setStrokeStyle(2, 0x6699bb);
-    const t = this.add
-      .text(w / 2, h / 2, '← Indietro', {
-        fontFamily: 'monospace',
-        fontSize: '13px',
-        color: '#fff',
-      })
-      .setOrigin(0.5, 0.5);
-    c.add([bg, t]);
-    bg.setInteractive({ useHandCursor: true });
-    bg.on('pointerover', () => bg.setFillStyle(0x447aaa));
-    bg.on('pointerout', () => bg.setFillStyle(0x335577));
-    bg.on('pointerup', () => this.scene.start('MainMenuScene'));
+    makeCodexButton({
+      scene: this,
+      x,
+      y,
+      width: 110,
+      height: 36,
+      label: '←  Frontespizio',
+      variant: 'outline',
+      fontKind: 'display',
+      fontSize: 13,
+      onClick: () => this.scene.start('MainMenuScene'),
+    });
   }
 }

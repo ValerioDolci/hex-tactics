@@ -10,6 +10,7 @@ import {
 } from '@core/hex/coords';
 import { getBaseHexes } from '@core/hex/base';
 import { GAME_CONFIG } from '@/config';
+import { FONTS, PALETTE } from '@/ui/theme';
 
 export interface HexBoardOptions {
   cols: number;
@@ -100,8 +101,15 @@ export class HexBoard {
       const verts = hexVertices(center, this.opts.hexSize);
 
       const fillColor = this.colorFor(hex);
+      const isHighlighted = this.isHighlighted(hex);
+
       this.graphics.fillStyle(fillColor, this.fillAlphaFor(hex));
-      this.graphics.lineStyle(2, GAME_CONFIG.colors.hexStroke, 1);
+      // Stroke ink caldo, leggibile su vellum: alpha alta sempre, peso variabile.
+      this.graphics.lineStyle(
+        isHighlighted ? 1.6 : 1,
+        isHighlighted ? PALETTE.ink.num : PALETTE.inkParchment.num,
+        isHighlighted ? 1 : 0.85,
+      );
 
       this.graphics.beginPath();
       this.graphics.moveTo(verts[0].x, verts[0].y);
@@ -111,6 +119,13 @@ export class HexBoard {
       this.graphics.strokePath();
     }
     this.renderLabels();
+  }
+
+  private isHighlighted(hex: Axial): boolean {
+    if (this.selectedHex && axialEquals(this.selectedHex, hex)) return true;
+    if (this.hoveredHex && axialEquals(this.hoveredHex, hex)) return true;
+    const k = this.key(hex);
+    return this.highlightedThreat.has(k) || this.highlightedMove.has(k);
   }
 
   /** Toggle visibilità etichette coordinate */
@@ -155,9 +170,9 @@ export class HexBoard {
     for (const hex of this.cells) {
       const center = axialToPixel(hex, this.opts.hexSize, this.origin);
       const t = this.scene.add.text(center.x, center.y, `${hex.q},${hex.r}`, {
-        fontFamily: 'monospace',
-        fontSize: '9px',
-        color: '#668899',
+        fontFamily: FONTS.mono,
+        fontSize: '11px',
+        color: PALETTE.inkSoft.css,
       });
       t.setOrigin(0.5, 0.5);
       this.labels.push(t);
@@ -169,9 +184,12 @@ export class HexBoard {
     if (this.hoveredHex && axialEquals(this.hoveredHex, hex)) return GAME_CONFIG.colors.hexHover;
     const k = this.key(hex);
     // Priorità: hex sotto minaccia (rosso scuro) > range movimento (verde) > deploy zone
-    if (this.highlightedThreat.has(k) && this.highlightedMove.has(k)) return 0xcc6633; // arancio: hex muovibile MA in minaccia
-    if (this.highlightedThreat.has(k)) return 0xaa3322; // rosso scuro: zona controllo nemica
-    if (this.highlightedMove.has(k)) return 0x44aa88;
+    // Codex Tacticus: oro = decisione critica (muovibile + minacciato)
+    //                 gules = zona di controllo (rosso araldico)
+    //                 verde = raggiungibile (verderame)
+    if (this.highlightedThreat.has(k) && this.highlightedMove.has(k)) return PALETTE.gold.num;
+    if (this.highlightedThreat.has(k)) return PALETTE.gules.num;
+    if (this.highlightedMove.has(k)) return PALETTE.verde.num;
     if (this.deployHexesA.has(k)) return GAME_CONFIG.colors.deployZoneA;
     if (this.deployHexesB.has(k)) return GAME_CONFIG.colors.deployZoneB;
     return GAME_CONFIG.colors.hexFill;
@@ -179,8 +197,12 @@ export class HexBoard {
 
   private fillAlphaFor(hex: Axial): number {
     const k = this.key(hex);
-    // Deploy zone leggermente trasparenti per non distrarre troppo
-    if (this.deployHexesA.has(k) || this.deployHexesB.has(k)) return 0.55;
+    // Deploy zone con wash heraldic leggero (effetto inchiostro acquoso)
+    if (this.deployHexesA.has(k) || this.deployHexesB.has(k)) return 0.32;
+    // Highlight movimento/minaccia con wash medio (sotto il pawn principale)
+    if (this.highlightedThreat.has(k) || this.highlightedMove.has(k)) return 0.55;
+    if (this.selectedHex && axialEquals(this.selectedHex, hex)) return 0.55;
+    if (this.hoveredHex && axialEquals(this.hoveredHex, hex)) return 0.85;
     return 1;
   }
 

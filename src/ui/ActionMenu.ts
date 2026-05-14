@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { s, sFont } from './uiScale';
+import { s } from './uiScale';
+import { makeCodexButton } from './theme';
 
 export type ActionMenuItem = {
   label: string;
@@ -38,28 +39,19 @@ export class ActionMenu {
   }
 
   private makeButton(x: number, y: number, item: ActionMenuItem): Phaser.GameObjects.Container {
-    const c = this.scene.add.container(x, y);
-    const w = s(280);
-    const h = s(52); // touch-friendly + leggibilità (scalato su mobile)
-    const bg = this.scene.add.rectangle(0, 0, w, h, item.disabled ? 0x222222 : 0x335577, 0.92);
-    bg.setOrigin(0, 0);
-    bg.setStrokeStyle(2, item.disabled ? 0x444444 : 0x6699bb);
-    const txt = this.scene.add.text(s(14), h / 2, item.label, {
-      fontFamily: 'monospace',
-      fontSize: sFont(15),
-      color: item.disabled ? '#888' : '#fff',
-      wordWrap: { width: w - s(28) },
+    return makeCodexButton({
+      scene: this.scene,
+      x,
+      y,
+      width: s(300),
+      height: s(56),
+      label: item.label,
+      disabled: item.disabled,
+      variant: 'outline',
+      fontKind: 'body',
+      fontSize: 17,
+      onClick: item.disabled ? undefined : item.onClick,
     });
-    txt.setOrigin(0, 0.5);
-    c.add([bg, txt]);
-    if (!item.disabled) {
-      bg.setInteractive({ useHandCursor: true });
-      bg.on('pointerover', () => bg.setFillStyle(0x4477aa, 0.9));
-      bg.on('pointerout', () => bg.setFillStyle(0x335577, 0.9));
-      // pointerup: più affidabile cross-platform per click
-      bg.on('pointerup', () => item.onClick());
-    }
-    return c;
   }
 
   setVisible(v: boolean): void {

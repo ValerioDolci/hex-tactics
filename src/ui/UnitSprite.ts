@@ -3,11 +3,9 @@ import { Unit } from '@entities/Unit';
 import { axialToPixel, Pixel, Axial } from '@core/hex/coords';
 import { getWeapon } from '@data/weapons';
 import { getShield } from '@data/shields';
+import { FONTS, PALETTE, factionTincture } from '@/ui/theme';
 
-const FACTION_COLOR = {
-  A: 0x4ab0ff,
-  B: 0xff5050,
-} as const;
+// Tinture araldiche: la fonte di verità è theme.factionTincture() — usata dal redraw().
 
 /**
  * Rendering di una unità: silhouette colorata sulla basetta + simbolo arma
@@ -40,20 +38,24 @@ export class UnitSprite {
     this.displayedPosition = unit.position;
 
     this.graphics = scene.add.graphics();
+    // Nome unità: ink scuro contornato pesantemente da vellum cream, così
+    // si stacca dal fondo qualunque esso sia (vellum della scena O scudo araldico).
     this.label = scene.add.text(0, 0, unit.name, {
-      fontFamily: 'monospace',
-      fontSize: '13px',
-      color: '#fff',
-      stroke: '#000',
-      strokeThickness: 3,
+      fontFamily: FONTS.display,
+      fontSize: '16px',
+      color: PALETTE.ink.css,
+      fontStyle: 'italic bold',
+      stroke: PALETTE.vellum.css,
+      strokeThickness: 5,
     });
     this.label.setOrigin(0.5, 1);
     this.hpText = scene.add.text(0, 0, '', {
-      fontFamily: 'monospace',
-      fontSize: '11px',
-      color: '#fff',
-      stroke: '#000',
-      strokeThickness: 3,
+      fontFamily: FONTS.mono,
+      fontSize: '13px',
+      color: PALETTE.ink.css,
+      fontStyle: 'bold',
+      stroke: PALETTE.vellum.css,
+      strokeThickness: 4,
     });
     this.hpText.setOrigin(0.5, 0);
     this.update(unit);
@@ -68,7 +70,14 @@ export class UnitSprite {
     this.redraw();
   }
 
-  /** Re-disegna usando `displayedPosition` come centro (non `unit.position`). */
+  /**
+   * Re-disegna usando `displayedPosition` come centro.
+   *
+   * Codex Tacticus: l'unità è uno **scudo araldico (heater shape)** con tintura
+   * di fazione (azure/gules), bordo inchiostro caldo, e glifo arma centrale.
+   * Sotto lo scudo, una serie di **tacche d'inchiostro** rappresenta gli HP
+   * (filled = HP attivi, faded = HP persi).
+   */
   private redraw(): void {
     const unit = this.currentUnit;
     this.graphics.clear();
@@ -79,45 +88,159 @@ export class UnitSprite {
     }
 
     const center = axialToPixel(this.displayedPosition, this.hexSize, this.origin);
-    const factionColor = FACTION_COLOR[unit.faction];
+    const tincture = factionTincture(unit.faction);
 
-    // Basetta: cerchio grande con bordo
-    this.graphics.lineStyle(3, 0x000000, 0.8);
-    this.graphics.fillStyle(factionColor, 0.4);
-    this.graphics.fillCircle(center.x, center.y, this.hexSize * 1.6);
-    this.graphics.strokeCircle(center.x, center.y, this.hexSize * 1.6);
+    // ── Wash heraldico sull'esagono di base (sotto lo scudo, leggero alone)
+    this.graphics.fillStyle(tincture.wash, 0.18);
+    this.graphics.fillCircle(center.x, center.y, this.hexSize * 1.45);
 
-    // Corpo unità (cerchio interno)
-    this.graphics.fillStyle(factionColor, 1);
-    this.graphics.fillCircle(center.x, center.y, this.hexSize * 0.7);
-    this.graphics.lineStyle(2, 0x000000, 1);
-    this.graphics.strokeCircle(center.x, center.y, this.hexSize * 0.7);
+    // ── Scudo araldico (heater shape): polygon procedurale
+    this.drawHeaterShield(center.x, center.y, tincture.num);
 
-    // Simbolo arma per riconoscere il tipo a colpo d'occhio
+    // ── Glifo arma al centro dello scudo
     this.drawWeaponSymbol(center.x, center.y);
 
-    // Anello dorato per posizione difensiva
+    // ── Stance difensiva: doppio bordo oro attorno allo scudo
     if (unit.defensiveStance) {
-      this.graphics.lineStyle(4, 0xffcc33, 0.9);
-      this.graphics.strokeCircle(center.x, center.y, this.hexSize * 1.85);
+      this.graphics.lineStyle(2, PALETTE.gold.num, 0.95);
+      this.drawHeaterShieldOutline(center.x, center.y, this.hexSize * 1.18);
+      this.graphics.lineStyle(1, PALETTE.goldLeaf.num, 0.7);
+      this.drawHeaterShieldOutline(center.x, center.y, this.hexSize * 1.32);
     }
 
-    // Highlight attivo (turno corrente): aggiornato in setActive()
+    // ── Highlight unità attiva (turno corrente)
     if (this.activeHighlight && this.isActive) {
       this.activeHighlight.clear();
-      this.activeHighlight.lineStyle(5, 0xffee99, 0.85);
-      this.activeHighlight.strokeCircle(center.x, center.y, this.hexSize * 2.0);
+      this.activeHighlight.lineStyle(2, PALETTE.gold.num, 0.95);
+      const r = this.hexSize * 1.55;
+      // Aureola circolare attorno alla basetta (non scudo, per stacco visivo)
+      this.activeHighlight.strokeCircle(center.x, center.y, r);
+      this.activeHighlight.lineStyle(1, PALETTE.goldLeaf.num, 0.55);
+      this.activeHighlight.strokeCircle(center.x, center.y, r + 4);
     }
 
-    // Label e HP
-    this.label.setPosition(center.x, center.y - this.hexSize * 1.7);
-    const nameSuffix = unit.defensiveStance ? ' 🛡' : '';
+    // ── Label nome (display serif italic, nero su vellum)
+    this.label.setPosition(center.x, center.y - this.hexSize * 1.55);
+    const nameSuffix = unit.defensiveStance ? ' ◇' : '';
     this.label.setText(unit.name + nameSuffix);
     this.label.setVisible(true);
 
-    this.hpText.setPosition(center.x, center.y + this.hexSize * 1.7);
-    this.hpText.setText(`HP ${unit.hp}/${unit.hpMax}  |  imp ${unit.impeto}  sl ${unit.slancio}`);
+    // ── Tacche HP: 10 marker, ciascuno = hpMax/10 HP (con sfondo vellum)
+    this.drawHpTallies(center.x, center.y + this.hexSize * 1.0, unit.hp, unit.hpMax);
+
+    // ── Stat compatto sotto: imp / sl in mono ink (più sotto per non collidere con tacche)
+    this.hpText.setPosition(center.x, center.y + this.hexSize * 1.55);
+    this.hpText.setText(
+      `${unit.hp}/${unit.hpMax}  ·  imp ${unit.impeto}  ·  sl ${unit.slancio}`,
+    );
     this.hpText.setVisible(true);
+  }
+
+  /** Polygon araldico "heater shield". Riempie con `tincture` + bordo ink. */
+  private drawHeaterShield(cx: number, cy: number, tincture: number): void {
+    const w = this.hexSize * 1.2;
+    const h = this.hexSize * 1.5;
+    const points = this.heaterShieldPoints(cx, cy, w, h);
+
+    // Riempimento tincture (saturo)
+    this.graphics.fillStyle(tincture, 1);
+    this.graphics.fillPoints(points, true);
+
+    // Bordo doppio: ink esterno (1.5px) + ink soft interno (per effetto rilievo)
+    this.graphics.lineStyle(1.5, PALETTE.ink.num, 0.95);
+    this.graphics.strokePoints(points, true);
+    // Reflesso luce: highlight chiaro sul bordo superiore-sinistro
+    const halfPts = points.slice(0, 5); // top-left → top-right → curva destra parziale
+    this.graphics.lineStyle(0.8, PALETTE.vellum.num, 0.35);
+    this.graphics.strokePoints(halfPts, false);
+  }
+
+  /** Outline-only (per stance halo). */
+  private drawHeaterShieldOutline(cx: number, cy: number, scale: number): void {
+    const w = this.hexSize * 1.2 * scale;
+    const h = this.hexSize * 1.5 * scale;
+    const points = this.heaterShieldPoints(cx, cy, w, h);
+    this.graphics.strokePoints(points, true);
+  }
+
+  /**
+   * Genera i vertici dello scudo araldico "heater" (Spagna, XIII-XV sec.):
+   * top piatto, lati che curvano leggermente, punto al centro-basso.
+   * Bounding box w × h, centro su (cx, cy).
+   */
+  private heaterShieldPoints(
+    cx: number,
+    cy: number,
+    w: number,
+    h: number,
+  ): { x: number; y: number }[] {
+    const half = w / 2;
+    const top = cy - h * 0.4;
+    const bot = cy + h * 0.6;
+    // 14 vertici: top edge + curva destra (5 pti) + punto + curva sinistra (5 pti)
+    const pts: { x: number; y: number }[] = [
+      { x: cx - half, y: top },
+      { x: cx + half, y: top },
+    ];
+    // Curva destra: parametrica da (cx+half, top) a (cx, bot)
+    for (let i = 1; i <= 5; i++) {
+      const t = i / 5;
+      // Bezier-like quadratic: (1-t)^2 * P0 + 2(1-t)t * P1 + t^2 * P2
+      const p0x = cx + half;
+      const p0y = top;
+      const p1x = cx + half * 1.05;
+      const p1y = cy + h * 0.05;
+      const p2x = cx;
+      const p2y = bot;
+      const x = (1 - t) ** 2 * p0x + 2 * (1 - t) * t * p1x + t ** 2 * p2x;
+      const y = (1 - t) ** 2 * p0y + 2 * (1 - t) * t * p1y + t ** 2 * p2y;
+      pts.push({ x, y });
+    }
+    // Curva sinistra (mirror)
+    for (let i = 1; i <= 5; i++) {
+      const t = i / 5;
+      const p0x = cx;
+      const p0y = bot;
+      const p1x = cx - half * 1.05;
+      const p1y = cy + h * 0.05;
+      const p2x = cx - half;
+      const p2y = top;
+      const x = (1 - t) ** 2 * p0x + 2 * (1 - t) * t * p1x + t ** 2 * p2x;
+      const y = (1 - t) ** 2 * p0y + 2 * (1 - t) * t * p1y + t ** 2 * p2y;
+      pts.push({ x, y });
+    }
+    return pts;
+  }
+
+  /**
+   * Disegna 10 tacche d'inchiostro orizzontali rappresentando gli HP.
+   * filled = HP attivi (ink pieno), unfilled = HP persi (ink faded outline).
+   */
+  private drawHpTallies(cx: number, cy: number, hp: number, hpMax: number): void {
+    const slots = 10;
+    const ratio = Math.max(0, Math.min(1, hp / hpMax));
+    const filled = Math.round(slots * ratio);
+    const tickW = 3;
+    const tickH = 10;
+    const gap = 3;
+    const totalW = slots * tickW + (slots - 1) * gap;
+    const startX = cx - totalW / 2;
+    // Sfondo vellum sotto le tacche (per contrasto su scudo o su deploy zone)
+    this.graphics.fillStyle(PALETTE.vellum.num, 0.85);
+    this.graphics.fillRect(startX - 4, cy - tickH / 2 - 2, totalW + 8, tickH + 4);
+    this.graphics.lineStyle(0.8, PALETTE.ink.num, 0.55);
+    this.graphics.strokeRect(startX - 4, cy - tickH / 2 - 2, totalW + 8, tickH + 4);
+    for (let i = 0; i < slots; i++) {
+      const x = startX + i * (tickW + gap);
+      if (i < filled) {
+        this.graphics.fillStyle(PALETTE.ink.num, 1);
+        this.graphics.fillRect(x, cy - tickH / 2, tickW, tickH);
+      } else {
+        // Persi: outline svanito (effetto "tacca cancellata")
+        this.graphics.lineStyle(1, PALETTE.inkFaded.num, 0.7);
+        this.graphics.strokeRect(x + 0.5, cy - tickH / 2 + 0.5, tickW - 1, tickH - 1);
+      }
+    }
   }
 
   /**
@@ -138,8 +261,10 @@ export class UnitSprite {
     const s = unit.offhand ? getShield(unit.offhand) : null;
     const hexSize = this.hexSize;
 
-    const dark = 0x222222;
-    const light = 0xeeeeee;
+    // Codex Tacticus: glifo arma in vellum (chiaro) + ink soft per ombre →
+    // letto come "araldica chiara su tintura saturata".
+    const dark = PALETTE.ink.num;
+    const light = PALETTE.vellum.num;
 
     if (!w) {
       // Nessuna arma: disegna i pugni
@@ -261,18 +386,19 @@ export class UnitSprite {
       );
     }
 
-    // Scudo nella offhand: disegnato a sinistra del corpo
+    // Scudo offhand (per chi ha shield in offhand): disco con borchia oro,
+    // disegnato in alto-destra dello scudo principale per evitare overlap col glifo.
     if (s) {
-      const sx = cx - hexSize * 0.55;
-      const sy = cy + hexSize * 0.15;
-      const r = hexSize * 0.32;
-      this.graphics.fillStyle(0x886633, 1);
+      const sx = cx + hexSize * 0.5;
+      const sy = cy - hexSize * 0.3;
+      const r = hexSize * 0.22;
+      this.graphics.fillStyle(PALETTE.inkSoft.num, 1);
       this.graphics.fillCircle(sx, sy, r);
-      this.graphics.lineStyle(2, dark, 1);
+      this.graphics.lineStyle(1, PALETTE.ink.num, 1);
       this.graphics.strokeCircle(sx, sy, r);
-      // Borchia centrale
-      this.graphics.fillStyle(0xddaa55, 1);
-      this.graphics.fillCircle(sx, sy, r * 0.35);
+      // Borchia centrale gold
+      this.graphics.fillStyle(PALETTE.gold.num, 1);
+      this.graphics.fillCircle(sx, sy, r * 0.42);
     }
   }
 
@@ -316,11 +442,11 @@ export class UnitSprite {
     });
   }
 
-  /** Flash visivo quando l'unità è colpita */
+  /** Flash visivo quando l'unità è colpita (oro per "colpo registrato"). */
   flashHit(scene: Phaser.Scene): void {
     const center = axialToPixel(this.displayedPosition, this.hexSize, this.origin);
     const flash = scene.add.graphics();
-    flash.fillStyle(0xffff00, 0.7);
+    flash.fillStyle(PALETTE.goldLeaf.num, 0.6);
     flash.fillCircle(center.x, center.y, this.hexSize * 1.6);
     scene.tweens.add({
       targets: flash,
@@ -333,13 +459,13 @@ export class UnitSprite {
   /** Numero danni fluttuante (grosso, scala in poi sale e svanisce) */
   showDamage(scene: Phaser.Scene, dmg: number): void {
     const center = axialToPixel(this.displayedPosition, this.hexSize, this.origin);
-    const t = scene.add.text(center.x, center.y - this.hexSize * 0.5, `-${dmg}`, {
-      fontFamily: 'monospace',
+    const t = scene.add.text(center.x, center.y - this.hexSize * 0.5, `−${dmg}`, {
+      fontFamily: FONTS.display,
       fontSize: '34px',
-      color: '#ff3030',
-      stroke: '#000',
+      color: PALETTE.gules.css,
+      stroke: PALETTE.vellum.css,
       strokeThickness: 5,
-      fontStyle: 'bold',
+      fontStyle: 'bold italic',
     });
     t.setOrigin(0.5, 0.5);
     t.setScale(0.3);
@@ -363,15 +489,15 @@ export class UnitSprite {
   }
 
   /** Testo "MISS / PARATO / SCHIVATO" fluttuante (per attacchi falliti). */
-  showText(scene: Phaser.Scene, text: string, color: string = '#ffd966'): void {
+  showText(scene: Phaser.Scene, text: string, color: string = PALETTE.gold.css): void {
     const center = axialToPixel(this.displayedPosition, this.hexSize, this.origin);
     const t = scene.add.text(center.x, center.y - this.hexSize * 0.5, text, {
-      fontFamily: 'monospace',
-      fontSize: '24px',
+      fontFamily: FONTS.display,
+      fontSize: '22px',
       color,
-      stroke: '#000',
+      stroke: PALETTE.vellum.css,
       strokeThickness: 4,
-      fontStyle: 'bold',
+      fontStyle: 'bold italic',
     });
     t.setOrigin(0.5, 0.5);
     t.setScale(0.4);
@@ -393,22 +519,22 @@ export class UnitSprite {
     });
   }
 
-  /** Popup variazione slancio: "+3 SLANCIO" verde / "−2 SLANCIO" rosso. */
+  /** Popup variazione slancio: "+3 sl" verderame / "−2 sl" gules. */
   showSlancioChange(scene: Phaser.Scene, delta: number): void {
     if (delta === 0) return;
     const center = axialToPixel(this.displayedPosition, this.hexSize, this.origin);
     const sign = delta > 0 ? '+' : '−';
-    const color = delta > 0 ? '#66ff99' : '#ff8866';
+    const color = delta > 0 ? PALETTE.verde.css : PALETTE.gules.css;
     const t = scene.add.text(
       center.x + this.hexSize * 1.4,
       center.y,
       `${sign}${Math.abs(delta)} sl`,
       {
-        fontFamily: 'monospace',
-        fontSize: '16px',
+        fontFamily: FONTS.mono,
+        fontSize: '17px',
         color,
-        stroke: '#000',
-        strokeThickness: 3,
+        stroke: PALETTE.vellum.css,
+        strokeThickness: 4,
         fontStyle: 'bold',
       },
     );

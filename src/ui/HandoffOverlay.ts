@@ -1,8 +1,10 @@
 import Phaser from 'phaser';
+import { FONTS, PALETTE, makeCodexButton, makeCodexPanel } from './theme';
 
 /**
- * Overlay "Passa al giocatore X" per hot-seat.
- * Nasconde la scelta privata fatta dal giocatore precedente prima di mostrare quella del nuovo.
+ * Overlay "Cambio di mano" per hot-seat (Codex Tacticus).
+ * Nasconde la scelta privata del giocatore precedente: schermata vellum
+ * inchiostrata centrale, "Sono pronto" come bottone Codex primary.
  */
 export class HandoffOverlay {
   private overlay: Phaser.GameObjects.Container;
@@ -10,6 +12,8 @@ export class HandoffOverlay {
   private title: Phaser.GameObjects.Text;
   private subtitle: Phaser.GameObjects.Text;
   private button: Phaser.GameObjects.Container;
+  private buttonHandler: (() => void) | null = null;
+  private cardContainer!: Phaser.GameObjects.Container;
 
   constructor(scene: Phaser.Scene) {
     const w = scene.cameras.main.width;
@@ -18,77 +22,87 @@ export class HandoffOverlay {
     this.overlay = scene.add.container(0, 0);
     this.overlay.setScrollFactor(0);
 
-    this.bg = scene.add.rectangle(0, 0, w, h, 0x000000, 0.95);
+    // Veil ink scuro semitrasparente (nasconde la scena)
+    this.bg = scene.add.rectangle(0, 0, w, h, PALETTE.ink.num, 0.92);
     this.bg.setOrigin(0, 0);
     this.bg.setInteractive(); // blocca click
 
-    this.title = scene.add.text(w / 2, h / 2 - 60, '', {
-      fontFamily: 'monospace',
-      fontSize: '22px',
-      color: '#fff',
-      align: 'center',
+    // Card vellum centrale (panel codex)
+    const cardW = Math.min(540, w * 0.7);
+    const cardH = 260;
+    const card = makeCodexPanel({
+      scene,
+      x: w / 2 - cardW / 2,
+      y: h / 2 - cardH / 2,
+      width: cardW,
+      height: cardH,
+      tone: 'vellum',
+      alpha: 1,
     });
-    this.title.setOrigin(0.5, 0.5);
+    this.cardContainer = card.container;
 
-    this.subtitle = scene.add.text(w / 2, h / 2 - 20, '', {
-      fontFamily: 'monospace',
-      fontSize: '14px',
-      color: '#aaa',
+    this.title = scene.add.text(cardW / 2, 30, '', {
+      fontFamily: FONTS.display,
+      fontSize: '26px',
+      color: PALETTE.ink.css,
       align: 'center',
-      wordWrap: { width: w * 0.7 },
+      fontStyle: 'italic',
     });
-    this.subtitle.setOrigin(0.5, 0.5);
+    this.title.setOrigin(0.5, 0);
 
-    // Bottone "Sono pronto" — touch-friendly
+    this.subtitle = scene.add.text(cardW / 2, 80, '', {
+      fontFamily: FONTS.body,
+      fontSize: '16px',
+      color: PALETTE.ink.css,
+      align: 'center',
+      wordWrap: { width: cardW - 40 },
+      fontStyle: 'italic',
+    });
+    this.subtitle.setOrigin(0.5, 0);
+
+    // Filetto oro
+    const sep = scene.add.graphics();
+    sep.lineStyle(1, PALETTE.gold.num, 0.85);
+    sep.lineBetween(cardW / 2 - 60, 145, cardW / 2 + 60, 145);
+
+    // Bottone "Sono pronto"
     const btnW = 280;
-    const btnH = 70;
-    this.button = scene.add.container(w / 2 - btnW / 2, h / 2 + 20);
-    const r = scene.add.rectangle(0, 0, btnW, btnH, 0x336633, 1);
-    r.setOrigin(0, 0);
-    r.setStrokeStyle(3, 0x66aa66);
-    const t = scene.add.text(btnW / 2, btnH / 2, 'Sono pronto', {
-      fontFamily: 'monospace',
-      fontSize: '20px',
-      color: '#fff',
+    const btnH = 64;
+    this.button = makeCodexButton({
+      scene,
+      x: cardW / 2 - btnW / 2,
+      y: 170,
+      width: btnW,
+      height: btnH,
+      label: 'Sono pronto',
+      variant: 'primary',
+      fontKind: 'display',
+      fontSize: 20,
+      onClick: () => {
+        this.hide();
+        this.buttonHandler?.();
+      },
     });
-    t.setOrigin(0.5, 0.5);
-    this.button.add([r, t]);
 
-    this.overlay.add([this.bg, this.title, this.subtitle, this.button]);
+    this.cardContainer.add([this.title, this.subtitle, sep, this.button]);
+    this.overlay.add([this.bg, this.cardContainer]);
     this.overlay.setVisible(false);
-    // Disable interactive all'init: viene riabilitato in show()
     this.bg.disableInteractive();
   }
 
   show(title: string, subtitle: string, onProceed: () => void): void {
     this.title.setText(title);
     this.subtitle.setText(subtitle);
-
-    // Riabilita interactive (il bg cattura click impedendo passaggio sotto)
+    this.buttonHandler = onProceed;
     this.bg.setInteractive();
-    const btnRect = this.button.getAt(0) as Phaser.GameObjects.Rectangle;
-    btnRect.removeAllListeners();
-    btnRect.setInteractive({ useHandCursor: true });
-    btnRect.on('pointerover', () => btnRect.setFillStyle(0x448844));
-    btnRect.on('pointerout', () => btnRect.setFillStyle(0x336633));
-    // pointerup invece di pointerdown per affidabilità touch
-    btnRect.on('pointerup', () => {
-      this.hide();
-      onProceed();
-    });
     this.overlay.setVisible(true);
   }
 
   hide(): void {
     this.overlay.setVisible(false);
-    // CRITICO: disabilitare interactive — un overlay invisibile MA interactive
-    // continua a catturare i click su touch. Bug fix iPad.
     this.bg.disableInteractive();
-    const btnRect = this.button.getAt(0) as Phaser.GameObjects.Rectangle;
-    btnRect.disableInteractive();
   }
 
-  /** Distrugge tutti gli oggetti grafici (per resize/teardown). */
   destroy(): void {
     this.overlay.destroy();
   }

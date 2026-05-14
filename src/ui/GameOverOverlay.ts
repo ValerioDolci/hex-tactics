@@ -1,15 +1,17 @@
 import Phaser from 'phaser';
+import { FONTS, PALETTE, factionTincture, makeCodexButton, makeCodexPanel } from './theme';
 
 /**
- * Overlay di fine partita non-opaco: mostra il vincitore con leggibilità chiara,
- * mantenendo VISIBILI sotto la mappa e il combat log. Bottone "Torna al menu".
+ * Banner di fine duello (Codex Tacticus) — non full-screen: lascia visibili
+ * sotto la mappa e la cronaca. Banner vellum centrale con drop-cap e bottone.
  */
 export class GameOverOverlay {
   private container: Phaser.GameObjects.Container;
   private bg: Phaser.GameObjects.Rectangle;
   private title: Phaser.GameObjects.Text;
   private subtitle: Phaser.GameObjects.Text;
-  private button: Phaser.GameObjects.Container;
+  private button!: Phaser.GameObjects.Container;
+  private buttonHandler: (() => void) | null = null;
 
   constructor(scene: Phaser.Scene) {
     const w = scene.cameras.main.width;
@@ -18,50 +20,71 @@ export class GameOverOverlay {
     this.container = scene.add.container(0, 0);
     this.container.setScrollFactor(0);
 
-    // Banner centrale (non full-screen): lascia visibili HUD/log/mappa
-    const bannerW = 600;
-    const bannerH = 200;
+    const bannerW = 620;
+    const bannerH = 220;
     const bx = w / 2 - bannerW / 2;
     const by = h / 2 - bannerH / 2;
 
-    this.bg = scene.add.rectangle(bx, by, bannerW, bannerH, 0x111820, 0.92);
-    this.bg.setOrigin(0, 0);
-    this.bg.setStrokeStyle(3, 0x88aacc);
-    this.bg.setInteractive(); // cattura click, non li propaga sotto
+    const panel = makeCodexPanel({
+      scene,
+      x: bx,
+      y: by,
+      width: bannerW,
+      height: bannerH,
+      tone: 'vellum',
+      alpha: 0.96,
+    });
+    const card = panel.container;
+    this.bg = panel.bg;
+    this.bg.setInteractive(); // cattura click
 
-    this.title = scene.add.text(w / 2, by + 40, '', {
-      fontFamily: 'monospace',
+    this.title = scene.add.text(bannerW / 2, 30, '', {
+      fontFamily: FONTS.display,
       fontSize: '32px',
-      color: '#fff',
+      color: PALETTE.ink.css,
       align: 'center',
+      fontStyle: 'italic',
     });
     this.title.setOrigin(0.5, 0);
 
-    this.subtitle = scene.add.text(w / 2, by + 90, '', {
-      fontFamily: 'monospace',
-      fontSize: '14px',
-      color: '#aaa',
+    // Filetto oro decorativo
+    const sep = scene.add.graphics();
+    sep.lineStyle(1.2, PALETTE.gold.num, 0.85);
+    sep.lineBetween(bannerW / 2 - 90, 86, bannerW / 2 + 90, 86);
+    sep.fillStyle(PALETTE.gold.num, 1);
+    sep.fillTriangle(bannerW / 2 - 4, 86, bannerW / 2 + 4, 86, bannerW / 2, 80);
+    sep.fillTriangle(bannerW / 2 - 4, 86, bannerW / 2 + 4, 86, bannerW / 2, 92);
+
+    this.subtitle = scene.add.text(bannerW / 2, 100, '', {
+      fontFamily: FONTS.body,
+      fontSize: '15px',
+      color: PALETTE.ink.css,
       align: 'center',
-      wordWrap: { width: bannerW - 40 },
+      wordWrap: { width: bannerW - 60 },
+      fontStyle: 'italic',
     });
     this.subtitle.setOrigin(0.5, 0);
 
-    // Bottone "Torna al menu"
-    this.button = scene.add.container(w / 2 - 130, by + 140);
     const btnW = 260;
-    const btnH = 44;
-    const r = scene.add.rectangle(0, 0, btnW, btnH, 0x336633, 1);
-    r.setOrigin(0, 0);
-    r.setStrokeStyle(2, 0x66aa66);
-    const t = scene.add.text(btnW / 2, btnH / 2, 'Torna al menu', {
-      fontFamily: 'monospace',
-      fontSize: '16px',
-      color: '#fff',
+    const btnH = 48;
+    this.button = makeCodexButton({
+      scene,
+      x: bannerW / 2 - btnW / 2,
+      y: 158,
+      width: btnW,
+      height: btnH,
+      label: 'Ritorno al frontespizio',
+      variant: 'primary',
+      fontKind: 'display',
+      fontSize: 16,
+      onClick: () => {
+        this.hide();
+        this.buttonHandler?.();
+      },
     });
-    t.setOrigin(0.5, 0.5);
-    this.button.add([r, t]);
 
-    this.container.add([this.bg, this.title, this.subtitle, this.button]);
+    card.add([this.title, sep, this.subtitle, this.button]);
+    this.container.add(card);
     this.container.setVisible(false);
     this.bg.disableInteractive();
   }
@@ -69,35 +92,25 @@ export class GameOverOverlay {
   show(winner: 'A' | 'B' | 'draw', onReturnToMenu: () => void): void {
     if (winner === 'draw') {
       this.title.setText('Pareggio');
+      this.title.setColor(PALETTE.ink.css);
     } else {
-      this.title.setText(`Vince Fazione ${winner}`);
+      const t = factionTincture(winner);
+      this.title.setText(`Vince la fazione ${t.blason}`);
+      this.title.setColor(t.css);
     }
     this.subtitle.setText(
-      'Il log della battaglia è visibile in basso a sinistra.\nClicca "Torna al menu" per scegliere un altro setup.',
+      'La cronaca del duello resta in basso a sinistra.\nIl frontespizio attende un nuovo setup.',
     );
-
+    this.buttonHandler = onReturnToMenu;
     this.bg.setInteractive();
-    const btnRect = this.button.getAt(0) as Phaser.GameObjects.Rectangle;
-    btnRect.removeAllListeners();
-    btnRect.setInteractive({ useHandCursor: true });
-    btnRect.on('pointerover', () => btnRect.setFillStyle(0x448844));
-    btnRect.on('pointerout', () => btnRect.setFillStyle(0x336633));
-    btnRect.on('pointerup', () => {
-      this.hide();
-      onReturnToMenu();
-    });
-
     this.container.setVisible(true);
   }
 
   hide(): void {
     this.container.setVisible(false);
     this.bg.disableInteractive();
-    const btnRect = this.button.getAt(0) as Phaser.GameObjects.Rectangle;
-    btnRect.disableInteractive();
   }
 
-  /** Distrugge tutti gli oggetti grafici. */
   destroy(): void {
     this.container.destroy();
   }

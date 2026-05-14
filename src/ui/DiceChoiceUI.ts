@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { s, sFont } from './uiScale';
+import { FONTS, PALETTE, makeCodexButton, makeCodexPanel } from './theme';
 
 export interface DiceChoiceOptions {
   /** Titolo principale del box (es. "Alpha — Tiro slancio") */
@@ -25,7 +26,6 @@ export interface DiceChoiceOptions {
 export class DiceChoiceUI {
   private overlay: Phaser.GameObjects.Container;
   private bg: Phaser.GameObjects.Rectangle;
-  private box: Phaser.GameObjects.Rectangle;
   private title: Phaser.GameObjects.Text;
   private subtitle: Phaser.GameObjects.Text;
   private info: Phaser.GameObjects.Text;
@@ -39,49 +39,48 @@ export class DiceChoiceUI {
     this.overlay = scene.add.container(0, 0);
     this.overlay.setScrollFactor(0);
 
-    // Backdrop semi-trasparente (non opaco: si vede mappa/log sotto)
-    this.bg = scene.add.rectangle(0, 0, w, h, 0x000000, 0.5);
+    // Backdrop ink semitrasparente
+    this.bg = scene.add.rectangle(0, 0, w, h, PALETTE.ink.num, 0.55);
     this.bg.setOrigin(0, 0);
 
-    // Box centrale (resta dentro il viewport anche su schermi piccoli)
+    // Box centrale (Codex panel vellum)
     const boxW = Math.min(560, w - 40);
     const boxH = Math.min(420, h - 80);
     const bx = w / 2 - boxW / 2;
     const by = h / 2 - boxH / 2;
-    this.box = scene.add.rectangle(bx, by, boxW, boxH, 0x1a2530, 0.96);
-    this.box.setOrigin(0, 0);
-    this.box.setStrokeStyle(2, 0x6699bb);
+    const panel = makeCodexPanel({ scene, x: bx, y: by, width: boxW, height: boxH, tone: 'vellum', alpha: 1 });
 
-    this.title = scene.add.text(w / 2, by + 20, '', {
-      fontFamily: 'monospace',
-      fontSize: sFont(20),
-      color: '#fff',
-      fontStyle: 'bold',
+    this.title = scene.add.text(w / 2, by + 22, '', {
+      fontFamily: FONTS.display,
+      fontSize: sFont(24),
+      color: PALETTE.ink.css,
+      fontStyle: 'italic',
       align: 'center',
       wordWrap: { width: boxW - 40 },
     });
     this.title.setOrigin(0.5, 0);
 
-    this.subtitle = scene.add.text(w / 2, by + 56, '', {
-      fontFamily: 'monospace',
-      fontSize: sFont(14),
-      color: '#9bcfff',
+    this.subtitle = scene.add.text(w / 2, by + 60, '', {
+      fontFamily: FONTS.body,
+      fontSize: sFont(15),
+      color: PALETTE.inkSoft.css,
+      fontStyle: 'italic',
       align: 'center',
       wordWrap: { width: boxW - 40 },
     });
     this.subtitle.setOrigin(0.5, 0);
 
-    this.info = scene.add.text(bx + 24, by + 96, '', {
-      fontFamily: 'monospace',
-      fontSize: sFont(13),
-      color: '#cdd9e3',
+    this.info = scene.add.text(bx + 24, by + 100, '', {
+      fontFamily: FONTS.body,
+      fontSize: sFont(14),
+      color: PALETTE.ink.css,
       align: 'left',
       wordWrap: { width: boxW - 48 },
-      lineSpacing: 4,
+      lineSpacing: 5,
     });
     this.info.setOrigin(0, 0);
 
-    this.overlay.add([this.bg, this.box, this.title, this.subtitle, this.info]);
+    this.overlay.add([this.bg, panel.container, this.title, this.subtitle, this.info]);
     this.overlay.setVisible(false);
     this.bg.disableInteractive();
   }
@@ -123,24 +122,20 @@ export class DiceChoiceUI {
 
     let x = startX;
     for (const n of opts.choices) {
-      const c = this.scene.add.container(x, btnY);
-      const r = this.scene.add.rectangle(0, 0, btnW, btnH, 0x335577, 1);
-      r.setOrigin(0, 0);
-      r.setStrokeStyle(3, 0x6699bb);
-      const t = this.scene.add.text(btnW / 2, btnH / 2, `${n}`, {
-        fontFamily: 'monospace',
-        fontSize: sFont(34),
-        color: '#fff',
-        fontStyle: 'bold',
-      });
-      t.setOrigin(0.5, 0.5);
-      c.add([r, t]);
-      r.setInteractive({ useHandCursor: true });
-      r.on('pointerover', () => r.setFillStyle(0x4477aa));
-      r.on('pointerout', () => r.setFillStyle(0x335577));
-      r.on('pointerup', () => {
-        this.hide();
-        opts.onChoose(n);
+      const c = makeCodexButton({
+        scene: this.scene,
+        x,
+        y: btnY,
+        width: btnW,
+        height: btnH,
+        label: `${n}`,
+        variant: 'gold',
+        fontKind: 'display',
+        fontSize: 34,
+        onClick: () => {
+          this.hide();
+          opts.onChoose(n);
+        },
       });
       this.buttons.push(c);
       this.overlay.add(c);

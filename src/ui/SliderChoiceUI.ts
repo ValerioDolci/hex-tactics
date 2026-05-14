@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { s, sFont } from './uiScale';
+import { FONTS, PALETTE, makeCodexButton, makeCodexPanel } from './theme';
 
 export interface SliderChoiceOptions {
   /** Titolo principale del box */
@@ -34,7 +35,6 @@ export class SliderChoiceUI {
   private scene: Phaser.Scene;
   private overlay: Phaser.GameObjects.Container;
   private bg: Phaser.GameObjects.Rectangle;
-  private box: Phaser.GameObjects.Rectangle;
   private title: Phaser.GameObjects.Text;
   private subtitle: Phaser.GameObjects.Text;
   private info: Phaser.GameObjects.Text;
@@ -60,47 +60,47 @@ export class SliderChoiceUI {
     this.overlay = scene.add.container(0, 0);
     this.overlay.setScrollFactor(0);
 
-    this.bg = scene.add.rectangle(0, 0, w, h, 0x000000, 0.5);
+    this.bg = scene.add.rectangle(0, 0, w, h, PALETTE.ink.num, 0.55);
     this.bg.setOrigin(0, 0);
 
     const boxW = Math.min(560, w - 40);
     const boxH = Math.min(420, h - 80);
     const bx = w / 2 - boxW / 2;
     const by = h / 2 - boxH / 2;
-    this.box = scene.add.rectangle(bx, by, boxW, boxH, 0x1a2530, 0.96);
-    this.box.setOrigin(0, 0);
-    this.box.setStrokeStyle(2, 0x6699bb);
+    // Pannello vellum codex
+    const panel = makeCodexPanel({ scene, x: bx, y: by, width: boxW, height: boxH, tone: 'vellum', alpha: 1 });
 
-    this.title = scene.add.text(w / 2, by + 20, '', {
-      fontFamily: 'monospace',
-      fontSize: sFont(20),
-      color: '#fff',
-      fontStyle: 'bold',
+    this.title = scene.add.text(w / 2, by + 22, '', {
+      fontFamily: FONTS.display,
+      fontSize: sFont(24),
+      color: PALETTE.ink.css,
+      fontStyle: 'italic',
       align: 'center',
       wordWrap: { width: boxW - 40 },
     });
     this.title.setOrigin(0.5, 0);
 
-    this.subtitle = scene.add.text(w / 2, by + 56, '', {
-      fontFamily: 'monospace',
-      fontSize: sFont(14),
-      color: '#9bcfff',
+    this.subtitle = scene.add.text(w / 2, by + 60, '', {
+      fontFamily: FONTS.body,
+      fontSize: sFont(15),
+      color: PALETTE.inkSoft.css,
+      fontStyle: 'italic',
       align: 'center',
       wordWrap: { width: boxW - 40 },
     });
     this.subtitle.setOrigin(0.5, 0);
 
-    this.info = scene.add.text(bx + 24, by + 96, '', {
-      fontFamily: 'monospace',
-      fontSize: sFont(13),
-      color: '#cdd9e3',
+    this.info = scene.add.text(bx + 24, by + 100, '', {
+      fontFamily: FONTS.body,
+      fontSize: sFont(14),
+      color: PALETTE.ink.css,
       align: 'left',
       wordWrap: { width: boxW - 48 },
-      lineSpacing: 4,
+      lineSpacing: 5,
     });
     this.info.setOrigin(0, 0);
 
-    this.overlay.add([this.bg, this.box, this.title, this.subtitle, this.info]);
+    this.overlay.add([this.bg, panel.container, this.title, this.subtitle, this.info]);
     this.overlay.setVisible(false);
     this.bg.disableInteractive();
   }
@@ -141,43 +141,43 @@ export class SliderChoiceUI {
     this.trackY = sliderY;
     const trackW = this.trackX1 - this.trackX0;
 
-    // Label valore corrente, in mezzo sopra slider, separato da info da margine
+    // Label valore corrente — display serif gold ink (mostra il numero come miniatura)
     this.valueText = this.scene.add.text(w / 2, valueY, '0', {
-      fontFamily: 'monospace',
-      fontSize: sFont(50),
-      color: '#ffd966',
-      fontStyle: 'bold',
-      stroke: '#000',
+      fontFamily: FONTS.display,
+      fontSize: sFont(56),
+      color: PALETTE.gold.css,
+      fontStyle: 'italic',
+      stroke: PALETTE.vellum.css,
       strokeThickness: 4,
     });
     this.valueText.setOrigin(0.5, 0.5);
 
-    // Track (sfondo)
+    // Track (sfondo) — vellum dark con bordo ink
     this.track = this.scene.add.rectangle(
       this.trackX0,
       sliderY,
       trackW,
       sliderH,
-      0x223344,
+      PALETTE.vellumDeep.num,
       1,
     );
     this.track.setOrigin(0, 0.5);
-    this.track.setStrokeStyle(2, 0x6699bb);
+    this.track.setStrokeStyle(1, PALETTE.ink.num);
 
-    // Fill (parte attiva, verde slancio)
+    // Fill (parte attiva) — gold leaf
     this.fill = this.scene.add.rectangle(
       this.trackX0,
       sliderY,
       0,
       sliderH,
-      0x44aa88,
+      PALETTE.gold.num,
       1,
     );
     this.fill.setOrigin(0, 0.5);
 
-    // Knob (cerchietto draggabile, più grande per hit-test agevole)
-    this.knob = this.scene.add.circle(this.trackX0, sliderY, s(18), 0xffd966, 1);
-    this.knob.setStrokeStyle(3, 0x886622);
+    // Knob — disco gold con bordo ink (sigillo araldico)
+    this.knob = this.scene.add.circle(this.trackX0, sliderY, s(18), PALETTE.gold.num, 1);
+    this.knob.setStrokeStyle(2, PALETTE.ink.num);
     this.knob.setInteractive({ draggable: true, useHandCursor: true });
 
     // Track click anche fuori dal knob: snap immediato
@@ -260,22 +260,18 @@ export class SliderChoiceUI {
     size: number,
     onClick: () => void,
   ): Phaser.GameObjects.Container {
-    const c = this.scene.add.container(cx, cy);
-    const r = this.scene.add.rectangle(0, 0, size, size, 0x335577, 1);
-    r.setStrokeStyle(2, 0x6699bb);
-    const t = this.scene.add.text(0, 0, label, {
-      fontFamily: 'monospace',
-      fontSize: `${Math.round(size * 0.6)}px`,
-      color: '#fff',
-      fontStyle: 'bold',
+    return makeCodexButton({
+      scene: this.scene,
+      x: cx - size / 2,
+      y: cy - size / 2,
+      width: size,
+      height: size,
+      label,
+      variant: 'outline',
+      fontKind: 'display',
+      fontSize: Math.round(size * 0.5),
+      onClick,
     });
-    t.setOrigin(0.5, 0.5);
-    c.add([r, t]);
-    r.setInteractive({ useHandCursor: true });
-    r.on('pointerover', () => r.setFillStyle(0x4477aa));
-    r.on('pointerout', () => r.setFillStyle(0x335577));
-    r.on('pointerup', onClick);
-    return c;
   }
 
   private makeConfirmButton(
@@ -283,22 +279,20 @@ export class SliderChoiceUI {
     cy: number,
     onClick: () => void,
   ): Phaser.GameObjects.Container {
-    const c = this.scene.add.container(cx, cy);
-    const r = this.scene.add.rectangle(0, 0, 220, 56, 0x336633, 1);
-    r.setStrokeStyle(3, 0x77bb77);
-    const t = this.scene.add.text(0, 0, 'CONFERMA', {
-      fontFamily: 'monospace',
-      fontSize: '22px',
-      color: '#ffffff',
-      fontStyle: 'bold',
+    const w = 220;
+    const h = 56;
+    return makeCodexButton({
+      scene: this.scene,
+      x: cx - w / 2,
+      y: cy - h / 2,
+      width: w,
+      height: h,
+      label: 'Conferma',
+      variant: 'primary',
+      fontKind: 'display',
+      fontSize: 20,
+      onClick,
     });
-    t.setOrigin(0.5, 0.5);
-    c.add([r, t]);
-    r.setInteractive({ useHandCursor: true });
-    r.on('pointerover', () => r.setFillStyle(0x448844));
-    r.on('pointerout', () => r.setFillStyle(0x336633));
-    r.on('pointerup', onClick);
-    return c;
   }
 
   private destroySliderElements(): void {
