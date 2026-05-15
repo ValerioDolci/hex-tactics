@@ -92,7 +92,10 @@ export function scoreMove(
       const transfer = move.impetoToSlancio ?? 0;
       if (!enemy || !me.weapon) return move.slancioDice === 2 && transfer === 0 ? 1 : 0;
       const weapon = getWeapon(me.weapon);
-      const reach = weapon?.range?.reach ?? 1;
+      // 2026-05-15 (Bug B propagation fix): per armi ranged-only (no reach) il
+      // default era 1 → considerava "in mischia se dist ≤ 1" e ritornava 0 sla.
+      // Per arco scarico significava: niente slancio → niente reload → niente shot.
+      const reach = weapon?.range?.reach ?? 0;
       const dist = baseDistance(me.position, enemy.position);
 
       // Minaccia ranged? (nemico con arma ranged caricata + LoS verso me)
@@ -148,7 +151,9 @@ export function scoreMove(
 
       // No minaccia ranged + no catch-up: regola classica con budget penalty
       if (transfer > 0) return -2;
-      if (dist <= reach) {
+      // 2026-05-15 (Bug B): check valido solo per armi melee-capable (reach >= 1).
+      // Per ranged-only la regola "in mischia → 0 dadi" non si applica.
+      if (reach >= 1 && dist <= reach) {
         // In mischia: 0 dadi (risparmia) — confermato ottimale per build con scudo
         return move.slancioDice === 0 ? 2 : -1 + budgetPenalty;
       }
@@ -289,7 +294,8 @@ export function scoreMove(
       // Detection arma: ranged-only (no melee viable) → kite; melee → close.
       const myWeapon = me.weapon ? getWeapon(me.weapon) : null;
       const hasRanged = !!(myWeapon?.range && (myWeapon.range.distance != null || myWeapon.range.throw != null));
-      const meleeReach = myWeapon?.range?.reach ?? 1;
+      // 2026-05-15 (Bug B propagation fix): no melee capability → reach 0, non 1.
+      const meleeReach = myWeapon?.range?.reach ?? 0;
       const rangedMax = myWeapon?.range?.distance ?? myWeapon?.range?.throw ?? 0;
       const isRangedOnly = hasRanged && myWeapon!.attackModes[0].diceVariable >= 1 && rangedMax >= 3;
 

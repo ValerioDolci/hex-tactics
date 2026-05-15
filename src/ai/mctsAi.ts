@@ -17,7 +17,7 @@ import {
   aiDecideAction,
   aiDecideAttackerDice,
   aiDecideDefense,
-  aiDecideSlancio,
+  aiDecideTurnStart,
 } from './basicAi';
 
 const UCB1_C = Math.sqrt(2); // exploration constant standard
@@ -102,8 +102,10 @@ function rollout(initialState: GameState, perspective: FactionId, maxRollouts = 
     if (state.phase === 'turn-start') {
       const unitId = state.turnOrder[state.currentTurnIdx];
       if (!unitId) break;
-      const slancio = aiDecideSlancio(state, unitId);
-      state = reduce(state, { type: 'START_TURN', slancioDice: slancio });
+      // 2026-05-15 (Bug E propagation): usa aiDecideTurnStart per il transfer
+      // impeto→slancio (D-044), necessario in particolare per arcieri/balestrieri.
+      const dec = aiDecideTurnStart(state, unitId);
+      state = reduce(state, { type: 'START_TURN', slancioDice: dec.slancioDice, impetoToSlancio: dec.impetoToSlancio });
       continue;
     }
     if (state.phase === 'choosing-action') {

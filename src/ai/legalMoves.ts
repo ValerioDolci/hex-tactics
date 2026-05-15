@@ -119,7 +119,14 @@ function legalActionMoves(state: GameState, unit: Unit): GameEvent[] {
   // il puramente più vicino. In 1v1 questo collassa al solo nemico → comportamento
   // identico. Per il target-picker UI umano vedi `legalActionMovesAllTargets`
   // (Step 1.4 — non ancora implementato).
-  const enemy = pickTargetForAction(state, unit);
+  //
+  // 2026-05-15 (Bug A propagation fix): stabilizza il target sul positionAtTurnStart
+  // come fa aiDecideAction. Senza, anche gli MLP (Hard/Expert) che chiamano legalMoves
+  // possono vedere azioni candidate che cambiano ad ogni MOVE.
+  const unitForTargeting: Unit = unit.positionAtTurnStart
+    ? { ...unit, position: unit.positionAtTurnStart }
+    : unit;
+  const enemy = pickTargetForAction(state, unitForTargeting);
   const weapon = unit.weapon ? getWeapon(unit.weapon) : undefined;
 
   // ATTACCO: se nemico in range mischia o ranged (V2 D-049)

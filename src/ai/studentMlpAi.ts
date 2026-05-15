@@ -43,7 +43,12 @@ export function aiDecideStudentMlp(
   // (pickTargetForAction) e passalo a buildObsV2 come `agentEnemyId`. Il modello MLP
   // distillato 1v1 vede così SOLO il main threat — comportamento back-compat con 1v1
   // (collassa al solo enemy) ma sensato in skirmish (non vede un nemico random).
-  const enemy = pickTargetForAction(state, unit);
+  // 2026-05-15 (Bug A propagation fix): usa positionAtTurnStart per stabilizzare
+  // il target durante un turno multi-MOVE.
+  const unitForTargeting: Unit = unit.positionAtTurnStart
+    ? ({ ...unit, position: unit.positionAtTurnStart } as Unit)
+    : unit;
+  const enemy = pickTargetForAction(state, unitForTargeting);
   if (!enemy) return moves[0];
 
   // Build input vector: obs153 + build_self39 + build_opp39 = 231
