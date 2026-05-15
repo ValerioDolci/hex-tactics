@@ -216,12 +216,17 @@ function countImpReductionsForEquip(u: Unit, slot: 'weapon' | 'offhand' | 'armor
     const sh = getShield(equipId);
     category = w?.category ?? sh?.category ?? null;
   }
+  // 2026-05-15 (Bug F fix): contare `skill.level`, non `count++` per ogni skill.
+  // Una skill "-1imp generico level 3" vale 3 punti riduzione, non 1. Senza questo
+  // fix, l'AI sottostimava le riduzioni e sovrastimava l'impedimento dei tank
+  // (imp calcolato 10 invece di 0 reale) → aiDecideSlancio ritornava 0 → tank
+  // a slancio 0 ogni turno → muovevano solo 1 hex (free) → mai arrivavano agli arcieri.
   let count = 0;
   for (const skill of u.skills) {
     if (skill.modifier !== '-1impedimento') continue;
     if (skill.classeOggetto && skill.classeOggetto !== category) continue;
     if (skill.oggettoSpecifico && skill.oggettoSpecifico !== equipId) continue;
-    count++;
+    count += skill.level;
   }
   return count;
 }
