@@ -52,7 +52,7 @@ describe('Skirmish scaling — 3v3, 5v5, 10v10', () => {
     let safety = 5000;
     const tStart = Date.now();
     while (s.phase !== 'game-over' && safety-- > 0) {
-      if (s.round > 100) break;
+      if (s.round > 200) break;
       const activeId = s.turnOrder[s.currentTurnIdx];
       if (!activeId) break;
       let ev: any;

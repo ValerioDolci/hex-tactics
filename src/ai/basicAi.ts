@@ -14,7 +14,7 @@
 import { GameState } from '@core/state';
 import { Unit, UnitId } from '@entities/Unit';
 import { hexDistance, hexesInRange, neighbors } from '@core/hex/distance';
-import { Axial } from '@core/hex/coords';
+import { Axial, axialToOffset } from '@core/hex/coords';
 import { baseDistance, getBaseHexes } from '@core/hex/base';
 import { hexLine } from '@core/hex/line';
 import { getWeapon } from '@data/weapons';
@@ -289,6 +289,23 @@ function findBestMoveToward(state: GameState, me: Unit, enemy: Unit, moveRange?:
     return false;
   };
 
+  /**
+   * 2026-05-15 (skirmish bug fix): l'INTERA basetta del target deve stare DENTRO
+   * i bounds della board. Senza questo check, in skirmish multi-unit le unità
+   * "schivano" gli alleati uscendo dalla mappa (es. arciere A1 si trovava a r=-64
+   * dopo 70 round, slancio 0, mai più capace di tornare in range del nemico).
+   * legalMoves.legalActionMoves già fa questo check, basicAi non lo faceva → in
+   * 1v1 non si notava (target sempre verso interno mappa), in skirmish sì.
+   */
+  const inBoardBounds = (h: Axial): boolean => {
+    for (const bh of getBaseHexes(h)) {
+      const off = axialToOffset(bh);
+      if (off.col < 0 || off.col >= state.board.cols) return false;
+      if (off.row < 0 || off.row >= state.board.rows) return false;
+    }
+    return true;
+  };
+
   /** True se il path da `from` a `to` è interamente valido (niente overlap step-by-step). */
   const pathIsClear = (from: Axial, to: Axial): boolean => {
     const fullLine = hexLine(from, to);
@@ -305,6 +322,7 @@ function findBestMoveToward(state: GameState, me: Unit, enemy: Unit, moveRange?:
     if (h.q === me.position.q && h.r === me.position.r) continue;
     if (blockedSet.has(`${h.q},${h.r}`)) continue;
     if (baseOverlap(h)) continue;
+    if (!inBoardBounds(h)) continue;
     // CRITICO: il path INTERO deve essere libero (no blocco mid-step)
     if (!pathIsClear(me.position, h)) continue;
     const score = baseDistance(h, enemy.position);
