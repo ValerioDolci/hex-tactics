@@ -39,16 +39,10 @@ export function aiDecideStudentMlp(
   const moves = legalMoves(state, unitId);
   if (moves.length === 0) return { type: 'END_TURN' };
 
-  // 2026-05-14 (Phase 1.3 skirmish): in NvN, scegli il "main threat" via euristica
-  // (pickTargetForAction) e passalo a buildObsV2 come `agentEnemyId`. Il modello MLP
-  // distillato 1v1 vede così SOLO il main threat — comportamento back-compat con 1v1
-  // (collassa al solo enemy) ma sensato in skirmish (non vede un nemico random).
-  // 2026-05-15 (Bug A propagation fix): usa positionAtTurnStart per stabilizzare
-  // il target durante un turno multi-MOVE.
-  const unitForTargeting: Unit = unit.positionAtTurnStart
-    ? ({ ...unit, position: unit.positionAtTurnStart } as Unit)
-    : unit;
-  const enemy = pickTargetForAction(state, unitForTargeting);
+  // In NvN, scegli il "main threat" via euristica e passalo a buildObsV2 come
+  // `agentEnemyId`. Il modello MLP distillato 1v1 vede solo il main threat.
+  // Bug A fix: positionAtTurnStart stabilizza il target tra MOVE multipli.
+  const enemy = pickTargetForAction(state, unit, { positionOverride: unit.positionAtTurnStart });
   if (!enemy) return moves[0];
 
   // Build input vector: obs153 + build_self39 + build_opp39 = 231

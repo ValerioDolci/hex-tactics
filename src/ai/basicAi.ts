@@ -19,9 +19,8 @@ import { baseDistance, getBaseHexes } from '@core/hex/base';
 import { hexLine } from '@core/hex/line';
 import { getWeapon } from '@data/weapons';
 import { getShield } from '@data/shields';
-import { getArmor } from '@data/armors';
 import { canFireRanged } from '@core/ranged';
-import { countFlatBonuses, makeSlancioContext } from '@core/stats';
+import { countFlatBonuses, getImpedimentTotal, makeSlancioContext } from '@core/stats';
 import { getMaxSlancioRoll } from '@core/turn';
 import { GameEvent, EventDeclareAttack, EventMove, EventEndTurn } from '@core/events';
 
@@ -54,8 +53,8 @@ function findClosestEnemy(state: GameState, me: Unit): Unit | null {
  * `danger_arma` = primo modo arma: fixedBonus + diceVariable × 3.5 (EV d6).
  * Per disarmato → 1 (epsilon).
  */
-function threatScore(me: Unit, enemy: Unit): number {
-  const dist = baseDistance(me.position, enemy.position);
+function threatScore(myPos: { q: number; r: number }, enemy: Unit): number {
+  const dist = baseDistance(myPos, enemy.position);
   const hpLeft = Math.max(1, enemy.hp);
   const w = enemy.weapon ? getWeapon(enemy.weapon) : null;
   let danger = 1;
@@ -76,22 +75,33 @@ function threatScore(me: Unit, enemy: Unit): number {
  *   2. Altrimenti scegli il main threat globale (scoring).
  *
  * Backward compatible col 1v1: se c'è UN solo nemico vivo restituisce quello.
+ *
+ * 2026-05-15 (Refactor 3): supporta `options.positionOverride` per stabilizzare
+ * il targeting durante un turno multi-MOVE (Bug A). I caller AI passano
+ * `me.positionAtTurnStart` come override → il main_threat non oscilla. Sostituisce
+ * il trick `{ ...unit, position: ... }` ripetuto in 3 file (basicAi.aiDecideAction,
+ * studentMlpAi, studentMultiAi).
  */
-export function pickTargetForAction(state: GameState, me: Unit): Unit | null {
+export function pickTargetForAction(
+  state: GameState,
+  me: Unit,
+  options?: { positionOverride?: { q: number; r: number } },
+): Unit | null {
   const enemies = Object.values(state.units).filter((u) => u.faction !== me.faction && u.alive);
   if (enemies.length === 0) return null;
   if (enemies.length === 1) return enemies[0];
+  const myPos = options?.positionOverride ?? me.position;
   // Prima fascia: in melee range della mia arma
   const w = me.weapon ? getWeapon(me.weapon) : null;
   const reach = w?.range?.reach ?? 0;
   if (reach >= 1) {
-    const inMelee = enemies.filter((e) => baseDistance(me.position, e.position) <= reach);
+    const inMelee = enemies.filter((e) => baseDistance(myPos, e.position) <= reach);
     if (inMelee.length > 0) {
-      return inMelee.reduce((best, u) => (threatScore(me, u) > threatScore(me, best) ? u : best));
+      return inMelee.reduce((best, u) => (threatScore(myPos, u) > threatScore(myPos, best) ? u : best));
     }
   }
   // Fallback: main threat globale (peso anche al ranged shot più value)
-  return enemies.reduce((best, u) => (threatScore(me, u) > threatScore(me, best) ? u : best));
+  return enemies.reduce((best, u) => (threatScore(myPos, u) > threatScore(myPos, best) ? u : best));
 }
 
 /** Quanti dadi tirare per lo slancio del turno corrente.
@@ -124,25 +134,10 @@ export function aiDecideSlancio(state: GameState, unitId: UnitId): number {
     if (reach >= 1 && dist <= reach) return 0;
   }
 
-  // Se l'impedimento mangia il tiro: 2d6+2 medio = 9, ma con imp >= 7 è pura perdita
-  const imp = (() => {
-    let total = 0;
-    if (u.weapon) {
-      const w = getWeapon(u.weapon);
-      if (w) total += Math.max(0, w.impediment - countImpReductionsForEquip(u, 'weapon'));
-    }
-    if (u.offhand) {
-      const sh = getShield(u.offhand);
-      const w = getWeapon(u.offhand);
-      const impPiece = sh?.impediment ?? w?.impediment ?? 0;
-      total += Math.max(0, impPiece - countImpReductionsForEquip(u, 'offhand'));
-    }
-    if (u.armor) {
-      const a = getArmor(u.armor);
-      if (a) total += Math.max(0, a.impediment - countImpReductionsForEquip(u, 'armor'));
-    }
-    return total;
-  })();
+  // 2026-05-15 (Refactor 1): usa getImpedimentTotal ufficiale di core/stats.
+  // Era duplicato qui (con bug F preesistente count++ vs skill.level). Adesso
+  // unico source of truth → no drift se la regola cambia.
+  const imp = getImpedimentTotal(u);
 
   // Se imp >= 7 il 2d6+2 (max 14, medio 9) finisce neutro o negativo. Skip.
   if (imp >= 7) return 0;
@@ -184,14 +179,8 @@ export function aiDecideTurnStart(state: GameState, unitId: UnitId): {
     return { slancioDice, impetoToSlancio: 0 };
   }
   // Arma ranged scarica con cost-slancio reload. Stima slancio post-tiro:
-  let imp = 0;
-  if (u.weapon) imp += Math.max(0, (getWeapon(u.weapon)?.impediment ?? 0) - countImpReductionsForEquip(u, 'weapon'));
-  if (u.offhand) {
-    const sh = getShield(u.offhand);
-    const ow = getWeapon(u.offhand);
-    imp += Math.max(0, (sh?.impediment ?? ow?.impediment ?? 0) - countImpReductionsForEquip(u, 'offhand'));
-  }
-  if (u.armor) imp += Math.max(0, (getArmor(u.armor)?.impediment ?? 0) - countImpReductionsForEquip(u, 'armor'));
+  // 2026-05-15 (Refactor 1): usa getImpedimentTotal ufficiale.
+  const imp = getImpedimentTotal(u);
   const flatBonus = countFlatBonuses(u.skills, makeSlancioContext());
   // Slancio post-tiro avg = slancioDice * 3.5 (avg d6) + 2 (BASE_PG_FIXED) + flat_skill - imp
   const slancioEstimateAvg = slancioDice * 3.5 + 2 + flatBonus - imp;
@@ -204,51 +193,20 @@ export function aiDecideTurnStart(state: GameState, unitId: UnitId): {
   return { slancioDice, impetoToSlancio: transfer };
 }
 
-/** Helper: conta riduzioni impedimento applicabili a uno specifico equip slot */
-function countImpReductionsForEquip(u: Unit, slot: 'weapon' | 'offhand' | 'armor'): number {
-  const equipId =
-    slot === 'weapon' ? u.weapon : slot === 'offhand' ? u.offhand : u.armor;
-  if (!equipId) return 0;
-  let category: string | null = null;
-  if (slot === 'armor') category = 'armature';
-  else {
-    const w = getWeapon(equipId);
-    const sh = getShield(equipId);
-    category = w?.category ?? sh?.category ?? null;
-  }
-  // 2026-05-15 (Bug F fix): contare `skill.level`, non `count++` per ogni skill.
-  // Una skill "-1imp generico level 3" vale 3 punti riduzione, non 1. Senza questo
-  // fix, l'AI sottostimava le riduzioni e sovrastimava l'impedimento dei tank
-  // (imp calcolato 10 invece di 0 reale) → aiDecideSlancio ritornava 0 → tank
-  // a slancio 0 ogni turno → muovevano solo 1 hex (free) → mai arrivavano agli arcieri.
-  let count = 0;
-  for (const skill of u.skills) {
-    if (skill.modifier !== '-1impedimento') continue;
-    if (skill.classeOggetto && skill.classeOggetto !== category) continue;
-    if (skill.oggettoSpecifico && skill.oggettoSpecifico !== equipId) continue;
-    count += skill.level;
-  }
-  return count;
-}
+// 2026-05-15 (Refactor 1): rimossa countImpReductionsForEquip duplicata.
+// I caller ora usano direttamente getImpedimentTotal(unit) di core/stats.ts
+// (single source of truth, evita drift Bug F).
 
 /** Decisione azione dopo START_TURN: attacco / movimento / end turn */
 export function aiDecideAction(state: GameState, unitId: UnitId): GameEvent {
   const me = state.units[unitId];
   if (!me) return { type: 'END_TURN' };
-  // 2026-05-14 (Phase 1.2 skirmish): target = main threat (HP basso × pericolosità arma
-  // × prossimità), con preferenza per nemici già in melee range. In 1v1 ricade su
-  // l'unico nemico → comportamento identico al pre-skirmish.
-  //
-  // 2026-05-15 (Bug A fix): usiamo `positionAtTurnStart` invece di `position` corrente
-  // per il target picking. Senza, in skirmish 4+ il main_threat può cambiare ad ogni
-  // MOVE (perché il scoring dipende da distanza), e l'unit oscilla avanti/indietro
-  // bruciando slancio. Esempio dal dump 4v4 r7: A3_Arciere oscilla 8 volte tra (8,12)
-  // e (9,12) e finisce con sla=0. Freezando il riferimento a positionAtTurnStart, il
-  // target resta stabile per tutto il turno.
-  const meForTargeting: Unit = me.positionAtTurnStart
-    ? { ...me, position: me.positionAtTurnStart }
-    : me;
-  const enemy = pickTargetForAction(state, meForTargeting);
+  // Target = main threat (HP basso × pericolosità arma × prossimità), con preferenza
+  // per nemici già in melee range. In 1v1 ricade sull'unico nemico → comportamento
+  // identico al pre-skirmish.
+  // Bug A fix: pos stabile (positionAtTurnStart) per non far oscillare il main_threat
+  // ad ogni MOVE in skirmish 4+. Refactor 3 usa option positionOverride pulito.
+  const enemy = pickTargetForAction(state, me, { positionOverride: me.positionAtTurnStart });
   if (!enemy) return { type: 'END_TURN' };
 
   const w = me.weapon ? getWeapon(me.weapon) : undefined;
@@ -476,25 +434,9 @@ export function aiDecideDefense(state: GameState, defenderId: UnitId): {
 
       // V2: stima impedimento attaccante per pesare l'efficacia della schivata.
       // Più imp → variabile_atk_effettiva minore → schivata vince più spesso.
+      // 2026-05-15 (Refactor 1): usa getImpedimentTotal ufficiale.
       const attacker = state.units[pa.attackerId];
-      let attackerImp = 0;
-      if (attacker) {
-        // riuso countImpReductionsForEquip: total piece imp - reduction
-        if (attacker.weapon) {
-          const w = getWeapon(attacker.weapon);
-          if (w) attackerImp += Math.max(0, w.impediment - countImpReductionsForEquip(attacker, 'weapon'));
-        }
-        if (attacker.offhand) {
-          const w = getWeapon(attacker.offhand);
-          const sh = getShield(attacker.offhand);
-          const piece = sh?.impediment ?? w?.impediment ?? 0;
-          attackerImp += Math.max(0, piece - countImpReductionsForEquip(attacker, 'offhand'));
-        }
-        if (attacker.armor) {
-          const a = getArmor(attacker.armor);
-          if (a) attackerImp += Math.max(0, a.impediment - countImpReductionsForEquip(attacker, 'armor'));
-        }
-      }
+      const attackerImp = attacker ? getImpedimentTotal(attacker) : 0;
       // Variabile attaccante attesa = totalAttackerDice * 3.5 - imp (post-floor 0).
       // Se imp ≥ 3.5 * totalDice (in attesa), la variabile è praticamente azzerata
       // → schivata blocca tutto a colpo sicuro.

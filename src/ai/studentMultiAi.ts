@@ -86,14 +86,8 @@ export async function aiDecideExpert(
   const moves = legalMoves(state, unitId);
   if (moves.length === 0) return { type: 'END_TURN' };
 
-  // 2026-05-14 (Phase 1.3 skirmish): main threat selector NvN-aware. In 1v1 ricade
-  // sull'unico nemico → backward compat.
-  // 2026-05-15 (Bug A propagation fix): usa positionAtTurnStart per stabilizzare
-  // il target durante un turno multi-MOVE.
-  const unitForTargeting: Unit = unit.positionAtTurnStart
-    ? ({ ...unit, position: unit.positionAtTurnStart } as Unit)
-    : unit;
-  const enemy = pickTargetForAction(state, unitForTargeting);
+  // Main threat selector NvN-aware con position stabile (Bug A fix).
+  const enemy = pickTargetForAction(state, unit, { positionOverride: unit.positionAtTurnStart });
   if (!enemy) {
     // No enemy: fallback prima azione legale
     return moves[0];

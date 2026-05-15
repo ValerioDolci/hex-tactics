@@ -115,18 +115,10 @@ function legalSlancioMoves(state: GameState, unitId: UnitId): GameEvent[] {
 /** Mosse legali per la fase choosing-action: muovi, attacca, ricarica, end turn */
 function legalActionMoves(state: GameState, unit: Unit): GameEvent[] {
   const moves: GameEvent[] = [];
-  // 2026-05-14 (Phase 1.2 skirmish): in NvN scegliamo il target "di valore" anziché
-  // il puramente più vicino. In 1v1 questo collassa al solo nemico → comportamento
-  // identico. Per il target-picker UI umano vedi `legalActionMovesAllTargets`
-  // (Step 1.4 — non ancora implementato).
-  //
-  // 2026-05-15 (Bug A propagation fix): stabilizza il target sul positionAtTurnStart
-  // come fa aiDecideAction. Senza, anche gli MLP (Hard/Expert) che chiamano legalMoves
-  // possono vedere azioni candidate che cambiano ad ogni MOVE.
-  const unitForTargeting: Unit = unit.positionAtTurnStart
-    ? { ...unit, position: unit.positionAtTurnStart }
-    : unit;
-  const enemy = pickTargetForAction(state, unitForTargeting);
+  // In NvN scegliamo il target "di valore" (main threat) anziché il puramente più
+  // vicino. In 1v1 collassa al solo nemico. Bug A fix: posizione stabile (turn-start)
+  // per non far oscillare il target ad ogni MOVE.
+  const enemy = pickTargetForAction(state, unit, { positionOverride: unit.positionAtTurnStart });
   const weapon = unit.weapon ? getWeapon(unit.weapon) : undefined;
 
   // ATTACCO: se nemico in range mischia o ranged (V2 D-049)
