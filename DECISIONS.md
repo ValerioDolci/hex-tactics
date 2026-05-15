@@ -676,16 +676,84 @@
 
 ---
 
+## D-053 — Skirmish NvN Phase 1 (build-a-team con budget exp)
+
+**Data**: 2026-05-14 → 2026-05-15
+**Status**: ACTIVE
+**Branch**: `feat/skirmish` (live su `hex-tactics-play/main`)
+
+**Contesto**: post-MVP Valerio chiede di evolvere il gioco da duello 1v1 a skirmish team-based (fino a 10 unit per faction).
+
+**Decisione**: Phase 1 minimale opzione B (skirmish + wrapper target-selector sull'MLP). Phase 2 e 3 separate.
+
+**Implementazione**:
+- `SkirmishSetupScene` per build-a-team (budget exp default 4000/faction, 7 preset selezionabili)
+- `TeamRosterHUD` (visibile solo se >1 unit per faction)
+- `pickTargetForAction(state, me, { positionOverride? })` in `basicAi` — scoring main_threat NvN-aware
+- `teamAi.ts` wrapper (extension point per Phase 3)
+- `buildObsV2` accetta `agentEnemyId` per centrare l'obs MLP sul main threat
+- `BattleScene.setupGameState` supporta `skirmishA/B: string[]` con deploy lineare verticale
+
+**Razionale**: il core reducer è già 100% NvN-ready, non serve refactor strutturale. Phase 1 è additivo.
+
+**Conseguenze**: 5 bug AI heuristic preesistenti + 1 introdotto esposti dallo skirmish (vedi D-054).
+
+---
+
+## D-054 — Bug fix AI heuristic post-skirmish (A+B+E+F+G)
+
+**Data**: 2026-05-14 → 2026-05-15
+**Status**: ACTIVE
+
+**Contesto**: il balance sweep skirmish ha rivelato 5 bug nell'AI heuristic (4 preesistenti dal commit iniziale, 1 introdotto in Phase 1.2).
+
+**Bug fixati**:
+- **A** — `pickTargetForAction` usava `position` corrente → main_threat oscilla ad ogni MOVE in skirmish 4+. Fix: `positionOverride` con `positionAtTurnStart`. *(introdotto da me in Phase 1.2)*
+- **B** — `aiDecideSlancio` con `reach ?? 1` → arciere "in mischia con MIA arma" se dist=1 → 0 sla → bloccato. Fix: `reach ?? 0` + check `reach >= 1 && dist <= reach`. *(preesistente)*
+- **E** — AI heuristic non usava mai il transfer impeto→slancio (D-044). Fix: nuovo `aiDecideTurnStart` che ritorna `{ slancioDice, impetoToSlancio }`. *(preesistente, omissione di feature)*
+- **F** — `countImpReductionsForEquip` contava `count++` ignorando `skill.level`. Tank con `-1imp level 3` sottostimato → imp calcolato 10 invece di 0 reale → tank statici. Fix: `count += skill.level`. *(preesistente)*
+- **G** — `findBestMoveToward` non validava bounds della board → unità andavano fuori mappa. Fix: `inBoardBounds(h)` check. *(preesistente)*
+
+**Propagazione**: fix A propagato a `legalMoves`, `studentMlpAi`, `studentMultiAi`. Fix B propagato a `utilityAi` (2 occorrenze). Fix E propagato a `mctsAi` (rollout).
+
+**Razionale**: in 1v1 i bug erano simmetrici tra le 2 fazioni → invisibili. Skirmish 3+ unit li ha esposti perché ogni unit ha un main_threat diverso e situazioni asimmetriche.
+
+**Conseguenze post-fix** (balance sweep 240 partite):
+- 3v3 spam tank vs balanced: 30/70 → 50/50
+- 4v4 mirror balanced: 70/30 → 45/55
+- 3 arcieri vs 3 tank: 100% → 90% (tank ora si muove)
+- Arcieri dominano vs solo-melee (80-90% WR) — game design legittimo (reload+shoot stesso turno), non bug
+
+---
+
+## D-055 — Refactor pulizia AI (getImpedimentTotal unificato + positionOverride)
+
+**Data**: 2026-05-15
+**Status**: ACTIVE
+
+**Contesto**: D-054 ha rivelato duplicazioni fragili nel codice AI (la funzione `countImpReductionsForEquip` di basicAi era la stessa di `getImpedimentTotal` in `core/stats.ts` ma con bug F latente).
+
+**Decisione**:
+1. **`countImpReductionsForEquip` rimossa**. I 3 caller in `basicAi` (aiDecideSlancio, aiDecideTurnStart, aiDecideDefense) usano `getImpedimentTotal` ufficiale di `core/stats.ts`. Single source of truth → no drift se la regola cambia.
+2. **`pickTargetForAction(state, me, { positionOverride? })`** sostituisce trick `{ ...unit, position: ... }` ripetuto in 4 file (basicAi, legalMoves, studentMlpAi, studentMultiAi).
+
+**Garanzia anti-regressione**: balance sweep byte-by-byte identico al baseline pre-refactor (verificato con `diff`).
+
+**Test CI sanity mirror**: `tests/sim/skirmish_mirror_sanity.test.ts` aggiunto. WR mirror balanced ∈ [30%, 70%] su 4 matchup × 20 partite seed deterministici. Cattura regressioni AI in CI prima del merge.
+
+---
+
 ## Decisioni pending (da prendere ad un certo punto)
 
-> Non bloccano lo scaffolding M1, ma vanno chiuse durante le milestone successive.
-
-- **D-pending-A**: scelta del pack asset esatto (Kenney "Hexagon Pack" vs altro) → **deadline: M2 (geometria/mappa)**
-- **D-pending-B**: usare libreria di immutabilità (es. Immer) o gestire a mano? → **deadline: M3 (modello dati core)**
-- **D-pending-C**: dimensioni mappa di default (12×8? 14×10?) → **deadline: M2**
-- **D-pending-D**: visualizzazione "scelta dadi nascosta" in hot-seat → schermata di passaggio o blur? → **deadline: M6 (combat in mischia)**
-- **D-pending-E**: nome definitivo del progetto (al momento `hex-tactics`) → **a discrezione di Valerio**
-- **D-pending-F**: gap nella `TAB_armi.docx` (5 righe vuote) → segnaposto per altre armi che Valerio aggiungerà o ignorabili?
+- ~~**D-pending-A**: pack asset~~ → **rimandato post-MVP**, rendering vettoriale OK
+- ~~**D-pending-B**: libreria immutabilità~~ → **risolto**, gestito a mano (spread/rest)
+- ~~**D-pending-C**: dimensioni mappa~~ → **risolto in D-019**: 24×18 (poi 24×14 in `config.ts`)
+- ~~**D-pending-D**: hot-seat~~ → **risolto**: `HandoffOverlay` con conferma esplicita
+- ~~**D-pending-E**: nome del progetto~~ → **risolto**: "Codex Tacticus" (design system + tono narratore)
+- ~~**D-pending-F**: gap `TAB_armi.docx`~~ → **risolto**, ignorato
+- **D-pending-G** (2026-05-15): **strategia balance arcieri** in skirmish (80-90% WR vs solo-melee). 4 opzioni in `REVIEW_2026-05-15.md` §4.4. Da scegliere prima di Phase 2.3.
+- **D-pending-H** (2026-05-15): **investigare mirror 2v2 spa+spa 60-80/40-20**. Ipotesi: alpha strike spada lunga 2h con cap dadi 2h.
+- **D-pending-I** (2026-05-15): **merge `feat/skirmish` → `design/codex-tacticus`**? Tre opzioni: merge subito (skirmish live "WIP"), merge dopo Phase 2 (balance assestato), cherry-pick solo bug fix (skirmish separato).
 
 ---
 

@@ -86,23 +86,46 @@ hex-tactics/
 │   │   ├── Equipment.ts            # weapon, shield, armor
 │   │   └── Skill.ts                # skill acquistata + specializzazioni
 │   │
-│   ├── ai/
-│   │   └── basicAi.ts              # heuristic decision tree
+│   ├── ai/                         # 6 implementazioni AI + helpers condivisi
+│   │   ├── basicAi.ts              # heuristic decision tree (Easy)
+│   │   ├── utilityAi.ts            # utility function (sperimentale, M9)
+│   │   ├── qLearningAi.ts          # Q-learning table (sperimentale)
+│   │   ├── mctsAi.ts               # Monte Carlo Tree Search (sperimentale)
+│   │   ├── studentMlpAi.ts         # MLP distillato Deep CFR (Hard, sync inline weights)
+│   │   ├── studentMultiAi.ts       # ONNX Deep CFR multi-matchup (Expert, async, no singlefile)
+│   │   ├── studentMlpWeights.ts    # pesi base64 inline (auto-gen da Python)
+│   │   ├── teamAi.ts               # wrapper team-level (extension point Phase 3)
+│   │   ├── legalMoves.ts           # genera mosse legali per fase corrente
+│   │   ├── obsFeaturesV2.ts        # observation 153-feat per gli MLP
+│   │   └── buildFeatures.ts        # build features 39-feat per gli MLP
 │   │
 │   ├── scenes/                     # ----- PHASER -----
 │   │   ├── BootScene.ts            # caricamento asset
-│   │   ├── MainMenuScene.ts        # menu iniziale
-│   │   ├── CharBuilderScene.ts     # builder PG con skill tree
-│   │   ├── BattleScene.ts          # battaglia (la scena principale)
-│   │   └── GameOverScene.ts        # vittoria/sconfitta
+│   │   ├── MainMenuScene.ts        # menu iniziale (1v1)
+│   │   ├── CharacterBuilderScene.ts # builder PG con skill tree
+│   │   ├── SkirmishSetupScene.ts   # build-a-team NvN con budget exp
+│   │   ├── BattleScene.ts          # battaglia (scena principale)
+│   │   ├── ManualScene.ts          # codice/regole consultabili in-gioco
+│   │   └── TutorialMenuScene.ts    # tutorial step-by-step
 │   │
 │   ├── ui/                         # componenti UI Phaser-based
 │   │   ├── HexBoard.ts             # rendering griglia + highlight
 │   │   ├── UnitSprite.ts           # sprite + animazioni unità
-│   │   ├── HUD.ts                  # HP/slancio/impeto/dadi visibili
+│   │   ├── HUD.ts                  # HP/slancio/impeto/dadi unità attiva
+│   │   ├── TeamRosterHUD.ts        # pannello multi-unit (solo skirmish)
 │   │   ├── ActionMenu.ts           # menu azioni del turno
 │   │   ├── DiceChoiceUI.ts         # scelta dadi (info nascosta)
-│   │   └── CombatLog.ts            # log scrollabile eventi
+│   │   ├── SliderChoiceUI.ts       # slider per impeto→slancio + carica + bid
+│   │   ├── DiceRollAnimation.ts    # animazione dadi post-resolve
+│   │   ├── CombatLog.ts            # log scrollabile eventi
+│   │   ├── CombatNarrationOverlay.ts # cartiglio narrazione Codex Tacticus
+│   │   ├── HandoffOverlay.ts       # transizione hot-seat tra giocatori
+│   │   ├── GameOverOverlay.ts      # vittoria/sconfitta
+│   │   ├── TutorialOverlay.ts      # bolle di tutorial step-by-step
+│   │   ├── Tooltip.ts              # tooltip su hover
+│   │   ├── theme.ts                # design system Codex Tacticus (palette + font)
+│   │   ├── Vellum.ts               # paint pergamena procedurale per scene
+│   │   └── combatNarrator.ts       # generatore narrazione pure-function
 │   │
 │   ├── persistence/
 │   │   └── storage.ts              # save/load PG da localStorage
@@ -211,6 +234,57 @@ END_ROUND
    ↓
 [GameOverScene] vittoria/sconfitta + return al menu
 ```
+
+---
+
+## Architettura AI
+
+Sei implementazioni distinte, in `src/ai/`. Tre helper condivisi.
+
+### Le 6 AI
+
+| File | Etichetta UI | Quando si usa | Perf | Stato |
+|---|---|---|---|---|
+| `basicAi.ts` | **Easy** | default + fallback | <1ms | mantenuta, source-of-truth heuristic |
+| `utilityAi.ts` | — | sperimentale (M9) | <1ms | non in UI, mantenuta passiva |
+| `qLearningAi.ts` | — | sperimentale | <1ms | non in UI, mantenuta passiva |
+| `mctsAi.ts` | — | sperimentale | ~200ms | non in UI, mantenuta passiva |
+| `studentMlpAi.ts` | **Hard** | live (singlefile + multifile) | <1ms | MLP small distillato Deep CFR, inline base64 |
+| `studentMultiAi.ts` | **Expert** | solo multifile (NO singlefile) | 5-10ms async | ONNX Deep CFR multi-matchup |
+
+### Helper condivisi
+
+- **`pickTargetForAction(state, me, { positionOverride? })`** — scoring main threat in NvN: `(danger_arma / hp_left) × (1 / dist)`. Backward-compatible col 1v1 (un solo nemico → quello). `positionOverride` per stabilizzare il target durante un turno multi-MOVE (Bug A fix).
+- **`aiDecideTurnStart(state, unitId): { slancioDice, impetoToSlancio }`** — slancio dadi + transfer impeto→slancio (D-044). Usata da basicAi (Easy), mctsAi (rollout), simulate driver, BattleScene fallback.
+- **`legalMoves(state, unitId): GameEvent[]`** — genera mosse legali per fase corrente. Usata da tutti gli MLP per masking.
+
+### Catena dipendenze
+
+```
+                  ┌─ findClosestEnemy ─── utilityAi, qLearningAi
+                  │
+ basicAi.ts ──────┤
+                  ├─ pickTargetForAction(positionOverride) ── legalMoves ─┐
+                  │                                                      ├── studentMlpAi  (Hard)
+                  ├─ aiDecideTurnStart ── BattleScene, simulate          │
+                  │                                                      ├── studentMultiAi (Expert)
+                  ├─ aiDecideAction ── basicAi (Easy), mctsAi (rollout) ─┘
+                  │
+                  └─ (usa) getImpedimentTotal di core/stats.ts (single source of truth)
+```
+
+### Note sulle NN distillate
+
+- **`studentMlpAi`** (Hard): MLP `[231 → 256 → 256 → 256 → 24]` con pesi inline base64 in `studentMlpWeights.ts` (~1 MB). Sync, no dipendenze runtime. Distillato dal teacher Deep CFR Python (training su scenari 1v1).
+- **`studentMultiAi`** (Expert): rete più grande `[231 → 512×4]` caricata da `student_multi.onnx` (~3.5 MB) via `onnxruntime-web`. Async. Esclusa dal build singlefile per peso.
+- **Skirmish-aware via `agentEnemyId`**: l'`obsFeaturesV2` ha 1 slot enemy. Per skirmish gli MLP usano `pickTargetForAction` per scegliere quale nemico mostrare alla rete → rete vede sempre input "1v1" coerente.
+
+### Test strategy AI
+
+- **`tests/sim/skirmish_mirror_sanity.test.ts`** — CI test: WR mirror balanced ∈ [30%, 70%] su 4 matchup × 20 partite seed deterministici. Cattura regressioni AI strutturali.
+- **`tests/sim/skirmish_balance.test.ts`** — diagnostico verbose: 12 matchup × 20 partite, output `/tmp/skirmish-balance.md`.
+- **`tests/sim/arc_vs_tank_3v3.test.ts`** — focus on 3v3 archer-vs-tank balance.
+- **`tests/sim/skirmish_*_diag.test.ts`** — dump dettagliato turn-by-turn per investigare squilibri.
 
 ---
 

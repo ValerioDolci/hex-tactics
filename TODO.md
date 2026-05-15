@@ -32,6 +32,15 @@
 |---|---|---|
 | **AI Optim** (D-046..D-048 + AI matchup-aware) | `[x]` | 12 GA matchup-specific eseguiti, AI Utility GA-tuned. Q-learning step B insufficiente |
 | **Python port** (engine + RL avanzato) | `[~]` | Scaffolding + RNG portato (parità verificata). Vedi `python/TODO.md` per dettaglio P0..P15 |
+| **Combat Narrator** (Codex Tacticus) | `[x]` | Cartiglio vellum + narratore pure-function, deployato 2026-05-14 |
+| **Skirmish Phase 1** (NvN 1v1→10v10) | `[x]` | Branch `feat/skirmish` @ `440904c`, live. Vedi D-053 |
+| **AI Bug fix** (A, B, E, F, G + propagazione) | `[x]` | 5 bug heuristic fixati. Vedi D-054, `REVIEW_2026-05-15.md` §2.2 |
+| **AI Refactor pulizia** | `[x]` | `getImpedimentTotal` unificato, `pickTargetForAction(positionOverride?)`. Vedi D-055 |
+| **Test CI sanity mirror** | `[x]` | `skirmish_mirror_sanity.test.ts` cattura regressioni AI |
+| **Skirmish Phase 2.1** Mappa scalabile | `[ ]` | 10v10 stallo finale su 24×14, serve mappa proporzionale |
+| **Skirmish Phase 2.2** ActionMenu scroll | `[ ]` | 5+ nemici × attack modes voci fuori viewport |
+| **Skirmish Phase 2.3** Balance team | `[ ]` | Strategia arcieri (D-pending-G), alpha strike spa+spa (D-pending-H) |
+| **Skirmish Phase 3** Retrain CFR unit-centric | `[ ]` | Design 3.B in CLAUDE.md, ~30-40h compute |
 
 ---
 
@@ -294,9 +303,10 @@
 - Salvataggio partite in corso
 - Più archetipi di abilità (oltre i 4 base)
 - Packaging desktop (Tauri)
-- Repository GitHub pubblico
-- Modalità 2v2, 3v3, 4v4
-- Bilanciamento approfondito post-feedback
+- ~~Repository GitHub pubblico~~ → fatto (`ValerioDolci/hex-tactics`, `hex-tactics-play`)
+- ~~Modalità 2v2, 3v3, 4v4~~ → fatto in Skirmish Phase 1 (D-053), 1v1→10v10
+- Bilanciamento approfondito post-feedback (skirmish: D-pending-G, D-pending-H)
+- Decisione merge `feat/skirmish` → `design/codex-tacticus` (D-pending-I)
 
 ---
 

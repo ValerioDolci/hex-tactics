@@ -4,81 +4,84 @@
 
 ---
 
-## 🔄 Rollback marker — Skirmish work in progress
+## 🔄 Rollback marker
 
-**Branch corrente di sviluppo**: `feat/skirmish` (creato 2026-05-14 sera).
+Per **rollback rapido al pre-skirmish** in caso di problemi futuri:
 
-**Commit stabile pre-skirmish** (rollback se necessario):
-- Hash: **`6189209`**
-- Branch: `design/codex-tacticus` (HEAD a quel commit)
-- Descrizione: "Combat narrator overlay: leggibilità + no overlap con popup UI"
-- Deployato live su `valeriodolci.github.io/hex-tactics-play/` (singlefile)
-
-**Per rollback** (in caso il lavoro skirmish rompa qualcosa):
 ```bash
-git checkout design/codex-tacticus
-git reset --hard 6189209  # solo se servono modifiche post-6189209 da scartare
-bash scripts/deploy_pages.sh "rollback to pre-skirmish"
+git checkout design/codex-tacticus       # @ 6189209, base stabile pre-skirmish
+PATH=/opt/homebrew/bin:$PATH SINGLEFILE=1 /opt/homebrew/bin/node node_modules/.bin/vite build
+bash scripts/deploy_pages.sh "rollback to pre-skirmish baseline"
 ```
 
-Le modifiche su `feat/skirmish` NON impattano `design/codex-tacticus` finché non viene fatto merge.
+| Branch | Commit | Descrizione |
+|---|---|---|
+| `main` | `a8d05e6` | legacy pre-codex |
+| `design/codex-tacticus` | `6189209` | base stabile pre-skirmish, 1v1 OK |
+| `feat/skirmish` (live) | `440904c` | Skirmish Phase 1 + 5 bug fix AI + refactor cleanup |
+
+**Cherry-pick consigliato se vuoi solo i bug fix AI senza skirmish**:
+```bash
+git checkout design/codex-tacticus
+git cherry-pick 67b23a2 fbf1464 34b61bd 7001540 440904c
+# bounds + A+B+E + F + propagation + refactor cleanup
+```
 
 ---
 
-## 🆕 Skirmish (Phase 1 completata, 2026-05-14)
+## 🆕 Skirmish — Phase 1 chiusa + AI cleanup (2026-05-15)
 
-**Branch `feat/skirmish` pushato + deployato live** — NvN da 2v2 fino a 10v10 (con limiti).
+### Cosa è live
+- **Build-a-team con budget exp** (`SkirmishSetupScene`): 4000 exp/faction default, 7 preset selezionabili (1750-2000 exp ciascuno), min 1 / max 10 unit.
+- **AI NvN-aware**: `pickTargetForAction(state, me, { positionOverride })` sceglie main threat (HP × pericolosità × prossimità), con posizione di turn-start stabile per evitare oscillazioni in skirmish 4+.
+- **`teamAi.ts`** wrapper per logica team-level futura.
+- **`TeamRosterHUD`**: pannello multi-unit (visibile solo se >1 unit per faction).
+- **Core reducer 100% NvN-ready** senza modifiche.
 
-### Funzionalità Phase 1 (live)
-- **Build-a-team con budget exp** (`SkirmishSetupScene`): 4000 exp/faction default,
-  preset selezionabili con costo (1750-2000 exp), min 1 / max 10 unit per faction.
-- **AI NvN-aware**: `pickTargetForAction` in basicAi sceglie main threat
-  (HP basso × pericolosità arma × prossimità). `studentMlpAi` + `studentMultiAi`
-  passano il main threat come `agentEnemyId` a `buildObsV2`.
-- **`teamAi.ts`** wrapper per logica team-level futura (Phase 3+).
-- **`TeamRosterHUD`**: pannello multi-unit con HP/slancio per ogni unit, header
-  faction, caret + bg oro per unit attiva. Visibile solo in skirmish (>1 unit per faction).
-- **Reducer core 100% NvN-ready** senza modifiche (`checkGameOver`, `computeTurnOrder`,
-  `doEndTurn` già generici).
+### Bug AI fixati nella sessione (vedi `REVIEW_2026-05-15.md` §2.2)
+| Bug | Origine | Dove |
+|---|---|---|
+| A — oscillazione main_threat | Phase 1.2 (mio) | `pickTargetForAction` |
+| B — `reach ?? 1` per ranged-only | commit iniziale | `aiDecideSlancio`, `utilityAi` |
+| E — transfer impeto→slancio mai usato | commit iniziale (omissione) | `aiDecideTurnStart` (nuovo) |
+| F — `count++` invece di `skill.level` | commit iniziale | `countImpReductionsForEquip` |
+| G — `findBestMoveToward` no bounds | commit iniziale | unità andavano a r=-90 |
 
-### Limiti noti Phase 1 → Phase 2
-- **3v3 e 10v10 vanno in timeout 100+ round su mappa 24×14**: troppe unit, manovre bloccate
-  da basette nemiche/alleate. Da risolvere con mappa scalabile in Phase 2.1.
-- **ActionMenu non ha scroll** verticale: con 5+ nemici × attack modes le voci escono
-  dalla viewport. Phase 2.2.
-- **AI hard "ignora alleati e nemici secondari"** nell'obs (training 1v1) →
-  no focus fire emergente, no copertura team. Richiede Phase 3 retrain.
+**Refactor pulizia successivo**:
+- `countImpReductionsForEquip` rimosso, sostituito da `getImpedimentTotal` ufficiale (`core/stats.ts`)
+- `pickTargetForAction(positionOverride?)` sostituisce trick `{ ...unit, position: ... }` ripetuto in 4 file
+- Test CI sanity mirror: `tests/sim/skirmish_mirror_sanity.test.ts` cattura regressioni AI in CI
+
+### Limiti noti → Phase 2
+- **10v10 stallo finale** (~200 round, 4 alive su 20): mappa 24×14 troppo stretta. Phase 2.1: mappa scalabile.
+- **ActionMenu no scroll**: con 5+ nemici × attack modes voci escono viewport. Phase 2.2.
+- **Mirror 2v2 spa+spa 60-80/40-20**: alpha strike spada lunga 2h, da indagare. Phase 2.3.
+- **Arcieri OP vs solo-melee** (80-90% WR): scelta di design aperta (cap transfer, nerf reload, ecc.). Phase 2.3.
 
 ### Phase 2 (TODO)
-- 2.1 Mappa scalabile (es. 24+6×N hex/faction colonne)
-- 2.2 ActionMenu scrollabile
-- 2.3 Bilanciamento team composition (test pipeline simulazioni)
+- 2.1 Mappa scalabile per team size (es. 24+6×N cols)
+- 2.2 `ActionMenu` scrollabile
+- 2.3 Bilanciamento iterativo preset + scelta strategia balance arcieri
+- 2.4 Investigare alpha strike spada lunga 2h
 
-### Phase 3 (retrain Deep CFR per skirmish, design doc)
+### Phase 3 (retrain Deep CFR per skirmish — design doc)
 
 **Approccio scelto: 3.B Unit-centric con teammates-as-environment.**
 
-Idea: ogni unit decide indipendentemente (no comunicazione team), ma l'obs space
-si arricchisce di feature aggregate del proprio team e del team avversario:
+Ogni unit decide indipendentemente (no comunicazione team), ma l'obs space si arricchisce di feature aggregate del proprio team e del team avversario:
 
-**Nuove feature obs (estensione `buildObsV2`)**:
 - `team_self`: # unit alive, HP medio team, slancio medio, distanza media al nemico
 - `team_opp`: # unit alive, HP medio team avversario, distanza media
-- `pos_in_team`: rank tactico (es. "sono il più ferito / il più sano / il più vicino al nemico")
+- `pos_in_team`: rank tactico (sono il più ferito / il più sano / vicino al nemico)
 
 **Pipeline training**:
-1. Estendi `python/cfr/abstract_game.py` per gestire stato N unit per faction
-2. Riusa il MLP small distillato attuale come **base policy** (transfer learning)
-3. Fine-tune con curriculum: 1v1 (1k epoch) → 2v2 (5k epoch) → 3v3 (5k epoch) → 4v4+
-4. Distill nuovo `studentMlpWeights.ts` (forse con obs feature aggiuntive → file più grande)
-5. Sostituisci `aiDecideTeamHard` con il nuovo MLP centric-team-aware
+1. Estendi `python/cfr/abstract_game.py` per stato N unit per faction
+2. Riusa MLP small attuale come **base policy** (transfer learning)
+3. Fine-tune con curriculum: 1v1 (1k epoch) → 2v2 (5k) → 3v3 (5k) → 4v4+
+4. Distill nuovo `studentMlpWeights.ts`
+5. Sostituisci `aiDecideTeamHard` col nuovo MLP team-aware
 
-**Costo stimato**: 20-30h compute overnight su Mac M4 + ~10h codice. Pro:
-incrementale, riutilizza l'esistente, performance prevedibile. Contro: il MLP
-può non imparare focus fire emergente senza canale di comunicazione esplicito.
-
-**Da fare DOPO** che Phase 1 è giocata e validata, e Phase 2 (scaling + UI scroll
-+ bilanciamento) chiuse.
+**Costo stimato**: 20-30h compute overnight Mac M4 + ~10h codice. **Da fare DOPO** Phase 2.
 
 ---
 
@@ -97,52 +100,68 @@ può non imparare focus fire emergente senza canale di comunicazione esplicito.
 
 ## Stato corrente
 
-**Fase**: **Post-MVP — bilanciamento Deep CFR in corso** (overnight 2026-05-05 → 2026-05-06).
+**Fase**: **Post-MVP + Skirmish Phase 1 completata + cleanup AI** (2026-05-15).
 
-**MVP completato**: tutte le 13 milestone (M1→M13 in scope ridotto), **139 test verdi**, gioco giocabile end-to-end via `npm run dev`.
+**MVP**: 13 milestone M1→M13 chiuse.
+**Post-MVP**: Skirmish NvN (build-a-team con budget exp, 1v1 → 10v10) Phase 1 + bug fix AI + refactor pulizia.
 
-**Workflow corrente**: Deep CFR su matchup paralleli per stimare V_a (win-rate proxy) di ogni build. 22 modelli salvati in `python/cfr/nightly_results/deep_cfr_*/`.
+**Suite test**: **235 test pass + 13 skip Playwright** (su 248 totali, ~3s execution).
 
-**File di stato bilanciamento (leggere a inizio sessione balance)**:
-- [`DEEP_CFR_RESULTS_2026-05-06.md`](./DEEP_CFR_RESULTS_2026-05-06.md) — snapshot completo V_a dei 22 modelli, insight strutturali, matrice copertura.
-- [`BALANCE_TODO.md`](./BALANCE_TODO.md) — TODO ordinato per priorità (bug lancia 3m, fix throwers, validazione mirror, distillazione AI, iterazione fino a `|V_a|<0.15`).
-- `python/cfr/nightly_results/database_index.json` — autopopolato, ordinato per imbalance.
+### Branch attivo
 
-**Squilibri principali rilevati** (riepilogo, dettagli in DEEP_CFR_RESULTS):
-- Throwers (lanc/giav/balestra) stomp i preset baseline (spa/arc) di 27-33 wr%.
-- Ascia1h dominata da lanciere/giavellottiere (range lancio insufficiente).
-- Tra i preset, arciere batte spadaccino (+16.5 wr%).
-- **Distillazione AI necessaria** per il gioco — confermato da Valerio.
-- **Bug noto**: lancia 3m matematicamente rotta (vedi M-3) — fix da decidere.
+- **`feat/skirmish`** @ `440904c` (live su `hex-tactics-play/main`):
+  - Skirmish Phase 1 completa (build-a-team, target picker NvN, TeamRosterHUD, multi-deploy)
+  - 5 bug fix AI heuristic (A oscillazione, B reach, E transfer impeto→slancio, F skill.level, G bounds check)
+  - 3 propagation fix ad altri AI (utilityAi, mctsAi, studentMlp/Multi, legalMoves)
+  - Refactor pulizia: `getImpedimentTotal` unificato, `pickTargetForAction(positionOverride?)`
+  - Test CI sanity mirror: cattura regressioni AI in CI (WR mirror ∈ [30%, 70%])
+- **`design/codex-tacticus`** @ `6189209` (base stabile pre-skirmish, rollback safe)
+- **`main`** @ `a8d05e6` (legacy)
 
-**Cosa funziona** (gameplay):
-- Mappa esagonale 24×18 con camera pan/zoom + deploy zone 7-hex
-- Movimento click-to-move con highlight slancio + costo applicato
+### Cosa funziona (gameplay)
+
+- Mappa esagonale 24×14 con camera fissa + deploy zone 7-hex (1v1) o lineare verticale (skirmish NvN)
+- Movimento click-to-move con highlight slancio + costo applicato + zona di controllo (asta Meccanica A)
 - Combat mischia con schivata/parata attiva + info nascosta hot-seat
-- Combat ranged con LoS dai 7 esagoni della basetta
-- AI heuristic (single-player) o hot-seat
-- 3 preset PG bilanciati su 2000 exp (Spadaccino/Arciere/Tank) + 4 nuove build (Lanciere, Giavellottiere, Ascia 1h lanciatore, Balestriere) con `thrown_inventory + backup_weapon`
+- Combat ranged con LoS dai 7 esagoni
+- **6 AI distinte**: heuristic (Easy), utility (sperim.), q-learning (sperim.), MCTS (sperim.), MLP distillato (Hard, live), ONNX Deep CFR (Expert, solo multi-file)
+- **Combat narrator overlay**: cartiglio vellum con narrazione asciutta-poetica degli eventi, posizione bottom + auto-hide popup
+- **Skirmish 1v1 → 10v10**: build-a-team con budget exp (default 4000), 7 preset selezionabili, modalità Umano/AI easy/AI hard
+- **TeamRosterHUD**: pannello multi-unit visibile solo in skirmish
 - Persistenza setup in localStorage
 
-**Cosa è rimandato a post-MVP** (D-035, D-036):
-- Character builder UI completo (i 3 preset coprono le tipologie principali — modifiche dirette a `data/presets.ts` per ora)
+### Cosa è rimandato
+
+- Character builder UI completo (D-035, D-036) — i 7 preset coprono le build standard
 - Asset sprite reali (rendering vettoriale spartano)
 - Audio (BGM + SFX)
 - Multiplayer online (architettura predisposta)
-- Animazioni movimento
+- Animazioni movimento avanzate
 
-**Per giocare**: `npm install && npm run dev` → apri `http://localhost:5173`.
+### Bilanciamento corrente
 
-**Pending da Claude (ordine implementazione proposto, dopo OK Valerio)**:
-1. Scaffolding Phaser 3 + TypeScript + Vite — "Hello hex grid" cliccabile
-2. Geometria esagonale (axial/cube coords), rendering mappa con base 7-hex deployment
-3. Modello unità + pool dadi azione + turn loop
-4. Combattimento: attacco, parata attiva, schivata attiva
-5. Iniziativa dinamica (formule da Valerio)
-6. AI heuristic base (gioca contro PC)
-7. Hot-seat (due umani stesso device, switch giocatore)
-8. Character builder + skill tree + persistenza locale
-9. Bilanciamento iterativo
+**Mirror balanced (sanity check)** — heuristic AI vs heuristic AI, 20-30 partite per matchup:
+- 2v2 mirror tank+tank: 60/40
+- 2v2 mirror spa+spa: 60-80/40-20 (⚠️ varianza per alpha strike spada lunga 2h)
+- 3v3 mirror balanced: 50/50 ✓
+- 4v4 mirror balanced: 45-70/55-30 ✓
+
+**Asimmetrie attese**:
+- Arcieri OP vs solo-melee (90% vs all-melee 4v4) — game design (reload+shoot stesso turno)
+- Tank batte fragili melee (60% vs spada in spam tank)
+
+**Decisione balance ancora aperta** (vedi `REVIEW_2026-05-15.md` §4.4): 4 strade per nerf arcieri (cap transfer impeto→slancio, alzare reload cost, ridurre damage, lasciare OP).
+
+### Per giocare
+
+- **Locale**: `npm install && npm run dev` → `http://localhost:5173`
+- **Live**: https://valeriodolci.github.io/hex-tactics-play/
+
+### Documenti correlati di sessione
+
+- **`REVIEW_2026-05-15.md`** — review completa stato + postmortem AI fix (leggere a inizio sessione skirmish/balance)
+- **`BALANCE_TODO.md`** — todo bilanciamento pre-skirmish (Deep CFR)
+- **`DEEP_CFR_RESULTS_2026-05-06.md`** — snapshot training Python CFR (legacy, ancora valido come riferimento)
 
 ---
 
