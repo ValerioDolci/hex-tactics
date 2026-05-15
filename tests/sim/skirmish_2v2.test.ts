@@ -31,7 +31,7 @@ describe('Skirmish scaling — 3v3, 5v5, 10v10', () => {
     const { createInitialState } = await import('@core/state');
     const { reduce } = await import('@core/reducer');
     const { unitFromPreset, getPreset } = await import('@data/presets');
-    const { aiDecideAction, aiDecideSlancio, aiDecideAttackerDice, aiDecideDefense } = await import('@ai/basicAi');
+    const { aiDecideAction, aiDecideTurnStart, aiDecideAttackerDice, aiDecideDefense } = await import('@ai/basicAi');
     const { offsetToAxial } = await import('@core/hex/coords');
 
     const presets = ['arciere', 'spadaccino', 'tank', 'lanciere', 'giavellottiere'];
@@ -56,7 +56,7 @@ describe('Skirmish scaling — 3v3, 5v5, 10v10', () => {
       const activeId = s.turnOrder[s.currentTurnIdx];
       if (!activeId) break;
       let ev: any;
-      if (s.phase === 'turn-start') ev = { type: 'START_TURN', slancioDice: aiDecideSlancio(s, activeId) };
+      if (s.phase === 'turn-start') { const _d = aiDecideTurnStart(s, activeId); ev = { type: 'START_TURN', slancioDice: _d.slancioDice, impetoToSlancio: _d.impetoToSlancio }; }
       else if (s.phase === 'choosing-action') ev = aiDecideAction(s, activeId);
       else if (s.phase === 'declaring-attack') ev = { type: 'CHOOSE_ATTACKER_DICE', diceN: aiDecideAttackerDice(s, activeId) };
       else if (s.phase === 'awaiting-defense') {
@@ -111,7 +111,7 @@ describe('Skirmish 2v2 — simulazione manuale NvN', () => {
     const { createInitialState } = await import('@core/state');
     const { reduce } = await import('@core/reducer');
     const { unitFromPreset, getPreset } = await import('@data/presets');
-    const { aiDecideAction, aiDecideSlancio, aiDecideAttackerDice, aiDecideDefense } = await import('@ai/basicAi');
+    const { aiDecideAction, aiDecideTurnStart, aiDecideAttackerDice, aiDecideDefense } = await import('@ai/basicAi');
     const { offsetToAxial } = await import('@core/hex/coords');
 
     const a1 = Object.assign(unitFromPreset(getPreset('arciere')!, 'A', offsetToAxial({ col: 2, row: 7 })), { id: 'A1' });
@@ -136,7 +136,7 @@ describe('Skirmish 2v2 — simulazione manuale NvN', () => {
       // Tutti heuristic, dispatch per phase
       let ev: any;
       if (s.phase === 'turn-start') {
-        ev = { type: 'START_TURN', slancioDice: aiDecideSlancio(s, activeId) };
+        { const _d = aiDecideTurnStart(s, activeId); ev = { type: 'START_TURN', slancioDice: _d.slancioDice, impetoToSlancio: _d.impetoToSlancio }; }
       } else if (s.phase === 'choosing-action') {
         ev = aiDecideAction(s, activeId);
       } else if (s.phase === 'declaring-attack') {

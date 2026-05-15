@@ -43,7 +43,7 @@ import {
   aiDecideBidMovement,
   aiDecideCarica,
   aiDecideDefense,
-  aiDecideSlancio,
+  aiDecideTurnStart,
 } from '@ai/basicAi';
 import { aiDecideStudentMlp as aiDecideHard } from '@ai/studentMlpAi';
 import { aiDecideExpert, preloadStudentMulti } from '@ai/studentMultiAi';
@@ -833,10 +833,16 @@ export class BattleScene extends Phaser.Scene {
           slancioN = e.slancioDice;
           impetoToSlancio = e.impetoToSlancio;
         } else {
-          slancioN = aiDecideSlancio(this.state, unit.id);
+          // Fallback heuristic con transfer impeto→slancio (Bug E fix)
+          const dec = aiDecideTurnStart(this.state, unit.id);
+          slancioN = dec.slancioDice;
+          impetoToSlancio = dec.impetoToSlancio;
         }
       } else {
-        slancioN = aiDecideSlancio(this.state, unit.id);
+        // Heuristic con transfer impeto→slancio per coprire reload arco/balestra
+        const dec = aiDecideTurnStart(this.state, unit.id);
+        slancioN = dec.slancioDice;
+        impetoToSlancio = dec.impetoToSlancio;
       }
       this.dispatch({ type: 'START_TURN', slancioDice: slancioN, impetoToSlancio });
       this.scheduleAiTurn();

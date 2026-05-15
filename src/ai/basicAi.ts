@@ -21,6 +21,8 @@ import { getWeapon } from '@data/weapons';
 import { getShield } from '@data/shields';
 import { getArmor } from '@data/armors';
 import { canFireRanged } from '@core/ranged';
+import { countFlatBonuses, makeSlancioContext } from '@core/stats';
+import { getMaxSlancioRoll } from '@core/turn';
 import { GameEvent, EventDeclareAttack, EventMove, EventEndTurn } from '@core/events';
 
 /** Trova il nemico più vicino vivo */
@@ -105,13 +107,21 @@ export function aiDecideSlancio(state: GameState, unitId: UnitId): number {
   const u = state.units[unitId];
   if (!u) return 0;
 
-  // Se ho già un nemico in mischia → niente slancio, risparmia dadi azione
+  // Se ho già un nemico in mischia con la MIA arma melee → niente slancio,
+  // risparmia dadi azione per attaccare.
+  //
+  // 2026-05-15 (Bug B fix): check valido SOLO per armi melee-capable (reach >= 1).
+  // Per armi ranged-only (arco, balestra: reach=undefined) lasciar fluire la logica
+  // standard: se un nemico melee è adiacente, l'arciere DEVE scappare (max slancio
+  // possibile), non risparmiare dadi. Senza questo fix, `reach ?? 1` faceva passare
+  // la condizione `dist <= 1` per arco a contatto, e l'arciere restava bloccato a
+  // sla=0 mentre il tank lo macellava (vedi diag tank+tank vs arc+arc).
   const enemy = findClosestEnemy(state, u);
   if (enemy && u.weapon) {
     const w = getWeapon(u.weapon);
-    const reach = w?.range?.reach ?? 1;
+    const reach = w?.range?.reach ?? 0; // 0 = no melee capability
     const dist = baseDistance(u.position, enemy.position);
-    if (dist <= reach) return 0;
+    if (reach >= 1 && dist <= reach) return 0;
   }
 
   // Se l'impedimento mangia il tiro: 2d6+2 medio = 9, ma con imp >= 7 è pura perdita
@@ -144,6 +154,56 @@ export function aiDecideSlancio(state: GameState, unitId: UnitId): number {
   return 0;
 }
 
+/**
+ * Decisione completa per START_TURN: numero dadi slancio + transfer impeto→slancio.
+ *
+ * 2026-05-15 (Bug E fix): l'AI heuristic non usava MAI il transfer impeto→slancio
+ * (D-044). Conseguenza: arcieri con arco scarico (cost 9 sla per ricaricare) e
+ * impeto alto (40+) non riuscivano mai a ricaricare nel round 1, perché 2d6+2
+ * tira mediamente 9 ma serve un'esca per essere sicuri. Risultato: arcieri morti
+ * in mischia senza aver mai sparato.
+ *
+ * Logica:
+ *   1. slancioDice via aiDecideSlancio (esistente).
+ *   2. Se l'arma è ranged scarica con reloadCostSlancio:
+ *      - Stima slancio post-tiro = slancioDice * 3.5 (avg d6) + 2 + flat - imp
+ *      - Se < reloadCostSlancio e impeto > 0:
+ *        transfer = min(impeto, reloadCost - estimate, max_slancio_headroom)
+ */
+export function aiDecideTurnStart(state: GameState, unitId: UnitId): {
+  slancioDice: number;
+  impetoToSlancio: number;
+} {
+  const slancioDice = aiDecideSlancio(state, unitId);
+  const u = state.units[unitId];
+  if (!u) return { slancioDice, impetoToSlancio: 0 };
+  if (u.impeto <= 0) return { slancioDice, impetoToSlancio: 0 };
+  if (!u.weapon) return { slancioDice, impetoToSlancio: 0 };
+  const w = getWeapon(u.weapon);
+  if (!w?.range?.reloadCostSlancio || u.weaponLoaded) {
+    return { slancioDice, impetoToSlancio: 0 };
+  }
+  // Arma ranged scarica con cost-slancio reload. Stima slancio post-tiro:
+  let imp = 0;
+  if (u.weapon) imp += Math.max(0, (getWeapon(u.weapon)?.impediment ?? 0) - countImpReductionsForEquip(u, 'weapon'));
+  if (u.offhand) {
+    const sh = getShield(u.offhand);
+    const ow = getWeapon(u.offhand);
+    imp += Math.max(0, (sh?.impediment ?? ow?.impediment ?? 0) - countImpReductionsForEquip(u, 'offhand'));
+  }
+  if (u.armor) imp += Math.max(0, (getArmor(u.armor)?.impediment ?? 0) - countImpReductionsForEquip(u, 'armor'));
+  const flatBonus = countFlatBonuses(u.skills, makeSlancioContext());
+  // Slancio post-tiro avg = slancioDice * 3.5 (avg d6) + 2 (BASE_PG_FIXED) + flat_skill - imp
+  const slancioEstimateAvg = slancioDice * 3.5 + 2 + flatBonus - imp;
+  const need = w.range.reloadCostSlancio - slancioEstimateAvg;
+  if (need <= 0) return { slancioDice, impetoToSlancio: 0 };
+  // Cap headroom: max teorico tiro slancio
+  const maxRoll = getMaxSlancioRoll(u);
+  const headroom = Math.max(0, maxRoll - slancioEstimateAvg);
+  const transfer = Math.max(0, Math.min(Math.ceil(need), u.impeto, headroom));
+  return { slancioDice, impetoToSlancio: transfer };
+}
+
 /** Helper: conta riduzioni impedimento applicabili a uno specifico equip slot */
 function countImpReductionsForEquip(u: Unit, slot: 'weapon' | 'offhand' | 'armor'): number {
   const equipId =
@@ -173,7 +233,17 @@ export function aiDecideAction(state: GameState, unitId: UnitId): GameEvent {
   // 2026-05-14 (Phase 1.2 skirmish): target = main threat (HP basso × pericolosità arma
   // × prossimità), con preferenza per nemici già in melee range. In 1v1 ricade su
   // l'unico nemico → comportamento identico al pre-skirmish.
-  const enemy = pickTargetForAction(state, me);
+  //
+  // 2026-05-15 (Bug A fix): usiamo `positionAtTurnStart` invece di `position` corrente
+  // per il target picking. Senza, in skirmish 4+ il main_threat può cambiare ad ogni
+  // MOVE (perché il scoring dipende da distanza), e l'unit oscilla avanti/indietro
+  // bruciando slancio. Esempio dal dump 4v4 r7: A3_Arciere oscilla 8 volte tra (8,12)
+  // e (9,12) e finisce con sla=0. Freezando il riferimento a positionAtTurnStart, il
+  // target resta stabile per tutto il turno.
+  const meForTargeting: Unit = me.positionAtTurnStart
+    ? { ...me, position: me.positionAtTurnStart }
+    : me;
+  const enemy = pickTargetForAction(state, meForTargeting);
   if (!enemy) return { type: 'END_TURN' };
 
   const w = me.weapon ? getWeapon(me.weapon) : undefined;

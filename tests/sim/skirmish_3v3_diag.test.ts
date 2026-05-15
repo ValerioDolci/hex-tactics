@@ -11,7 +11,7 @@ describe('Skirmish 3v3 timeout — diagnosi', () => {
     const { createInitialState } = await import('@core/state');
     const { reduce } = await import('@core/reducer');
     const { unitFromPreset, getPreset } = await import('@data/presets');
-    const { aiDecideAction, aiDecideSlancio, aiDecideAttackerDice, aiDecideDefense } = await import('@ai/basicAi');
+    const { aiDecideAction, aiDecideTurnStart, aiDecideAttackerDice, aiDecideDefense } = await import('@ai/basicAi');
     const { offsetToAxial } = await import('@core/hex/coords');
 
     const presets = ['arciere', 'spadaccino', 'tank'];
@@ -36,7 +36,7 @@ describe('Skirmish 3v3 timeout — diagnosi', () => {
       const activeId = s.turnOrder[s.currentTurnIdx];
       if (!activeId) break;
       let ev: any;
-      if (s.phase === 'turn-start') ev = { type: 'START_TURN', slancioDice: aiDecideSlancio(s, activeId) };
+      if (s.phase === 'turn-start') { const _d = aiDecideTurnStart(s, activeId); ev = { type: 'START_TURN', slancioDice: _d.slancioDice, impetoToSlancio: _d.impetoToSlancio }; }
       else if (s.phase === 'choosing-action') ev = aiDecideAction(s, activeId);
       else if (s.phase === 'declaring-attack') ev = { type: 'CHOOSE_ATTACKER_DICE', diceN: aiDecideAttackerDice(s, activeId) };
       else if (s.phase === 'awaiting-defense') {

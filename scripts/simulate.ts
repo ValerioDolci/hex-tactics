@@ -21,7 +21,7 @@ import {
   aiDecideAction,
   aiDecideAttackerDice,
   aiDecideDefense,
-  aiDecideSlancio,
+  aiDecideTurnStart,
 } from '@ai/basicAi';
 import { utilityDecideMove } from '@ai/utilityAi';
 import { qChoose } from '@ai/qLearningAi';
@@ -54,7 +54,10 @@ function decideMoveByMode(state: GameState, unitId: string, mode: AiMode, mctsCo
     case 'heuristic': {
       // Per heuristic, la chiamata varia in base alla fase
       if (state.phase === 'turn-start') {
-        return { type: 'START_TURN', slancioDice: aiDecideSlancio(state, unitId) };
+        // 2026-05-15: usa aiDecideTurnStart per includere transfer impeto→slancio
+        // (D-044), critico per arcieri/balestrieri scarichi.
+        const dec = aiDecideTurnStart(state, unitId);
+        return { type: 'START_TURN', slancioDice: dec.slancioDice, impetoToSlancio: dec.impetoToSlancio };
       }
       if (state.phase === 'choosing-action') return aiDecideAction(state, unitId);
       if (state.phase === 'declaring-attack') {
